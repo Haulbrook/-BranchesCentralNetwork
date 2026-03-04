@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crew Scheduler - Deep Roots Landscape</title>
+    <!-- v2.0 - Drag and drop crew scheduling -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --brand-primary: #2E7D32;
+            --brand-primary-dark: #1B5E20;
+            --brand-primary-light: #4CAF50;
+            --brand-accent: #FFA726;
+            --success: #66BB6A;
+            --warning: #FFA726;
+            --error: #EF5350;
+            --info: #42A5F5;
+            --gray-50: #FAFAFA;
+            --gray-100: #F5F5F5;
+            --gray-200: #EEEEEE;
+            --gray-300: #E0E0E0;
+            --gray-600: #757575;
+            --gray-800: #424242;
+            --gray-900: #212121;
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.12);
+            --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--brand-primary-light) 0%, var(--brand-primary) 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 100%;
+            height: 100vh;
+            background: white;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header - Compact */
+        .header {
+            background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-dark) 100%);
+            color: white;
+            padding: 15px 20px;
+        }
+
+        .header h1 {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header p {
+            font-size: 0.85em;
+            opacity: 0.9;
+            margin-bottom: 12px;
+        }
+
+        /* Controls Bar - Compact */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .date-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .date-display {
+            font-size: 0.95em;
+            font-weight: 600;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            min-width: 180px;
+            text-align: center;
+        }
+
+        .preset-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            background: white;
+            color: var(--brand-primary);
+            border: none;
+            border-radius: 6px;
+            font-size: 0.8em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            font-family: inherit;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.35);
+        }
+
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 0.75em;
+        }
+
+        /* Main Content */
+        .content {
+            padding: 30px;
+            flex: 1;
+            overflow: auto;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--brand-primary);
+        }
+
+        /* Available Resources Section */
+        .resources-section {
+            margin-bottom: 40px;
+        }
+
+        .resources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .resource-category {
+            background: var(--gray-50);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .category-header {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 100px;
+        }
+
+        /* Draggable Cards */
+        .card {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+            cursor: move;
+            transition: all 0.2s ease;
+            border-left: 4px solid;
+            font-weight: 500;
+            user-select: none;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .card.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+        }
+
+        .card.crew-member {
+            border-color: #42A5F5;
+            background: linear-gradient(to right, #E3F2FD 0%, white 10%);
+        }
+
+        .card.truck {
+            border-color: #FF9800;
+            background: linear-gradient(to right, #FFF3E0 0%, white 10%);
+        }
+
+        .card.equipment {
+            border-color: #9C27B0;
+            background: linear-gradient(to right, #F3E5F5 0%, white 10%);
+        }
+
+        .card.job {
+            border-color: #66BB6A;
+            background: linear-gradient(to right, #E8F5E9 0%, white 10%);
+        }
+
+        .card.salesman {
+            border-color: #FF5722;
+            background: linear-gradient(to right, #FBE9E7 0%, white 10%);
+        }
+
+        .card.used {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .card.multi-use {
+            position: relative;
+        }
+
+        .card.multi-use::after {
+            content: '∞';
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2em;
+            opacity: 0.4;
+        }
+
+        /* Crews Section */
+        .crews-section {
+            margin-top: 40px;
+        }
+
+        .crews-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .crew-card {
+            background: var(--gray-50);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow-md);
+            border: 2px solid var(--gray-200);
+        }
+
+        .crew-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--brand-primary);
+        }
+
+        .crew-name {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: var(--brand-primary);
+        }
+
+        .remove-crew-btn {
+            padding: 5px 10px;
+            background: var(--error);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.85em;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .crew-dropzone {
+            min-height: 60px;
+            border: 2px dashed var(--gray-300);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 12px;
+            background: white;
+            transition: all 0.2s ease;
+        }
+
+        .crew-dropzone.drag-over {
+            border-color: var(--brand-primary);
+            background: var(--gray-50);
+            border-style: solid;
+        }
+
+        .crew-dropzone-label {
+            font-size: 0.85em;
+            font-weight: 600;
+            color: var(--gray-600);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .crew-dropzone.has-cards .crew-dropzone-label {
+            margin-bottom: 8px;
+        }
+
+        .crew-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .crew-dropzone .card {
+            cursor: move;
+        }
+
+        .add-crew-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: var(--gray-50);
+            border-radius: 12px;
+            border: 2px dashed var(--brand-primary);
+        }
+
+        .add-crew-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .input-field {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--brand-primary);
+        }
+
+        /* Empty state */
+        .empty-message {
+            color: var(--gray-600);
+            font-size: 0.9em;
+            text-align: center;
+            padding: 15px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .crews-container {
+                grid-template-columns: 1fr;
+            }
+
+            .resources-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                padding: 12px 15px;
+            }
+
+            .header h1 {
+                font-size: 1.3em;
+            }
+
+            .header p {
+                font-size: 0.8em;
+            }
+
+            .date-display {
+                font-size: 0.85em;
+                min-width: 150px;
+            }
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            background: var(--gray-900);
+            color: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow-xl);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success {
+            background: var(--success);
+        }
+
+        .toast.error {
+            background: var(--error);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📅 Crew Scheduler</h1>
+            <p>Deep Roots Landscape - Daily Crew Management</p>
+
+            <div class="controls">
+                <div class="date-controls">
+                    <button class="btn btn-secondary" onclick="changeDate(-1)">← Previous Day</button>
+                    <div class="date-display" id="currentDate"></div>
+                    <button class="btn btn-secondary" onclick="changeDate(1)">Next Day →</button>
+                    <button class="btn btn-secondary" onclick="loadToday()">Today</button>
+                </div>
+
+                <div class="preset-controls">
+                    <button class="btn btn-secondary btn-small" onclick="savePreset(1)">Save Preset 1</button>
+                    <button class="btn btn-secondary btn-small" onclick="savePreset(2)">Save Preset 2</button>
+                    <button class="btn btn-secondary btn-small" onclick="savePreset(3)">Save Preset 3</button>
+                    <span style="color: rgba(255,255,255,0.6); margin: 0 10px;">|</span>
+                    <button class="btn btn-secondary btn-small" onclick="loadPreset(1)">Load 1</button>
+                    <button class="btn btn-secondary btn-small" onclick="loadPreset(2)">Load 2</button>
+                    <button class="btn btn-secondary btn-small" onclick="loadPreset(3)">Load 3</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Available Resources -->
+            <div class="resources-section">
+                <h2 class="section-title">Available Resources</h2>
+                <div class="resources-grid">
+                    <!-- Crew Members -->
+                    <div class="resource-category">
+                        <div class="category-header">👷 Available Crew Members</div>
+                        <div class="card-container" id="availableCrewMembers" data-type="crew"></div>
+                    </div>
+
+                    <!-- Trucks -->
+                    <div class="resource-category">
+                        <div class="category-header">🚛 Trucks</div>
+                        <div class="card-container" id="availableTrucks" data-type="truck"></div>
+                    </div>
+
+                    <!-- Equipment -->
+                    <div class="resource-category">
+                        <div class="category-header">🔧 Equipment</div>
+                        <div class="card-container" id="availableEquipment" data-type="equipment"></div>
+                    </div>
+
+                    <!-- Job Names -->
+                    <div class="resource-category">
+                        <div class="category-header">📍 Job Names</div>
+                        <div class="card-container" id="availableJobs" data-type="job"></div>
+                    </div>
+
+                    <!-- Project Salesman -->
+                    <div class="resource-category">
+                        <div class="category-header">💼 Project Salesman</div>
+                        <div class="card-container" id="availableSalesmen" data-type="salesman"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Crews -->
+            <div class="crews-section">
+                <h2 class="section-title">Daily Crews</h2>
+                <div class="crews-container" id="crewsContainer"></div>
+
+                <!-- Add New Crew -->
+                <div class="add-crew-section">
+                    <div class="add-crew-form">
+                        <input type="text" id="newCrewName" class="input-field" placeholder="Enter new crew name (e.g., Crew A, Maintenance Team)">
+                        <button class="btn" onclick="addCrew()">➕ Add Crew</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Application State
+        let currentDate = new Date();
+        let crews = [];
+        let resources = {
+            crewMembers: ['John Smith', 'Mike Johnson', 'Sarah Williams', 'Tom Davis', 'Chris Brown', 'Alex Martinez'],
+            trucks: ['Truck #1', 'Truck #2', 'Truck #3', 'Truck #4'],
+            equipment: ['Excavator', 'Bobcat', 'Trailer', 'Wood Chipper'],
+            jobs: ['Johnson Residence', 'City Park Maintenance', 'Corporate Plaza', 'Greenfield Development'],
+            salesmen: ['Robert Kane', 'Jennifer Lee', 'David Park']
+        };
+
+        let draggedElement = null;
+        let draggedData = null;
+
+        // Initialize
+        function init() {
+            loadFromLocalStorage();
+            updateDateDisplay();
+            renderResources();
+            renderCrews();
+        }
+
+        // Date Management
+        function updateDateDisplay() {
+            const dateStr = currentDate.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('currentDate').textContent = dateStr;
+        }
+
+        function changeDate(days) {
+            currentDate.setDate(currentDate.getDate() + days);
+            updateDateDisplay();
+            loadFromLocalStorage();
+            renderResources();
+            renderCrews();
+        }
+
+        function loadToday() {
+            currentDate = new Date();
+            updateDateDisplay();
+            loadFromLocalStorage();
+            renderResources();
+            renderCrews();
+        }
+
+        // Storage Management
+        function getStorageKey() {
+            return `scheduler_${currentDate.toISOString().split('T')[0]}`;
+        }
+
+        function loadFromLocalStorage() {
+            const stored = localStorage.getItem(getStorageKey());
+            if (stored) {
+                const data = JSON.parse(stored);
+                crews = data.crews || [];
+            } else {
+                crews = [];
+            }
+        }
+
+        function saveToLocalStorage() {
+            const data = { crews, resources };
+            localStorage.setItem(getStorageKey(), JSON.stringify(data));
+        }
+
+        // Preset Management
+        function savePreset(num) {
+            const data = { crews, resources };
+            localStorage.setItem(`scheduler_preset_${num}`, JSON.stringify(data));
+            showToast(`Preset ${num} saved!`, 'success');
+        }
+
+        function loadPreset(num) {
+            const stored = localStorage.getItem(`scheduler_preset_${num}`);
+            if (stored) {
+                const data = JSON.parse(stored);
+                crews = data.crews || [];
+                saveToLocalStorage();
+                renderResources();
+                renderCrews();
+                showToast(`Preset ${num} loaded!`, 'success');
+            } else {
+                showToast(`Preset ${num} is empty`, 'error');
+            }
+        }
+
+        // Crew Management
+        function addCrew() {
+            const nameInput = document.getElementById('newCrewName');
+            const name = nameInput.value.trim();
+
+            if (!name) {
+                showToast('Please enter a crew name', 'error');
+                return;
+            }
+
+            crews.push({
+                id: Date.now(),
+                name: name,
+                members: [],
+                trucks: [],
+                equipment: [],
+                jobs: [],
+                salesmen: []
+            });
+
+            nameInput.value = '';
+            saveToLocalStorage();
+            renderCrews();
+            showToast(`Crew "${name}" added!`, 'success');
+        }
+
+        function removeCrew(crewId) {
+            if (confirm('Are you sure you want to remove this crew?')) {
+                crews = crews.filter(c => c.id !== crewId);
+                saveToLocalStorage();
+                renderResources();
+                renderCrews();
+                showToast('Crew removed', 'success');
+            }
+        }
+
+        // Resource Rendering
+        function renderResources() {
+            const usedResources = getUsedResources();
+
+            renderResourceCategory('availableCrewMembers', resources.crewMembers, 'crew-member', false, usedResources.members);
+            renderResourceCategory('availableTrucks', resources.trucks, 'truck', false, usedResources.trucks);
+            renderResourceCategory('availableEquipment', resources.equipment, 'equipment', false, usedResources.equipment);
+            renderResourceCategory('availableJobs', resources.jobs, 'job', true, []);
+            renderResourceCategory('availableSalesmen', resources.salesmen, 'salesman', true, []);
+        }
+
+        function getUsedResources() {
+            const used = {
+                members: [],
+                trucks: [],
+                equipment: []
+            };
+
+            crews.forEach(crew => {
+                used.members.push(...crew.members);
+                used.trucks.push(...crew.trucks);
+                used.equipment.push(...crew.equipment);
+            });
+
+            return used;
+        }
+
+        function renderResourceCategory(containerId, items, cardClass, multiUse, usedItems) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = items.map(item => {
+                const isUsed = usedItems.includes(item);
+                const usedClass = isUsed ? 'used' : '';
+                const multiUseClass = multiUse ? 'multi-use' : '';
+                return `<div class="card ${cardClass} ${usedClass} ${multiUseClass}"
+                             draggable="${!isUsed || multiUse}"
+                             data-item="${item}"
+                             data-type="${cardClass}"
+                             ondragstart="handleDragStart(event)"
+                             ondragend="handleDragEnd(event)">
+                    ${item}
+                </div>`;
+            }).join('');
+        }
+
+        // Crew Rendering
+        function renderCrews() {
+            const container = document.getElementById('crewsContainer');
+
+            if (crews.length === 0) {
+                container.innerHTML = '<div class="empty-message">No crews yet. Add a crew to get started.</div>';
+                return;
+            }
+
+            container.innerHTML = crews.map(crew => `
+                <div class="crew-card">
+                    <div class="crew-header">
+                        <div class="crew-name">${crew.name}</div>
+                        <button class="remove-crew-btn" onclick="removeCrew(${crew.id})">Remove</button>
+                    </div>
+
+                    <!-- Crew Members -->
+                    <div class="crew-dropzone-label">👷 Crew Members</div>
+                    <div class="crew-dropzone ${crew.members.length > 0 ? 'has-cards' : ''}"
+                         data-crew-id="${crew.id}"
+                         data-drop-type="crew-member"
+                         ondragover="handleDragOver(event)"
+                         ondragleave="handleDragLeave(event)"
+                         ondrop="handleDrop(event)">
+                        <div class="crew-cards">
+                            ${crew.members.map(m => `
+                                <div class="card crew-member"
+                                     draggable="true"
+                                     data-item="${m}"
+                                     data-type="crew-member"
+                                     data-crew-id="${crew.id}"
+                                     ondragstart="handleDragStart(event)"
+                                     ondragend="handleDragEnd(event)">
+                                    ${m}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Trucks -->
+                    <div class="crew-dropzone-label">🚛 Trucks</div>
+                    <div class="crew-dropzone ${crew.trucks.length > 0 ? 'has-cards' : ''}"
+                         data-crew-id="${crew.id}"
+                         data-drop-type="truck"
+                         ondragover="handleDragOver(event)"
+                         ondragleave="handleDragLeave(event)"
+                         ondrop="handleDrop(event)">
+                        <div class="crew-cards">
+                            ${crew.trucks.map(t => `
+                                <div class="card truck"
+                                     draggable="true"
+                                     data-item="${t}"
+                                     data-type="truck"
+                                     data-crew-id="${crew.id}"
+                                     ondragstart="handleDragStart(event)"
+                                     ondragend="handleDragEnd(event)">
+                                    ${t}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Equipment -->
+                    <div class="crew-dropzone-label">🔧 Equipment</div>
+                    <div class="crew-dropzone ${crew.equipment.length > 0 ? 'has-cards' : ''}"
+                         data-crew-id="${crew.id}"
+                         data-drop-type="equipment"
+                         ondragover="handleDragOver(event)"
+                         ondragleave="handleDragLeave(event)"
+                         ondrop="handleDrop(event)">
+                        <div class="crew-cards">
+                            ${crew.equipment.map(e => `
+                                <div class="card equipment"
+                                     draggable="true"
+                                     data-item="${e}"
+                                     data-type="equipment"
+                                     data-crew-id="${crew.id}"
+                                     ondragstart="handleDragStart(event)"
+                                     ondragend="handleDragEnd(event)">
+                                    ${e}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Jobs -->
+                    <div class="crew-dropzone-label">📍 Job Names</div>
+                    <div class="crew-dropzone ${crew.jobs.length > 0 ? 'has-cards' : ''}"
+                         data-crew-id="${crew.id}"
+                         data-drop-type="job"
+                         ondragover="handleDragOver(event)"
+                         ondragleave="handleDragLeave(event)"
+                         ondrop="handleDrop(event)">
+                        <div class="crew-cards">
+                            ${crew.jobs.map(j => `
+                                <div class="card job"
+                                     draggable="true"
+                                     data-item="${j}"
+                                     data-type="job"
+                                     data-crew-id="${crew.id}"
+                                     ondragstart="handleDragStart(event)"
+                                     ondragend="handleDragEnd(event)">
+                                    ${j}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- Salesmen -->
+                    <div class="crew-dropzone-label">💼 Project Salesman</div>
+                    <div class="crew-dropzone ${crew.salesmen.length > 0 ? 'has-cards' : ''}"
+                         data-crew-id="${crew.id}"
+                         data-drop-type="salesman"
+                         ondragover="handleDragOver(event)"
+                         ondragleave="handleDragLeave(event)"
+                         ondrop="handleDrop(event)">
+                        <div class="crew-cards">
+                            ${crew.salesmen.map(s => `
+                                <div class="card salesman"
+                                     draggable="true"
+                                     data-item="${s}"
+                                     data-type="salesman"
+                                     data-crew-id="${crew.id}"
+                                     ondragstart="handleDragStart(event)"
+                                     ondragend="handleDragEnd(event)">
+                                    ${s}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Drag and Drop Handlers
+        function handleDragStart(event) {
+            draggedElement = event.target;
+            draggedData = {
+                item: event.target.dataset.item,
+                type: event.target.dataset.type,
+                fromCrewId: event.target.dataset.crewId
+            };
+            event.target.classList.add('dragging');
+            event.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(event) {
+            event.target.classList.remove('dragging');
+            draggedElement = null;
+            draggedData = null;
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            const dropzone = event.currentTarget;
+            const dropType = dropzone.dataset.dropType;
+
+            // Check if the dragged item type matches the dropzone type
+            if (draggedData && draggedData.type === dropType) {
+                event.dataTransfer.dropEffect = 'move';
+                dropzone.classList.add('drag-over');
+            } else {
+                event.dataTransfer.dropEffect = 'none';
+            }
+        }
+
+        function handleDragLeave(event) {
+            event.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            const dropzone = event.currentTarget;
+            dropzone.classList.remove('drag-over');
+
+            const dropType = dropzone.dataset.dropType;
+            const toCrewId = parseInt(dropzone.dataset.crewId);
+
+            // Verify type match
+            if (draggedData.type !== dropType) {
+                showToast('Cannot drop this item here!', 'error');
+                return;
+            }
+
+            const fromCrewId = draggedData.fromCrewId ? parseInt(draggedData.fromCrewId) : null;
+
+            // Remove from source crew if applicable
+            if (fromCrewId) {
+                const fromCrew = crews.find(c => c.id === fromCrewId);
+                if (fromCrew) {
+                    const typeMap = {
+                        'crew-member': 'members',
+                        'truck': 'trucks',
+                        'equipment': 'equipment',
+                        'job': 'jobs',
+                        'salesman': 'salesmen'
+                    };
+                    const arrayKey = typeMap[draggedData.type];
+                    fromCrew[arrayKey] = fromCrew[arrayKey].filter(item => item !== draggedData.item);
+                }
+            }
+
+            // Add to target crew
+            const toCrew = crews.find(c => c.id === toCrewId);
+            if (toCrew) {
+                const typeMap = {
+                    'crew-member': 'members',
+                    'truck': 'trucks',
+                    'equipment': 'equipment',
+                    'job': 'jobs',
+                    'salesman': 'salesmen'
+                };
+                const arrayKey = typeMap[draggedData.type];
+
+                // For single-use items, check if already in another crew
+                if (draggedData.type !== 'job' && draggedData.type !== 'salesman' && !fromCrewId) {
+                    const isUsed = crews.some(crew => crew[arrayKey].includes(draggedData.item));
+                    if (isUsed) {
+                        showToast('This item is already assigned!', 'error');
+                        return;
+                    }
+                }
+
+                toCrew[arrayKey].push(draggedData.item);
+            }
+
+            saveToLocalStorage();
+            renderResources();
+            renderCrews();
+        }
+
+        // Toast Notifications
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Initialize app
+        init();
+    </script>
+</body>
+</html>

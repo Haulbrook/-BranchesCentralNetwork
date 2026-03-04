@@ -1,0 +1,24 @@
+# Ignore everything except backend files
+js/**
+styles/**
+images/**
+assets/**
+asset-management/**
+node_modules/**
+*.html
+*.css
+*.md
+*.toml
+config.json
+package.json
+package-lock.json
+deploy.js
+branches-v1-fixes.js
+branches-v1-fixes.css
+_headers
+_redirects
+build.sh
+inject-env.js
+.git/**
+.github/**
+.netlify/**

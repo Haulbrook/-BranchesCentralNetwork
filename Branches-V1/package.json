@@ -1,0 +1,30 @@
+{
+  "name": "deep-roots-dashboard",
+  "version": "1.0.0",
+  "description": "Integrated dashboard for Deep Roots Landscape operations tools",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 8080",
+    "deploy": "node deploy.js",
+    "build": "node build.js",
+    "test": "node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/deeproots/operations-dashboard.git"
+  },
+  "keywords": [
+    "dashboard",
+    "inventory",
+    "scheduling",
+    "grading",
+    "tools",
+    "landscaping"
+  ],
+  "author": "Deep Roots Landscape",
+  "license": "MIT",
+  "devDependencies": {
+    "node-fetch": "^3.3.2"
+  },
+  "dependencies": {}
+}

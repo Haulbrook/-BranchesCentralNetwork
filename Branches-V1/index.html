@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Deep Roots Landscape Operations Dashboard - Unified access to all operational tools">
+    <meta name="theme-color" content="#2E7D32">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Deep Roots">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://branchesv1.netlify.app/">
+    <meta property="og:title" content="Deep Roots Operations Dashboard">
+    <meta property="og:description" content="Unified landscaping operations dashboard - inventory management, crew scheduling, tool checkout, and AI-powered assistance.">
+    <meta property="og:image" content="https://branchesv1.netlify.app/images/og-image.svg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Deep Roots Operations Dashboard - Landscaping management platform">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://branchesv1.netlify.app/">
+    <meta name="twitter:title" content="Deep Roots Operations Dashboard">
+    <meta name="twitter:description" content="Unified landscaping operations dashboard - inventory management, crew scheduling, tool checkout, and AI-powered assistance.">
+    <meta name="twitter:image" content="https://branchesv1.netlify.app/images/og-image.svg">
+    <meta name="twitter:image:alt" content="Deep Roots Operations Dashboard - Landscaping management platform">
+
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://api.anthropic.com https://api.openai.com https://api.open-meteo.com; img-src 'self' data: https:; frame-src 'self' https://script.google.com https://script.googleusercontent.com https://dailychessmap.netlify.app;">
+    <title>Deep Roots Operations Dashboard</title>
+    <!-- Force light mode as default -->
+    <script>
+        if (!localStorage.getItem('theme')) {
+            localStorage.setItem('theme', 'light');
+        }
+    </script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
+    <link rel="stylesheet" href="styles/main.css?v=20260224f">
+    <link rel="stylesheet" href="styles/components.css?v=20260224f">
+    <!-- Enhanced v2.0 Professional Components -->
+    <link rel="stylesheet" href="styles/enhanced-theme.css?v=20260224f">
+    <link rel="stylesheet" href="styles/enhanced-components.css?v=20260224f">
+    <!-- AI Skills Styles -->
+    <link rel="stylesheet" href="styles/wizard.css?v=20260224f">
+    <link rel="stylesheet" href="styles/skills.css?v=20260224f">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="branches-v1-fixes.css?v=20260227a">
+</head>
+<body>
+    <!-- Skip to main content link for accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen" role="status" aria-live="polite" aria-label="Loading application">
+        <video id="introVideo" class="intro-video" autoplay muted playsinline>
+            <source src="assets/intro.mp4" type="video/mp4">
+        </video>
+        <span class="sr-only">Loading, please wait...</span>
+    </div>
+
+    <!-- Main Application -->
+    <div id="app" class="app hidden" role="application" aria-label="Deep Roots Operations Dashboard">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar" role="complementary" aria-label="Sidebar navigation">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon" aria-hidden="true">🌱</span>
+                    <span class="logo-text">Deep Roots</span>
+                </div>
+                <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle sidebar" aria-expanded="true" aria-controls="sidebar">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav" role="navigation" aria-label="Main navigation">
+                <div class="nav-section" role="group" aria-labelledby="quick-actions-heading">
+                    <h3 id="quick-actions-heading">Quick Actions</h3>
+                    <button id="dashboardBtn" class="nav-item active" aria-current="page">
+                        <span class="nav-icon" aria-hidden="true">📊</span>
+                        <span class="nav-text">Dashboard</span>
+                    </button>
+                    <button id="newChatBtn" class="nav-item" aria-label="Start new query">
+                        <span class="nav-icon" aria-hidden="true">💬</span>
+                        <span class="nav-text">New Query</span>
+                    </button>
+                </div>
+
+                <div class="nav-section" role="group" aria-labelledby="tools-heading">
+                    <h3 id="tools-heading">Tools</h3>
+                    <button class="nav-item tool-item" data-tool="inventory" aria-label="Open Inventory - Clippings">
+                        <span class="nav-icon" aria-hidden="true">🌱</span>
+                        <span class="nav-text">Inventory</span>
+                        <span class="nav-badge">Clippings</span>
+                    </button>
+                    <button class="nav-item tool-item" data-tool="grading" aria-label="Open Repair vs Replace Analysis">
+                        <span class="nav-icon" aria-hidden="true">🛠️</span>
+                        <span class="nav-text">Repair vs Replace</span>
+                        <span class="nav-badge">Analysis</span>
+                    </button>
+                    <button class="nav-item tool-item" data-tool="scheduler" aria-label="Open Crew Scheduler">
+                        <span class="nav-icon" aria-hidden="true">📅</span>
+                        <span class="nav-text">Scheduler</span>
+                        <span class="nav-badge">Crew</span>
+                    </button>
+                    <button class="nav-item tool-item" data-tool="tools" aria-label="Open Hand Tool Checkout - Rental">
+                        <span class="nav-icon" aria-hidden="true">🔧</span>
+                        <span class="nav-text">Hand Tool Checkout</span>
+                        <span class="nav-badge">Rental</span>
+                    </button>
+                    <button class="nav-item tool-item" data-tool="chessmap" aria-label="Open Chess Map and Logistics Tracking">
+                        <span class="nav-icon" aria-hidden="true">♟️</span>
+                        <span class="nav-text">Chess Map & Logistics</span>
+                        <span class="nav-badge">Tracking</span>
+                    </button>
+                </div>
+
+                <div class="nav-section" role="group" aria-labelledby="recent-heading">
+                    <h3 id="recent-heading">Recent</h3>
+                    <div id="recentQueries" class="recent-queries" role="list" aria-label="Recent queries">
+                        <!-- Recent queries will be populated dynamically -->
+                    </div>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar" aria-hidden="true">👤</div>
+                    <div class="user-details">
+                        <div class="user-name" id="userName" aria-live="polite">Loading...</div>
+                        <div class="user-email" id="userEmail">...</div>
+                    </div>
+                </div>
+                <button id="overseerBtn" class="settings-btn" aria-label="Open Apple Overseer" style="margin-right:4px;">🍎<span id="overseerStatusBadge" class="overseer-status-badge"></span></button>
+                <button id="settingsBtn" class="settings-btn" aria-label="Open settings">⚙️</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main id="main-content" class="main-content" role="main" aria-label="Main content area">
+            <!-- Mobile menu button (visible on small screens when sidebar is hidden) -->
+            <button id="mobileMenuBtn" class="mobile-menu-btn" aria-label="Open navigation menu">
+                <span></span><span></span><span></span>
+            </button>
+            <!-- Connection status indicator -->
+            <div id="statusIndicator" class="status-indicator online" title="Connected" aria-live="polite"></div>
+
+            <!-- Dashboard View -->
+            <section id="dashboardView" class="dashboard-view" aria-labelledby="dashboard-heading">
+                <h2 id="dashboard-heading" class="sr-only">Dashboard Overview</h2>
+                <!-- Weather Alert Banner -->
+                <div id="weatherAlertBanner" class="weather-alert-banner" role="alert" aria-live="polite"></div>
+                <!-- Metrics Grid -->
+                <div class="metrics-grid" id="metricsGrid" role="region" aria-label="Key metrics">
+                    <!-- Metric cards will be populated dynamically by dashboard.js -->
+                </div>
+
+                <!-- WO Stats Bar -->
+                <div class="wo-stats-bar" id="woStatsBar">
+                    <div class="wo-stat-item"><span class="wo-stat-value" id="woStatActive">—</span><span class="wo-stat-label">Active Jobs</span></div>
+                    <div class="wo-stat-item"><span class="wo-stat-value" id="woStatItems">—</span><span class="wo-stat-label">Total Items</span></div>
+                    <div class="wo-stat-item"><span class="wo-stat-value" id="woStatDone">—</span><span class="wo-stat-label">Completed</span></div>
+                    <div class="wo-stat-item wo-stat-overall"><span class="wo-stat-value" id="woStatPct">—</span><span class="wo-stat-label">Overall Progress</span></div>
+                </div>
+
+                <!-- Active Jobs Dashboard Section -->
+                <section class="active-jobs-section" aria-labelledby="active-jobs-heading">
+                    <div class="section-header" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+                        <div>
+                            <h2 id="active-jobs-heading">Active Jobs Dashboard</h2>
+                            <p>Track work order progress — click a card for details</p>
+                        </div>
+                        <button class="btn btn-primary" id="addWoBtn" style="flex-shrink:0;margin-top:4px;">+ Add Work Order</button>
+                    </div>
+
+                    <!-- Legacy PDF Upload Zone — hidden; modal flow used instead -->
+                    <div class="pdf-upload-zone hidden" id="pdfUploadZone" aria-hidden="true" style="display:none">
+                        <input type="file" id="pdfFileInput" accept=".pdf" class="sr-only">
+                    </div>
+
+                    <!-- Job Cards Grid -->
+                    <div class="job-cards-grid" id="jobCardsGrid" role="list" aria-label="Active jobs" aria-busy="true">
+                        <!-- Job cards populated dynamically -->
+                        <div class="loading-skeleton" aria-hidden="true">
+                            <div class="skeleton-item"></div>
+                            <div class="skeleton-item"></div>
+                            <div class="skeleton-item"></div>
+                        </div>
+                        <span class="sr-only">Loading active jobs...</span>
+                    </div>
+                </section>
+
+                <!-- Activity Feed -->
+                <div class="dashboard-section" id="activityFeedSection">
+                    <div class="section-header">
+                        <h3>Activity Feed</h3>
+                        <span id="activityFeedTimestamp" class="feed-timestamp"></span>
+                    </div>
+                    <div id="activityFeedList" class="activity-feed-list">
+                        <div class="activity-placeholder">Loading activity…</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chat Interface -->
+            <section id="chatInterface" class="chat-interface hidden" aria-labelledby="chat-heading">
+                <h2 id="chat-heading" class="sr-only">AI Assistant Chat</h2>
+                <div class="chat-container">
+                    <div id="chatHistory" class="chat-history" role="log" aria-label="Chat history" aria-live="polite">
+                        <!-- Welcome Message -->
+                        <div class="message assistant-message welcome-message" role="article">
+                            <div class="message-avatar" aria-hidden="true">🌱</div>
+                            <div class="message-content">
+                                <h3>Welcome to Deep Roots Operations Dashboard</h3>
+                                <p>I can help you with:</p>
+                                <div class="quick-actions" role="group" aria-label="Quick action buttons">
+                                    <button class="quick-action" data-query="Check inventory for boxwood" aria-label="Quick action: Check Inventory">
+                                        <span class="action-icon" aria-hidden="true">🌱</span>
+                                        <span class="action-text">Check Inventory</span>
+                                    </button>
+                                    <button class="quick-action" data-action="browse_inventory" aria-label="Quick action: Browse Inventory">
+                                        <span class="action-icon" aria-hidden="true">📋</span>
+                                        <span class="action-text">Browse Inventory</span>
+                                    </button>
+                                    <button class="quick-action" data-query="Grade this plant for quality" aria-label="Quick action: Grade Plants">
+                                        <span class="action-icon" aria-hidden="true">⭐</span>
+                                        <span class="action-text">Grade Plants</span>
+                                    </button>
+                                    <button class="quick-action" data-query="Schedule crew for tomorrow" aria-label="Quick action: Schedule Crew">
+                                        <span class="action-icon" aria-hidden="true">📅</span>
+                                        <span class="action-text">Schedule Crew</span>
+                                    </button>
+                                    <button class="quick-action" data-query="Check out hand tools" aria-label="Quick action: Checkout Tools">
+                                        <span class="action-icon" aria-hidden="true">🔧</span>
+                                        <span class="action-text">Checkout Tools</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="chat-input-container">
+                        <div class="chat-input-wrapper">
+                            <label for="chatInput" class="sr-only">Type your message</label>
+                            <textarea
+                                id="chatInput"
+                                class="chat-input"
+                                placeholder="Ask about inventory, grading, scheduling, or tool checkout..."
+                                rows="1"
+                                aria-describedby="chat-input-hint"
+                            ></textarea>
+                            <div class="input-actions">
+                                <button id="attachBtn" class="input-btn" aria-label="Attach file">📎</button>
+                                <button id="sendBtn" class="input-btn send-btn" aria-label="Send message">
+                                    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                                        <path fill="currentColor" d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="input-footer">
+                            <span class="input-hint" id="chat-input-hint">Press Enter to send, Shift+Enter for new line</span>
+                            <div class="typing-indicator hidden" id="typingIndicator" role="status" aria-live="polite">
+                                <span>Assistant is thinking</span>
+                                <div class="typing-dots" aria-hidden="true">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tool Iframe Container -->
+            <section id="toolContainer" class="tool-container hidden" aria-labelledby="toolTitle">
+                <div class="tool-header">
+                    <div class="tool-info">
+                        <span class="tool-icon" id="toolIcon" aria-hidden="true">🌱</span>
+                        <div class="tool-details">
+                            <h2 id="toolTitle">Tool Name</h2>
+                            <p id="toolDescription">Tool description</p>
+                        </div>
+                    </div>
+                    <div class="tool-actions" role="toolbar" aria-label="Tool actions">
+                        <button id="toolBackBtn" class="tool-btn" aria-label="Back to Dashboard">← Back to Dashboard</button>
+                        <button id="toolRefreshBtn" class="tool-btn" aria-label="Refresh tool">🔄 Refresh</button>
+                        <button id="toolFullscreenBtn" class="tool-btn" aria-label="Toggle fullscreen">⛶ Fullscreen</button>
+                    </div>
+                </div>
+                <div class="tool-iframe-container">
+                    <iframe id="toolIframe" src="" frameborder="0" title="External tool content" aria-label="Tool interface"></iframe>
+                    <div class="tool-loading" role="status" aria-live="polite">
+                        <div class="loading-spinner" aria-hidden="true"></div>
+                        <p>Loading tool...</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="settingsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="settings-modal-title">Settings</h2>
+                <button class="modal-close" aria-label="Close settings">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-group">
+                    <h3>Tool Configuration</h3>
+                    <div class="setting-item">
+                        <label for="inventoryUrl">Inventory Tool URL:</label>
+                        <input type="url" id="inventoryUrl" placeholder="https://script.google.com/...">
+                    </div>
+                    <div class="setting-item">
+                        <label for="gradingUrl">Grading Tool URL:</label>
+                        <input type="url" id="gradingUrl" placeholder="https://script.google.com/...">
+                    </div>
+                    <div class="setting-item">
+                        <label for="schedulerUrl">Scheduler Tool URL:</label>
+                        <input type="url" id="schedulerUrl" placeholder="https://script.google.com/...">
+                    </div>
+                    <div class="setting-item">
+                        <label for="toolsUrl">Tools Checkout URL:</label>
+                        <input type="url" id="toolsUrl" placeholder="https://script.google.com/...">
+                    </div>
+                    <div class="setting-item">
+                        <label for="chessmapUrl">DRL Chess Map URL:</label>
+                        <input type="url" id="chessmapUrl" placeholder="https://dailychessmap.netlify.app/">
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <h3>Appearance</h3>
+                    <div class="setting-item">
+                        <label for="darkMode">Dark Mode:</label>
+                        <input type="checkbox" id="darkMode">
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <h3>AI Configuration</h3>
+                    <div class="setting-item">
+                        <label for="openaiApiKey">🤖 OpenAI API Key:</label>
+                        <input type="password" id="openaiApiKey" placeholder="sk-..." autocomplete="off">
+                        <p style="font-size: 12px; color: var(--text-secondary, #666); margin-top: 5px;">
+                            Enable intelligent AI chat responses. Get your key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">platform.openai.com/api-keys</a>
+                        </p>
+                        <div class="security-notice" style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 8px; margin-top: 8px; font-size: 12px;">
+                            <strong>⚠️ Security Notice:</strong> API keys stored in browser localStorage may be visible to browser extensions or scripts. For production use, consider implementing server-side API key management. Use a key with limited permissions and set spending limits in your OpenAI dashboard.
+                        </div>
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <h3>Work Order Dashboard</h3>
+                    <div class="setting-item">
+                        <label for="workOrdersGasUrl">GAS Web App URL:</label>
+                        <input type="url" id="workOrdersGasUrl" placeholder="https://script.google.com/macros/s/…/exec">
+                        <p style="font-size: 12px; color: var(--text-secondary, #666); margin-top: 5px;">
+                            Deploy → New Deployment → Web App · Execute as: Me · Who has access: Anyone
+                        </p>
+                    </div>
+                    <div class="setting-item">
+                        <label for="claudeApiKey">Anthropic Claude API Key:</label>
+                        <input type="password" id="claudeApiKey" placeholder="sk-ant-…" autocomplete="off">
+                        <p style="font-size: 12px; color: var(--text-secondary, #666); margin-top: 5px;">
+                            Used for parsing work order PDFs. Stored in this browser only.
+                        </p>
+                    </div>
+                </div>
+                <div class="setting-group">
+                    <h3>AI Skills Configuration</h3>
+                    <div class="setting-item">
+                        <label>Setup Wizard:</label>
+                        <button class="btn btn-secondary" id="runSetupWizard" style="width: auto; margin-top: 5px;">
+                            🧙‍♂️ Run Setup Wizard
+                        </button>
+                        <p style="font-size: 12px; color: var(--text-secondary, #666); margin-top: 5px;">
+                            Configure external connections, AI skills, and API integrations
+                        </p>
+                    </div>
+                    <div class="setting-item">
+                        <label for="enableAppleOverseer">🍎 Enable Apple Overseer:</label>
+                        <input type="checkbox" id="enableAppleOverseer" checked>
+                        <p style="font-size: 12px; color: var(--text-secondary, #666); margin-top: 5px;">
+                            Oversees operations, coordinates tools, and provides quality control
+                        </p>
+                    </div>
+                    <div class="setting-item">
+                        <label for="enableDeconstructionSkill">Enable Complex Query Analysis:</label>
+                        <input type="checkbox" id="enableDeconstructionSkill">
+                    </div>
+                    <div class="setting-item">
+                        <label for="enableForwardThinkerSkill">Enable Predictive Suggestions:</label>
+                        <input type="checkbox" id="enableForwardThinkerSkill">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelSettings">Cancel</button>
+                <button class="btn btn-primary" id="saveSettings">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Apple Overseer Panel -->
+    <div id="overseerPanel" class="overseer-panel hidden" role="dialog" aria-modal="false" aria-labelledby="overseer-panel-title">
+        <div class="overseer-panel-header">
+            <div class="overseer-panel-title">
+                <span class="overseer-icon" aria-hidden="true">🍎</span>
+                <h3 id="overseer-panel-title">Apple Overseer</h3>
+                <span class="overseer-health-badge" id="overseerHealthBadge" role="status" aria-live="polite">Healthy</span>
+            </div>
+            <button class="overseer-panel-close" id="overseerPanelClose" aria-label="Close Apple Overseer panel">×</button>
+        </div>
+
+        <div class="overseer-panel-body">
+            <!-- Status Summary -->
+            <div class="overseer-section">
+                <h4>System Status</h4>
+                <div class="overseer-stats">
+                    <div class="overseer-stat">
+                        <span class="stat-label">Active Operations</span>
+                        <span class="stat-value" id="overseerActiveOps">0</span>
+                    </div>
+                    <div class="overseer-stat">
+                        <span class="stat-label">Active Tools</span>
+                        <span class="stat-value" id="overseerActiveTools">0</span>
+                    </div>
+                    <div class="overseer-stat">
+                        <span class="stat-label">Success Rate</span>
+                        <span class="stat-value" id="overseerSuccessRate">100%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Operations -->
+            <div class="overseer-section">
+                <h4>Active Operations</h4>
+                <div class="overseer-operations-list" id="overseerOperationsList">
+                    <p class="overseer-empty">No active operations</p>
+                </div>
+            </div>
+
+            <!-- Alerts -->
+            <div class="overseer-section" id="overseerAlertsSection">
+                <h4>Alerts</h4>
+                <div class="overseer-alerts-list" id="overseerAlertsList">
+                    <p class="overseer-empty">No alerts</p>
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="overseer-section" id="overseerRecommendationsSection">
+                <h4>Recommendations</h4>
+                <div class="overseer-recommendations-list" id="overseerRecommendationsList">
+                    <p class="overseer-empty">No recommendations</p>
+                </div>
+            </div>
+
+            <!-- Recent History -->
+            <div class="overseer-section">
+                <h4>Recent Operations</h4>
+                <div class="overseer-history-list" id="overseerHistoryList">
+                    <p class="overseer-empty">No recent operations</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="overseer-panel-footer">
+            <button class="btn btn-secondary" id="overseerRefreshBtn">🔄 Refresh</button>
+            <button class="btn btn-secondary" id="overseerReportBtn">📊 Generate Report</button>
+            <button class="btn btn-secondary" id="overseerClearHistoryBtn">🗑️ Clear History</button>
+        </div>
+    </div>
+
+    <!-- WO Detail Modal -->
+    <div class="wo-modal-overlay hidden" id="woDetailModal" onclick="if(event.target===this)this.classList.add('hidden')">
+        <div class="wo-modal-box" role="dialog" aria-modal="true" aria-labelledby="woDetailTitle">
+            <div class="wo-modal-header">
+                <span class="wo-modal-title" id="woDetailTitle">WO Details</span>
+                <button class="wo-modal-close" onclick="document.getElementById('woDetailModal').classList.add('hidden')" aria-label="Close">×</button>
+            </div>
+            <div class="wo-modal-body" id="woDetailBody">
+                <div style="text-align:center;padding:40px"><div class="spinner" style="margin:auto;width:32px;height:32px;border-width:3px"></div></div>
+            </div>
+            <div class="wo-modal-footer">
+                <button class="btn btn-secondary" onclick="document.getElementById('woDetailModal').classList.add('hidden')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Work Order Modal -->
+    <div class="wo-modal-overlay hidden" id="addWoModal" onclick="if(event.target===this)this.classList.add('hidden')">
+        <div class="wo-modal-box wo-modal-wide" role="dialog" aria-modal="true" aria-label="Add Work Order">
+            <div class="wo-modal-header">
+                <span class="wo-modal-title">Add Work Order</span>
+                <button class="wo-modal-close" onclick="document.getElementById('addWoModal').classList.add('hidden')" aria-label="Close">×</button>
+            </div>
+            <div class="wo-modal-body">
+
+                <div class="wo-input-tabs">
+                    <button class="wo-input-tab active" id="woTabPdf" onclick="window.app?.dashboard?.setInputMode('pdf')">📄 Upload PDF</button>
+                    <button class="wo-input-tab" id="woTabText" onclick="window.app?.dashboard?.setInputMode('text')">✏️ Type / Paste</button>
+                </div>
+
+                <!-- PDF mode -->
+                <div id="woPdfMode">
+                    <input type="file" id="woFileInput" accept=".pdf,application/pdf" style="display:none" onchange="window.app?.dashboard?.handleFileSelect(this.files[0])">
+                    <div class="wo-pdf-dropzone" id="woPdfDropzone"
+                         onclick="document.getElementById('woFileInput').click()"
+                         ondragover="event.preventDefault();this.classList.add('drag-over')"
+                         ondragleave="this.classList.remove('drag-over')"
+                         ondrop="event.preventDefault();this.classList.remove('drag-over');window.app?.dashboard?.handleFileSelect(event.dataTransfer.files[0])">
+                        <div class="wo-dz-icon" id="woDzIcon">📄</div>
+                        <div class="wo-dz-label" id="woDzLabel">Drop PDF here or click to browse</div>
+                        <div class="wo-dz-hint" id="woDzHint">Deep Roots work order PDFs — all fields extracted automatically</div>
+                    </div>
+                </div>
+
+                <!-- Text mode -->
+                <div id="woTextMode" class="hidden">
+                    <p class="wo-parse-hint">Describe the work order — Claude will extract all fields.<br><em>Example: "WO #2847 — Client: Bob Smith. Install flagstone patio at 123 Oak St Canton GA 30114."</em></p>
+                    <textarea class="wo-textarea" id="woRawInput" placeholder="Paste or type a work order description…" rows="5"></textarea>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;gap:8px;align-items:center;margin-top:4px;">
+                    <span id="woParseSpinner" class="spinner hidden" style="width:18px;height:18px;border-width:2px"></span>
+                    <button class="btn btn-primary" id="woBtnParse" onclick="window.app?.dashboard?.parseWithClaude()">Parse with AI →</button>
+                </div>
+
+                <div class="wo-parse-error hidden" id="woParseError"></div>
+
+                <!-- Parsed Preview -->
+                <div class="wo-parsed-preview hidden" id="woParsedPreview">
+                    <span class="wo-section-label">Work Order — Review &amp; Edit Before Saving</span>
+
+                    <div class="wo-field-grid-2">
+                        <div class="wo-preview-field"><label>WO Number</label><input type="text" id="pfWonumber" placeholder="90979"></div>
+                        <div class="wo-preview-field"><label>Job Name</label><input type="text" id="pfJobname" placeholder="Install Tree &amp; Retaining Wall"></div>
+                    </div>
+                    <div class="wo-field-grid-2">
+                        <div class="wo-preview-field"><label>Client</label><input type="text" id="pfClient" placeholder="Steve Willis"></div>
+                        <div class="wo-preview-field"><label>Category</label>
+                            <select id="pfCategory">
+                                <option value="Residential">Residential</option>
+                                <option value="Commercial">Commercial</option>
+                                <option value="HOA">HOA</option>
+                                <option value="Institutional">Institutional</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="wo-field-grid-2">
+                        <div class="wo-preview-field"><label>Status</label><input type="text" id="pfStatus" placeholder="e.g. Procurement in Process"></div>
+                        <div class="wo-preview-field"><label>Sales Rep</label><input type="text" id="pfSalesrep" placeholder="Nathan"></div>
+                    </div>
+                    <div class="wo-preview-field"><label>Address (no commas)</label><input type="text" id="pfAddress" placeholder="120 Stoney Creek Terrace Dahlonega GA 30533"></div>
+                    <div class="wo-preview-field"><label>Crew Notes</label><input type="text" id="pfJobnotes" placeholder="Must use a pick up truck"></div>
+
+                    <div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                            <span class="wo-section-label">Line Items (<span id="woLiCount">0</span>)</span>
+                            <button class="wo-btn-add-li" onclick="window.app?.dashboard?.addLineItemRow()">+ Add item</button>
+                        </div>
+                        <datalist id="woUnitOptions">
+                            <option value="Man Hours"><option value="Ea."><option value="Yards"><option value="Pallet">
+                            <option value="Tons"><option value="LF"><option value="Sq. Ft."><option value="Bags">
+                            <option value="Flat"><option value="Weeks"><option value="Days"><option value="Zones">
+                            <option value="Lbs"><option value="Bales">
+                        </datalist>
+                        <div class="wo-li-table-wrap">
+                            <table class="wo-li-table">
+                                <thead><tr>
+                                    <th style="width:36px">#</th>
+                                    <th style="width:24%">Item Name</th>
+                                    <th>Description</th>
+                                    <th style="width:60px">Qty</th>
+                                    <th style="width:100px">Unit</th>
+                                    <th style="width:28px"></th>
+                                </tr></thead>
+                                <tbody id="woLiTbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="wo-modal-footer">
+                <button class="btn btn-secondary" onclick="document.getElementById('addWoModal').classList.add('hidden')">Cancel</button>
+                <span id="woAddSpinner" class="spinner hidden" style="width:18px;height:18px;border-width:2px"></span>
+                <button class="btn btn-primary hidden" id="woBtnConfirmAdd" onclick="window.app?.dashboard?.confirmAddWO()">Add to Sheet →</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container" role="alert" aria-live="assertive" aria-atomic="true"></div>
+
+    <!-- Scripts -->
+    <script src="js/config.js?v=20260224f"></script>
+    <script src="js/utils.js?v=20260224f"></script>
+    <script src="js/api.js?v=20260301a"></script>
+    <script src="js/ui.js?v=20260224f"></script>
+    <!-- AI Skills -->
+    <script src="js/setupWizard.js?v=20260224f"></script>
+    <script src="js/deconstructionRebuildSkill.js?v=20260224f"></script>
+    <script src="js/forwardThinkerSkill.js?v=20260224f"></script>
+    <!-- Apple Overseer -->
+    <script src="js/appleOverseer.js?v=20260224f"></script>
+    <!-- Core Components -->
+    <script src="js/chat.js?v=20260301a"></script>
+    <script src="js/tools.js?v=20260224f"></script>
+    <script src="js/dashboard.js?v=20260224g"></script>
+    <script src="js/main.js?v=20260301b"></script>
+
+    <!-- Dashboard and Toast initialization handled by main.js and dashboard.js -->
+
+    <!-- Service Worker DISABLED — was caching JS files and preventing updates -->
+    <!-- To re-enable, uncomment the block below -->
+    <!--
+    <script>
+        if ('serviceWorker' in navigator && window.self === window.top) {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker registered:', reg))
+                .catch(err => console.log('Service Worker registration failed:', err));
+        }
+    </script>
+    -->
+    <script src="branches-v1-fixes.js?v=20260227a"></script>
+</body>
+</html>

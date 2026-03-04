@@ -1,0 +1,364 @@
+/**
+ * Skills Visualization Styles
+ */
+
+/* Deconstruction response styling */
+.message-content .deconstruction-plan {
+    background: var(--bg-secondary, #f8f9fa);
+    border-left: 4px solid var(--primary-color, #2196F3);
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 8px;
+}
+
+.message-content .deconstruction-plan .step-item {
+    padding: 10px;
+    margin: 8px 0;
+    background: var(--bg-primary, #ffffff);
+    border-radius: 6px;
+    border: 1px solid var(--border-color, #e0e0e0);
+    transition: all 0.2s ease;
+}
+
+.message-content .deconstruction-plan .step-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.message-content .deconstruction-plan .step-number {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    background: var(--primary-color, #2196F3);
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 28px;
+    font-weight: bold;
+    margin-right: 10px;
+    font-size: 14px;
+}
+
+.message-content .deconstruction-plan .step-resources,
+.message-content .deconstruction-plan .step-dependencies {
+    font-size: 12px;
+    color: var(--text-secondary, #666);
+    margin-top: 5px;
+    padding-left: 38px;
+}
+
+.message-content .deconstruction-plan .step-resources::before {
+    content: '📦';
+    margin-right: 5px;
+}
+
+.message-content .deconstruction-plan .step-dependencies::before {
+    content: '⚠️';
+    margin-right: 5px;
+}
+
+/* Forward thinking styling */
+.forward-thinking-panel {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 10px 0;
+    animation: slideInRight 0.4s ease;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.forward-thinking-panel .panel-title {
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.forward-thinking-panel .next-steps {
+    margin: 10px 0;
+}
+
+.forward-thinking-panel .next-steps ul {
+    margin: 5px 0;
+    padding-left: 20px;
+}
+
+.forward-thinking-panel .next-steps li {
+    margin: 5px 0;
+    list-style: none;
+    position: relative;
+    padding-left: 20px;
+}
+
+.forward-thinking-panel .next-steps li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    font-weight: bold;
+}
+
+.forward-thinking-panel .consequences {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 6px;
+    margin: 10px 0;
+    border-left: 3px solid #ff9800;
+}
+
+.forward-thinking-panel .optimizations {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 10px;
+    border-radius: 6px;
+    margin: 10px 0;
+    border-left: 3px solid #4caf50;
+}
+
+.forward-thinking-panel .section-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Skill indicators in chat */
+.skill-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 5px 5px 5px 0;
+}
+
+.skill-indicator.deconstruction {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.skill-indicator.forward-thinking {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.skill-indicator .indicator-icon {
+    font-size: 14px;
+}
+
+/* Complexity meter */
+.complexity-meter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+    padding: 10px;
+    background: var(--bg-secondary, #f8f9fa);
+    border-radius: 6px;
+}
+
+.complexity-meter .meter-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary, #666);
+}
+
+.complexity-meter .meter-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--border-color, #e0e0e0);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.complexity-meter .meter-fill {
+    height: 100%;
+    transition: width 0.6s ease;
+    border-radius: 4px;
+}
+
+.complexity-meter .meter-fill.low {
+    background: linear-gradient(90deg, #4caf50, #8bc34a);
+    width: 33%;
+}
+
+.complexity-meter .meter-fill.medium {
+    background: linear-gradient(90deg, #ff9800, #ffc107);
+    width: 66%;
+}
+
+.complexity-meter .meter-fill.high {
+    background: linear-gradient(90deg, #f44336, #e91e63);
+    width: 100%;
+}
+
+.complexity-meter .meter-value {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--text-primary, #333);
+    min-width: 40px;
+    text-align: right;
+}
+
+/* Proactive suggestions banner */
+.proactive-suggestions {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    max-width: 350px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    padding: 15px;
+    z-index: 1000;
+    animation: slideInUp 0.4s ease;
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.proactive-suggestions .suggestions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.proactive-suggestions .suggestions-title {
+    font-weight: bold;
+    font-size: 14px;
+    color: var(--text-primary, #333);
+}
+
+.proactive-suggestions .suggestions-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: var(--text-secondary, #666);
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s ease;
+}
+
+.proactive-suggestions .suggestions-close:hover {
+    background: var(--bg-secondary, #f5f5f5);
+}
+
+.proactive-suggestions .suggestion-item {
+    padding: 10px;
+    margin: 8px 0;
+    background: var(--bg-secondary, #f8f9fa);
+    border-radius: 8px;
+    border-left: 3px solid var(--primary-color, #2196F3);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.proactive-suggestions .suggestion-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.proactive-suggestions .suggestion-item.high-priority {
+    border-left-color: #f44336;
+}
+
+.proactive-suggestions .suggestion-item.medium-priority {
+    border-left-color: #ff9800;
+}
+
+.proactive-suggestions .suggestion-item.low-priority {
+    border-left-color: #4caf50;
+}
+
+.proactive-suggestions .suggestion-title {
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-primary, #333);
+    margin-bottom: 4px;
+}
+
+.proactive-suggestions .suggestion-description {
+    font-size: 12px;
+    color: var(--text-secondary, #666);
+    line-height: 1.4;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .message-content .deconstruction-plan {
+        background: var(--bg-secondary, #2a2a2a);
+    }
+
+    .message-content .deconstruction-plan .step-item {
+        background: var(--bg-primary, #1e1e1e);
+        border-color: var(--border-color, #404040);
+    }
+
+    .complexity-meter {
+        background: var(--bg-secondary, #2a2a2a);
+    }
+
+    .complexity-meter .meter-bar {
+        background: var(--border-color, #404040);
+    }
+
+    .proactive-suggestions {
+        background: var(--bg-primary, #1e1e1e);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .proactive-suggestions .suggestion-item {
+        background: var(--bg-secondary, #2a2a2a);
+    }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .proactive-suggestions {
+        right: 10px;
+        left: 10px;
+        max-width: none;
+        bottom: 70px;
+    }
+
+    .forward-thinking-panel {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .message-content .deconstruction-plan {
+        padding: 12px;
+    }
+}

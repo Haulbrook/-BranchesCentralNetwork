@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Roots - Shop TV Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Brand Colors */
+            --brand-primary: #22c55e;
+            --brand-dark: #166534;
+            --brand-light: #4ade80;
+            --brand-glow: rgba(34, 197, 94, 0.4);
+
+            /* Status Colors */
+            --status-active: #4ade80;
+            --status-in-use: #fbbf24;
+            --status-inactive: #6b7280;
+            --status-error: #f87171;
+            --status-info: #60a5fa;
+
+            /* Background - Darker Theme */
+            --bg-dark: #0d1117;
+            --bg-card: #161b22;
+            --bg-card-elevated: #1c2128;
+            --bg-card-hover: #21262d;
+
+            /* Text */
+            --text-primary: #f0f6fc;
+            --text-secondary: #8b949e;
+            --text-muted: #6e7681;
+
+            /* Borders */
+            --border-color: #30363d;
+            --border-subtle: #21262d;
+
+            /* Shadows */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 20px var(--brand-glow);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            font-weight: 500;
+        }
+
+        /* ============================================ DASHBOARD GRID LAYOUT ============================================ */
+        .dashboard {
+            display: grid;
+            grid-template-columns: minmax(25vw, 2fr) 3fr;
+            grid-template-rows: 10vh 1fr 19.2vh;
+            gap: 1vh 1vw;
+            padding: 1vh 1vw;
+            height: 100vh;
+            max-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ============================================ HEADER ============================================ */
+        .header {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, var(--brand-dark) 0%, #0f4c2a 100%);
+            padding: 1vh 2vw;
+            border-radius: clamp(6px, 1vw, 12px);
+            box-shadow: var(--shadow-lg), var(--shadow-glow);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            overflow: hidden;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: clamp(8px, 1vw, 16px);
+        }
+
+        .logo {
+            font-size: clamp(1.5rem, 4vh, 3.5rem);
+            filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.5));
+        }
+
+        .header-title h1 {
+            font-size: clamp(0.9rem, 2vw, 2rem);
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header-title p {
+            font-size: clamp(0.6rem, 1vw, 1rem);
+            opacity: 0.85;
+            font-weight: 500;
+        }
+
+        .header-center {
+            text-align: center;
+        }
+
+        .time-display .time {
+            font-size: clamp(1.5rem, 5vh, 4rem);
+            font-weight: 900;
+            letter-spacing: -0.02em;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+            line-height: 1;
+        }
+
+        .time-display .date {
+            font-size: clamp(0.6rem, 1.2vw, 1.1rem);
+            opacity: 0.9;
+            font-weight: 500;
+            margin-top: 0.5vh;
+        }
+
+        .header-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.5vh;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: clamp(4px, 0.5vw, 8px);
+            font-size: clamp(0.6rem, 1vw, 0.9rem);
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: clamp(6px, 1vh, 12px);
+            height: clamp(6px, 1vh, 12px);
+            border-radius: 50%;
+            background: var(--status-active);
+            box-shadow: 0 0 10px var(--status-active);
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+
+        .status-dot.offline {
+            background: var(--status-error);
+            box-shadow: 0 0 10px var(--status-error);
+            animation: none;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.7;
+                transform: scale(1.2);
+            }
+        }
+
+        .last-updated {
+            font-size: clamp(0.5rem, 0.9vw, 0.85rem);
+            color: var(--text-secondary);
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.5vh 1vw;
+            border-radius: 20px;
+        }
+
+        /* ============================================ CARDS BASE STYLE ============================================ */
+        .card {
+            background: var(--bg-card);
+            border-radius: clamp(6px, 1vw, 12px);
+            padding: clamp(6px, 1vh, 12px);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: clamp(4px, 0.8vh, 10px);
+            padding-bottom: clamp(4px, 0.6vh, 8px);
+            border-bottom: 2px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        .card-title {
+            font-size: clamp(0.7rem, 1.2vw, 1.2rem);
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: clamp(4px, 0.8vw, 10px);
+            color: var(--text-primary);
+        }
+
+        .card-title-icon {
+            font-size: clamp(0.8rem, 1.4vw, 1.4rem);
+        }
+
+        .card-badge {
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-dark));
+            padding: clamp(3px, 0.5vh, 6px) clamp(8px, 1vw, 14px);
+            border-radius: 20px;
+            font-size: clamp(0.55rem, 0.9vw, 0.85rem);
+            font-weight: 700;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .card-content {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* ============================================ FLEET STATUS (Left Column) ============================================ */
+        .vehicles-card {
+            grid-row: 2;
+            grid-column: 1;
+        }
+
+        .vehicle-list {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(4px, 0.6vh, 8px);
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .fleet-section-title {
+            font-size: clamp(0.45rem, 0.65vw, 0.65rem);
+            color: var(--brand-light);
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: clamp(2px, 0.3vh, 4px) 0 clamp(1px, 0.2vh, 3px) 0;
+            padding: clamp(1px, 0.2vh, 3px) clamp(3px, 0.4vw, 6px);
+            background: rgba(34, 197, 94, 0.15);
+            border-radius: 3px;
+            border-left: 2px solid var(--brand-primary);
+            flex-shrink: 0;
+        }
+
+        .fleet-section-title:first-child {
+            margin-top: 0;
+        }
+
+        /* Pills container - wraps pills horizontally */
+        .vehicle-pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: clamp(4px, 0.5vw, 8px);
+        }
+
+        /* Vehicle pill style */
+        .vehicle-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(6px, 0.72vh, 12px) clamp(12px, 1.2vw, 20px);
+            border-radius: 16px;
+            font-size: clamp(0.85rem, 1.3vw, 1.3rem);
+            font-weight: 900;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            min-width: clamp(100px, 13vw, 175px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .vehicle-pill.active {
+            background: linear-gradient(135deg, #166534, #22c55e);
+            color: white;
+            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+        }
+
+        .vehicle-pill.inactive {
+            background: linear-gradient(135deg, #991b1b, #ef4444);
+            color: white;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+        }
+
+        .vehicle-pill.in-use {
+            background: linear-gradient(135deg, #92400e, #fbbf24);
+            color: white;
+            box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+            animation: pulse-pill 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-pill {
+            0%, 100% {
+                box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+            }
+            50% {
+                box-shadow: 0 4px 16px rgba(251, 191, 36, 0.5);
+            }
+        }
+
+        /* Equipment list with dropdowns - pill grid layout */
+        .equipment-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: clamp(4px, 0.5vh, 6px);
+        }
+
+        .equipment-item {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: clamp(6px, 0.72vh, 12px) clamp(12px, 1.2vw, 20px);
+            border-radius: 16px;
+            font-size: clamp(0.85rem, 1.3vw, 1.3rem);
+            font-weight: 900;
+            gap: clamp(3px, 0.3vh, 5px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            min-width: clamp(100px, 13vw, 175px);
+        }
+
+        .equipment-item.active {
+            background: linear-gradient(135deg, #166534, #22c55e);
+            color: white;
+        }
+
+        .equipment-item.inactive {
+            background: linear-gradient(135deg, #991b1b, #ef4444);
+            color: white;
+        }
+
+        .equipment-item.in-use {
+            background: linear-gradient(135deg, #92400e, #fbbf24);
+            color: white;
+        }
+
+        .equipment-name {
+            white-space: nowrap;
+            max-width: clamp(100px, 13vw, 175px);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: center;
+            font-weight: 900;
+            font-size: clamp(0.85rem, 1.3vw, 1.3rem);
+        }
+
+        .job-dropdown {
+            padding: clamp(2px, 0.25vh, 4px) clamp(4px, 0.4vw, 6px);
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            background: rgba(0, 0, 0, 0.4);
+            color: white;
+            font-size: clamp(0.45rem, 0.65vw, 0.65rem);
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+        }
+
+        .job-dropdown:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.8);
+        }
+
+        .job-dropdown option {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        /* ============================================ ACTIVE JOBS (Main Column) ============================================ */
+        .jobs-card {
+            grid-row: 2;
+            grid-column: 2;
+        }
+
+        .job-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(clamp(150px, 15vw, 280px), 1fr));
+            gap: clamp(4px, 0.5vh, 10px);
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .job-item {
+            background: var(--bg-card-elevated);
+            padding: clamp(5px, 0.7vh, 10px) clamp(6px, 0.8vw, 12px);
+            border-radius: clamp(5px, 0.7vw, 10px);
+            border: 1px solid var(--border-subtle);
+            border-left: 3px solid var(--brand-primary);
+            display: flex;
+            flex-direction: column;
+            gap: clamp(2px, 0.3vh, 4px);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .job-item:hover {
+            background: var(--bg-card-hover);
+            box-shadow: var(--shadow-md);
+        }
+
+        .job-item.urgent {
+            border-left-color: var(--status-error);
+        }
+
+        .job-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .job-wo {
+            font-size: clamp(0.5rem, 0.8vw, 0.8rem);
+            color: var(--brand-light);
+            font-weight: 800;
+            letter-spacing: 0.5px;
+        }
+
+        .job-crew {
+            font-size: clamp(0.45rem, 0.7vw, 0.75rem);
+            color: var(--text-secondary);
+            background: var(--bg-card);
+            padding: clamp(1px, 0.2vh, 3px) clamp(4px, 0.5vw, 8px);
+            border-radius: 10px;
+        }
+
+        .job-name {
+            font-size: clamp(0.6rem, 1vw, 1.1rem);
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1.2;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .job-details {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(1px, 0.2vh, 4px);
+        }
+
+        .job-detail {
+            font-size: clamp(0.5rem, 0.75vw, 0.8rem);
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: clamp(2px, 0.3vw, 4px);
+            font-weight: 600;
+        }
+
+        .job-detail-icon {
+            font-size: clamp(0.6rem, 0.9vw, 1rem);
+            width: clamp(12px, 1.5vw, 18px);
+            text-align: center;
+        }
+
+        .job-notes {
+            font-size: clamp(0.5rem, 0.75vw, 0.8rem);
+            color: var(--status-in-use);
+            font-style: italic;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-top: clamp(2px, 0.3vh, 4px);
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        /* Progress Bar */
+        .job-progress {
+            margin-top: auto;
+            padding-top: clamp(3px, 0.4vh, 8px);
+        }
+
+        .progress-bar-container {
+            display: flex;
+            align-items: center;
+            gap: clamp(4px, 0.6vw, 10px);
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: clamp(4px, 0.6vh, 8px);
+            background: var(--bg-dark);
+            border-radius: 4px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--brand-dark), var(--brand-primary));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 8px var(--brand-glow);
+        }
+
+        .progress-label {
+            font-size: clamp(0.5rem, 0.75vw, 0.8rem);
+            font-weight: 700;
+            color: var(--brand-light);
+            min-width: clamp(24px, 3vw, 36px);
+            text-align: right;
+        }
+
+        .progress-na {
+            font-size: clamp(0.45rem, 0.7vw, 0.75rem);
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* ============================================ WEATHER (Bottom Full Width) ============================================ */
+        .weather-card {
+            grid-row: 3;
+            grid-column: 1 / -1;
+        }
+
+        .weather-content {
+            display: flex;
+            gap: clamp(8px, 1vw, 16px);
+            align-items: center;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .weather-current {
+            text-align: center;
+            padding: clamp(4px, 0.6vh, 10px) clamp(8px, 1vw, 16px);
+            background: linear-gradient(135deg, var(--bg-card-elevated), var(--bg-card));
+            border-radius: clamp(5px, 0.7vw, 10px);
+            min-width: clamp(60px, 7vw, 100px);
+            border: 1px solid var(--border-subtle);
+            flex-shrink: 0;
+        }
+
+        .weather-icon {
+            font-size: clamp(1.5rem, 4vh, 3rem);
+            margin-bottom: clamp(1px, 0.2vh, 4px);
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+        }
+
+        .weather-temp {
+            font-size: clamp(1.2rem, 3vh, 2.5rem);
+            font-weight: 900;
+            letter-spacing: -0.02em;
+        }
+
+        .weather-desc {
+            font-size: clamp(0.5rem, 0.8vw, 0.8rem);
+            color: var(--text-secondary);
+            margin-top: clamp(1px, 0.1vh, 2px);
+            font-weight: 600;
+        }
+
+        .weather-forecast {
+            display: flex;
+            gap: clamp(4px, 0.5vw, 8px);
+            flex: 1;
+            overflow: hidden;
+            padding: 0;
+        }
+
+        .forecast-day {
+            text-align: center;
+            padding: clamp(6px, 1vh, 12px) clamp(8px, 1vw, 16px);
+            background: var(--bg-card-elevated);
+            border-radius: clamp(4px, 0.5vw, 8px);
+            min-width: clamp(50px, 6vw, 80px);
+            border: 1px solid var(--border-subtle);
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .forecast-day:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .forecast-day-name {
+            font-size: clamp(0.55rem, 0.9vw, 0.9rem);
+            font-weight: 800;
+            margin-bottom: clamp(2px, 0.2vh, 4px);
+            color: var(--text-primary);
+        }
+
+        .forecast-icon {
+            font-size: clamp(1rem, 2vh, 1.5rem);
+            margin-bottom: clamp(2px, 0.2vh, 4px);
+        }
+
+        .forecast-temps {
+            font-size: clamp(0.6rem, 1vw, 1rem);
+            font-weight: 700;
+        }
+
+        .forecast-high {
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .forecast-low {
+            color: var(--text-secondary);
+            margin-left: 2px;
+        }
+
+        .forecast-rain {
+            font-size: clamp(0.4rem, 0.65vw, 0.7rem);
+            color: var(--status-info);
+            margin-top: clamp(1px, 0.1vh, 2px);
+            font-weight: 700;
+        }
+
+        /* Weather Alerts */
+        .weather-alerts {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(2px, 0.3vh, 4px);
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+
+        .weather-alert {
+            padding: clamp(3px, 0.4vh, 6px) clamp(6px, 0.8vw, 12px);
+            border-radius: clamp(3px, 0.4vw, 6px);
+            font-size: clamp(0.5rem, 0.8vw, 0.8rem);
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: clamp(3px, 0.4vw, 6px);
+            animation: alert-pulse 2s ease-in-out infinite;
+            white-space: nowrap;
+        }
+
+        .weather-alert.freeze {
+            background: rgba(248, 113, 113, 0.2);
+            color: var(--status-error);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+        }
+
+        .weather-alert.heat {
+            background: rgba(251, 191, 36, 0.2);
+            color: var(--status-in-use);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .weather-alert.storm {
+            background: rgba(96, 165, 250, 0.2);
+            color: var(--status-info);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+        }
+
+        @keyframes alert-pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        /* ============================================ LOADING & EMPTY STATES ============================================ */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-secondary);
+            gap: clamp(6px, 1vw, 12px);
+            font-size: clamp(0.6rem, 1vw, 1rem);
+        }
+
+        .loading-spinner {
+            width: clamp(20px, 3vh, 32px);
+            height: clamp(20px, 3vh, 32px);
+            border: 2px solid var(--border-color);
+            border-top-color: var(--brand-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: clamp(10px, 2vh, 40px) clamp(10px, 2vw, 20px);
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: clamp(1.5rem, 4vh, 3rem);
+            margin-bottom: clamp(6px, 1vh, 12px);
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: clamp(0.6rem, 1vw, 0.9rem);
+        }
+
+        /* Offline Banner */
+        .offline-banner {
+            display: none;
+            background: linear-gradient(90deg, var(--status-error), #dc2626);
+            color: white;
+            text-align: center;
+            padding: clamp(4px, 0.6vh, 8px);
+            font-weight: 700;
+            font-size: clamp(0.6rem, 1vw, 0.85rem);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            animation: slide-down 0.3s ease;
+        }
+
+        .offline-banner.show {
+            display: block;
+        }
+
+        @keyframes slide-down {
+            from {
+                transform: translateY(-100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        /* ============================================ SCROLLBAR ============================================ */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-dark);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--brand-dark);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--brand-primary);
+        }
+
+        /* ============================================ FIXED VIEWPORT - NO SCROLLING ============================================ */
+        /* All sizing uses clamp() for automatic scaling - no media queries needed */
+        /* Hide any potential scrollbars */
+        * {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        *::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="offlineBanner" class="offline-banner">⚠️ CONNECTION LOST - Displaying cached data</div>
+
+    <div class="dashboard">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <div class="logo">🌱</div>
+                <div class="header-title">
+                    <h1>Deep Roots Operations</h1>
+                    <p>Shop TV Dashboard</p>
+                </div>
+            </div>
+
+            <div class="header-center">
+                <div class="time-display">
+                    <div class="time" id="currentTime">--:--</div>
+                    <div class="date" id="currentDate">Loading...</div>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <div class="connection-status">
+                    <div class="status-dot" id="connectionDot"></div>
+                    <span id="connectionText">Connected</span>
+                </div>
+                <div class="last-updated" id="lastUpdated">Last updated: --</div>
+            </div>
+        </div>
+
+        <!-- Fleet Status Card -->
+        <div class="vehicles-card card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span class="card-title-icon">🚛</span>
+                    <span>Fleet Status</span>
+                </div>
+                <div class="card-badge" id="vehicleCount">0 Vehicles</div>
+            </div>
+            <div class="card-content">
+                <div id="vehicleList" class="vehicle-list">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <span>Loading fleet...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Jobs Card -->
+        <div class="jobs-card card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span class="card-title-icon">📋</span>
+                    <span>Active Jobs</span>
+                </div>
+                <div class="card-badge" id="jobCount">0 Jobs</div>
+            </div>
+            <div class="card-content">
+                <div id="jobList" class="job-list">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <span>Loading jobs...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weather Card -->
+        <div class="weather-card card">
+            <div class="card-header">
+                <div class="card-title">
+                    <span class="card-title-icon">🌤️</span>
+                    <span>Weather - Gainesville, GA</span>
+                </div>
+            </div>
+            <div class="card-content">
+                <div id="weatherContent" class="weather-content">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        <span>Loading weather...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION
+        // ============================================
+        const CONFIG = {
+            API_URL: localStorage.getItem('apiUrl') || 'https://script.google.com/macros/s/AKfycbxWHqo7-YySZyMKrGTQMcnhhEtg4s_p57o5XhP-9tmxU8aSEBDvQ1CKq1l52I1Te6MneQ/exec',
+            REFRESH_INTERVAL: 5 * 60 * 1000, // 5 minutes
+            WEATHER_REFRESH: 30 * 60 * 1000, // 30 minutes
+            CONNECTION_CHECK: 30 * 1000, // 30 seconds
+            WEATHER_LOCATION: {
+                lat: 34.2979,
+                lon: -83.8241,
+                city: 'Gainesville',
+                state: 'GA'
+            }
+        };
+
+        // ============================================
+        // STATE
+        // ============================================
+        let dashboardData = null;
+        let isOnline = true;
+        let lastSuccessfulFetch = null;
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            updateClock();
+            setInterval(updateClock, 1000);
+            loadDashboardData();
+            loadWeatherData();
+
+            // Auto-refresh intervals
+            setInterval(loadDashboardData, CONFIG.REFRESH_INTERVAL);
+            setInterval(loadWeatherData, CONFIG.WEATHER_REFRESH);
+            setInterval(checkConnection, CONFIG.CONNECTION_CHECK);
+        });
+
+        // ============================================
+        // CLOCK
+        // ============================================
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+
+        // ============================================
+        // CONNECTION STATUS
+        // ============================================
+        function setConnectionStatus(online) {
+            isOnline = online;
+            const dot = document.getElementById('connectionDot');
+            const text = document.getElementById('connectionText');
+            const banner = document.getElementById('offlineBanner');
+
+            if (online) {
+                dot.classList.remove('offline');
+                text.textContent = 'Connected';
+                banner.classList.remove('show');
+            } else {
+                dot.classList.add('offline');
+                text.textContent = 'Offline';
+                banner.classList.add('show');
+            }
+        }
+
+        function checkConnection() {
+            if (lastSuccessfulFetch) {
+                const timeSince = Date.now() - lastSuccessfulFetch;
+                if (timeSince > CONFIG.REFRESH_INTERVAL * 2) {
+                    setConnectionStatus(false);
+                }
+            }
+        }
+
+        // ============================================
+        // LOAD DASHBOARD DATA
+        // ============================================
+        async function callAPI(functionName, parameters = []) {
+            const response = await fetch(CONFIG.API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify({ function: functionName, parameters }),
+                redirect: 'follow'
+            });
+            if (!response.ok) throw new Error('API request failed');
+            return response.json();
+        }
+
+        async function loadDashboardData() {
+            if (!CONFIG.API_URL) {
+                showNoApiWarning();
+                return;
+            }
+
+            try {
+                // Fetch all TV dashboard data in one call
+                const result = await callAPI('getTVDashboardData');
+
+                // Parse response: { success: true, response: { success: true, data: { vehicles, workOrders, attachments, ... } } }
+                let vehicles = { active: [], inactive: [], machinery: [] };
+                let workOrders = [];
+                let attachments = [];
+
+                if (result.success && result.response?.success && result.response?.data) {
+                    const data = result.response.data;
+
+                    // Vehicles come pre-structured with active, inactive, machinery arrays
+                    if (data.vehicles) {
+                        vehicles = {
+                            active: data.vehicles.active || [],
+                            inactive: data.vehicles.inactive || [],
+                            machinery: data.vehicles.machinery || []
+                        };
+                    }
+
+                    // Attachments array
+                    if (data.attachments && Array.isArray(data.attachments)) {
+                        attachments = data.attachments;
+                    }
+
+                    // Work orders array
+                    if (data.workOrders && Array.isArray(data.workOrders)) {
+                        workOrders = data.workOrders.map(wo => ({
+                            woNumber: wo.woNumber || 'N/A',
+                            jobDescription: wo.jobDescription || 'Untitled',
+                            jobAddress: wo.jobAddress || '',
+                            salesman: wo.salesman || '',
+                            crew: wo.crew || '',
+                            notes: wo.notes || '',
+                            progress: wo.progress || null,
+                            priority: wo.priority || '',
+                            customerName: wo.customerName || '',
+                            jobStatus: wo.jobStatus || ''
+                        }));
+                    }
+                }
+
+                dashboardData = { vehicles, workOrders, attachments };
+                renderVehicles(vehicles, attachments, workOrders);
+                renderJobs(workOrders, {});
+                updateLastUpdated();
+                lastSuccessfulFetch = Date.now();
+                setConnectionStatus(true);
+
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                setConnectionStatus(false);
+                if (!dashboardData) {
+                    showError('vehicleList', 'Failed to load fleet data');
+                    showError('jobList', 'Failed to load jobs');
+                }
+            }
+        }
+
+        // Parse fleet report text into structured vehicle data
+        function parseFleetReport(reportText) {
+            const vehicles = { active: [], inactive: [], machinery: [] };
+            if (!reportText || typeof reportText !== 'string') return vehicles;
+
+            const lines = reportText.split('\n');
+            let currentSection = 'active';
+
+            lines.forEach(line => {
+                const lower = line.toLowerCase();
+                if (lower.includes('inactive') || lower.includes('out of service')) {
+                    currentSection = 'inactive';
+                } else if (lower.includes('machinery') || lower.includes('equipment')) {
+                    currentSection = 'machinery';
+                } else if (line.trim() && !line.startsWith('=') && !line.startsWith('-')) {
+                    // Parse vehicle line - look for name and status
+                    const parts = line.split(/[:\-–]/);
+                    if (parts.length >= 1) {
+                        const name = parts[0].trim();
+                        const status = parts[1]?.trim() || 'Active';
+                        if (name && name.length > 1) {
+                            vehicles[currentSection].push({
+                                name: name,
+                                type: currentSection === 'machinery' ? 'Heavy Equipment' : 'Vehicle',
+                                status: status,
+                                assignedJob: null
+                            });
+                        }
+                    }
+                }
+            });
+
+            return vehicles;
+        }
+
+        // ============================================
+        // RENDER VEHICLES
+        // ============================================
+        function renderVehicles(vehicles, attachments = [], workOrders = []) {
+            const container = document.getElementById('vehicleList');
+
+            // Defensive: ensure vehicles object has required arrays
+            const safeVehicles = {
+                active: Array.isArray(vehicles?.active) ? vehicles.active : [],
+                inactive: Array.isArray(vehicles?.inactive) ? vehicles.inactive : [],
+                machinery: Array.isArray(vehicles?.machinery) ? vehicles.machinery : []
+            };
+            const safeAttachments = Array.isArray(attachments) ? attachments : [];
+
+            // Filter out maintenance and written-off
+            const filterVehicle = (v) => {
+                if (!v) return false;
+                const status = (v.status || '').toLowerCase();
+                return !status.includes('maintenance') && !status.includes('written');
+            };
+
+            // Check if vehicle is a trailer by name
+            const isTrailer = (v) => {
+                const name = (v?.name || '').toLowerCase();
+                return name.includes('trailer');
+            };
+
+            // Trucks: INACTIVE only (not trailers)
+            const inactiveTrucks = safeVehicles.inactive.filter(v => filterVehicle(v) && !isTrailer(v));
+            // Trailers: ACTIVE trailers only
+            const activeTrailers = safeVehicles.active.filter(v => filterVehicle(v) && isTrailer(v));
+            // Combine for display
+            const trucksAndTrailers = [...inactiveTrucks, ...activeTrailers];
+
+            const machinery = safeVehicles.machinery.filter(filterVehicle);
+            const totalCount = trucksAndTrailers.length + machinery.length + safeAttachments.length;
+
+            document.getElementById('vehicleCount').textContent = `${totalCount} Vehicles`;
+
+            if (totalCount === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🚛</div>
+                        <p>No vehicles configured</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Render a simple pill (for trucks/trailers)
+            const renderSimplePill = (vehicle, isActive, isTruck = false) => {
+                if (!vehicle) return '';
+                const isInUse = vehicle.assignedJob !== null && vehicle.assignedJob !== undefined;
+                const pillClass = isInUse ? 'in-use' : (isActive ? 'active' : 'inactive');
+                const vehicleName = vehicle.name || 'Unknown';
+                const displayName = escapeHtml(
+                    isTruck && vehicle.assetNumber ? String(vehicle.assetNumber) : vehicleName
+                );
+                return `<span class="vehicle-pill ${pillClass}">${displayName}</span>`;
+            };
+
+            // Render equipment with dropdown for job assignment
+            const renderEquipmentWithDropdown = (item, itemType) => {
+                if (!item) return '';
+                const isInUse = item.assignedJob !== null && item.assignedJob !== undefined;
+                const statusLower = (item.status || '').toLowerCase();
+                const isActive = item.active === true || statusLower === 'active' || statusLower === 'yes';
+                const pillClass = isInUse ? 'in-use' : (isActive ? 'active' : 'inactive');
+                const displayName = escapeHtml(item.name || 'Unknown');
+                const itemId = escapeHtml(item.assetNumber || item.name || Math.random().toString());
+                const currentWO = item.assignedWO || item.assignedJob?.woNumber || '';
+
+                // Build dropdown options
+                let options = `<option value="">Unassigned</option>`;
+                workOrders.forEach(wo => {
+                    const selected = (wo.woNumber == currentWO) ? 'selected' : '';
+                    options += `<option value="${wo.woNumber}" ${selected}>WO #${wo.woNumber}</option>`;
+                });
+
+                return `
+                    <div class="equipment-item ${pillClass}">
+                        <span class="equipment-name">${displayName}</span>
+                        <select class="job-dropdown" data-item-id="${itemId}" data-item-type="${itemType}" onchange="assignEquipmentToJob(this)">
+                            ${options}
+                        </select>
+                    </div>
+                `;
+            };
+
+            let html = '';
+
+            // Trucks & Trailers section
+            if (trucksAndTrailers.length > 0) {
+                html += `<div class="fleet-section-title">Trucks & Trailers</div>`;
+                html += `<div class="vehicle-pills">`;
+                html += trucksAndTrailers.map(v => {
+                    const isActive = isTrailer(v); // Trailers are active, trucks are inactive
+                    const isTruck = !isTrailer(v);
+                    return renderSimplePill(v, isActive, isTruck);
+                }).join('');
+                html += `</div>`;
+            }
+
+            // Heavy Equipment section (machinery + attachments)
+            if (machinery.length > 0 || safeAttachments.length > 0) {
+                html += `<div class="fleet-section-title">Heavy Equipment</div>`;
+                html += `<div class="equipment-list">`;
+                html += machinery.map(v => renderEquipmentWithDropdown(v, 'machinery')).join('');
+                if (safeAttachments.length > 0) {
+                    html += `</div>`;
+                    html += `<div class="fleet-section-title">Attachments</div>`;
+                    html += `<div class="equipment-list">`;
+                    html += safeAttachments.map(a => renderEquipmentWithDropdown(a, 'attachment')).join('');
+                }
+                html += `</div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Handle equipment assignment to job
+        async function assignEquipmentToJob(selectElement) {
+            const itemId = selectElement.dataset.itemId;
+            const itemType = selectElement.dataset.itemType;
+            const woNumber = selectElement.value;
+
+            console.log(`Assigning ${itemType} ${itemId} to WO #${woNumber || 'none'}`);
+
+            // TODO: Call API to update assignment
+            // For now, just update the UI
+            const parent = selectElement.closest('.equipment-item');
+            if (woNumber) {
+                parent.classList.remove('active', 'inactive');
+                parent.classList.add('in-use');
+            } else {
+                parent.classList.remove('in-use');
+                parent.classList.add('active');
+            }
+        }
+
+        // ============================================
+        // RENDER JOBS
+        // ============================================
+        function renderJobs(workOrders, progressData) {
+            const container = document.getElementById('jobList');
+            document.getElementById('jobCount').textContent = `${workOrders?.length || 0} Jobs`;
+
+            if (!workOrders || workOrders.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <p>No active jobs</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Merge progress data if available
+            const progressMap = {};
+            if (progressData) {
+                Object.entries(progressData).forEach(([woNum, data]) => {
+                    progressMap[woNum] = data.progress || data;
+                });
+            }
+
+            container.innerHTML = workOrders.map(job => {
+                if (!job) return '';
+
+                // Escape all user-provided data
+                const woNumber = escapeHtml(job.woNumber || 'N/A');
+                const customerName = escapeHtml(job.customerName || '');
+                const jobName = escapeHtml(job.jobDescription || 'Untitled Job');
+                const jobAddress = escapeHtml(job.jobAddress || 'No address');
+                const salesman = escapeHtml(job.salesman || 'Unassigned');
+                const crew = job.crew ? escapeHtml(job.crew) : null;
+                const notesText = escapeHtml((job.notes && job.notes.trim()) ? job.notes : 'NO NOTES');
+
+                // Get progress - check job object first, then progressMap, then sanitize
+                let rawProgress = job.progress;
+                if (rawProgress === undefined && progressMap[job.woNumber]) {
+                    rawProgress = progressMap[job.woNumber];
+                }
+                const progress = sanitizeProgress(rawProgress);
+                const hasProgress = progress !== null;
+
+                // Determine if urgent (could be based on a priority field)
+                const isUrgent = job.priority === 'urgent' || job.isUrgent;
+
+                return `
+                    <div class="job-item ${isUrgent ? 'urgent' : ''}">
+                        <div class="job-header">
+                            <div class="job-wo">WO #${woNumber}${customerName ? ' ' + customerName : ''}</div>
+                            ${crew ? `<div class="job-crew">${crew}</div>` : ''}
+                        </div>
+                        <div class="job-name">${jobName}</div>
+                        <div class="job-details">
+                            <div class="job-detail">
+                                <span class="job-detail-icon">📍</span>
+                                <span>${jobAddress}</span>
+                            </div>
+                            <div class="job-detail">
+                                <span class="job-detail-icon">👤</span>
+                                <span>${salesman}</span>
+                            </div>
+                        </div>
+                        <div class="job-notes">📝 ${notesText}</div>
+                        <div class="job-progress">
+                            ${hasProgress ? `
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar">
+                                        <div class="progress-bar-fill" style="width: ${progress}%"></div>
+                                    </div>
+                                    <span class="progress-label">${progress}%</span>
+                                </div>
+                            ` : `
+                                <div class="progress-na">Progress data not available</div>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ============================================
+        // LOAD WEATHER DATA
+        // ============================================
+        async function loadWeatherData() {
+            const container = document.getElementById('weatherContent');
+
+            try {
+                const { lat, lon } = CONFIG.WEATHER_LOCATION;
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,apparent_temperature&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max&temperature_unit=fahrenheit&timezone=America%2FNew_York&forecast_days=7`;
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Weather API failed');
+
+                const data = await response.json();
+                renderWeather(data);
+            } catch (error) {
+                console.error('Error loading weather:', error);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🌤️</div>
+                        <p>Weather unavailable</p>
+                    </div>
+                `;
+            }
+        }
+
+        // ============================================
+        // RENDER WEATHER
+        // ============================================
+        function renderWeather(data) {
+            const container = document.getElementById('weatherContent');
+            const current = data.current;
+            const daily = data.daily;
+
+            const weatherIcons = {
+                0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️', 45: '🌫️', 48: '🌫️',
+                51: '🌦️', 53: '🌧️', 55: '🌧️', 61: '🌧️', 63: '🌧️', 65: '🌧️',
+                71: '🌨️', 73: '🌨️', 75: '❄️', 77: '🌨️', 80: '🌧️', 81: '🌧️',
+                82: '⛈️', 85: '🌨️', 86: '🌨️', 95: '⛈️', 96: '⛈️', 99: '⛈️'
+            };
+
+            const getWeatherIcon = (code) => weatherIcons[code] || '🌤️';
+
+            const getWeatherDesc = (code) => {
+                if (code === 0) return 'Clear';
+                if (code <= 3) return 'Partly Cloudy';
+                if (code <= 48) return 'Foggy';
+                if (code <= 55) return 'Drizzle';
+                if (code <= 65) return 'Rain';
+                if (code <= 77) return 'Snow';
+                if (code <= 82) return 'Rain Showers';
+                if (code <= 86) return 'Snow Showers';
+                return 'Thunderstorm';
+            };
+
+            // Build alerts
+            const alerts = [];
+
+            // Check for freeze (any day with low <= 32)
+            daily.temperature_2m_min.slice(0, 3).forEach((low, i) => {
+                if (low <= 32) {
+                    const dayName = i === 0 ? 'Today' : i === 1 ? 'Tomorrow' : daily.time[i];
+                    alerts.push({
+                        type: 'freeze',
+                        icon: '❄️',
+                        message: `FREEZE WARNING: ${dayName} low ${Math.round(low)}°F`
+                    });
+                }
+            });
+
+            // Check for extreme heat
+            const apparentTemp = current.apparent_temperature;
+            if (apparentTemp >= 100 || current.temperature_2m >= 95) {
+                alerts.push({
+                    type: 'heat',
+                    icon: '🌡️',
+                    message: `HEAT ADVISORY: Feels like ${Math.round(apparentTemp)}°F`
+                });
+            }
+
+            // Check for storms
+            if (current.weather_code >= 95) {
+                alerts.push({
+                    type: 'storm',
+                    icon: '⛈️',
+                    message: 'STORM WARNING: Severe weather in area'
+                });
+            }
+
+            const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+            container.innerHTML = `
+                <div class="weather-current">
+                    <div class="weather-icon">${getWeatherIcon(current.weather_code)}</div>
+                    <div class="weather-temp">${Math.round(current.temperature_2m)}°F</div>
+                    <div class="weather-desc">${getWeatherDesc(current.weather_code)}</div>
+                </div>
+                <div class="weather-forecast">
+                    ${daily.time.slice(0, 7).map((date, i) => {
+                        const d = new Date(date + 'T00:00:00');
+                        const dayName = i === 0 ? 'Today' : daysOfWeek[d.getDay()];
+                        const rainChance = daily.precipitation_probability_max[i];
+
+                        return `
+                            <div class="forecast-day">
+                                <div class="forecast-day-name">${dayName}</div>
+                                <div class="forecast-icon">${getWeatherIcon(daily.weather_code[i])}</div>
+                                <div class="forecast-temps">
+                                    <span class="forecast-high">${Math.round(daily.temperature_2m_max[i])}°</span>
+                                    <span class="forecast-low">${Math.round(daily.temperature_2m_min[i])}°</span>
+                                </div>
+                                ${rainChance > 0 ? `<div class="forecast-rain">💧 ${rainChance}%</div>` : ''}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                ${alerts.length > 0 ? `
+                    <div class="weather-alerts">
+                        ${alerts.map(alert => `
+                            <div class="weather-alert ${alert.type}">
+                                ${alert.icon} ${alert.message}
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        // Security: Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            const div = document.createElement('div');
+            div.textContent = String(text);
+            return div.innerHTML;
+        }
+
+        // Validate and clamp progress value
+        function sanitizeProgress(value) {
+            if (value === null || value === undefined) return null;
+            const num = Number(value);
+            if (isNaN(num)) return null;
+            return Math.max(0, Math.min(100, Math.round(num)));
+        }
+
+        function updateLastUpdated() {
+            const now = new Date();
+            document.getElementById('lastUpdated').textContent = `Last updated: ${now.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            })}`;
+        }
+
+        function showNoApiWarning() {
+            const warning = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">⚠️</div>
+                    <p>API URL not configured</p>
+                    <p style="font-size: 0.8rem; margin-top: 10px; opacity: 0.7;">Set the API URL in the main dashboard settings</p>
+                </div>
+            `;
+            document.getElementById('vehicleList').innerHTML = warning;
+            document.getElementById('jobList').innerHTML = warning;
+        }
+
+        function showError(containerId, message) {
+            document.getElementById(containerId).innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">❌</div>
+                    <p>${message}</p>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

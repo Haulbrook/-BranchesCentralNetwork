@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Tool Checkout - Deep Roots Landscape</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --brand-primary: #2E7D32;
+            --brand-primary-dark: #1B5E20;
+            --brand-primary-light: #4CAF50;
+            --brand-accent: #FFA726;
+            --success: #66BB6A;
+            --warning: #FFA726;
+            --error: #EF5350;
+            --info: #42A5F5;
+            --gray-50: #FAFAFA;
+            --gray-100: #F5F5F5;
+            --gray-200: #EEEEEE;
+            --gray-300: #E0E0E0;
+            --gray-600: #757575;
+            --gray-800: #424242;
+            --gray-900: #212121;
+            --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.12);
+            --shadow-xl: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--brand-primary-light) 0%, var(--brand-primary) 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 100%;
+            height: 100vh;
+            background: white;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header - Compact */
+        .header {
+            background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-dark) 100%);
+            color: white;
+            padding: 15px 20px;
+        }
+
+        .header h1 {
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header p {
+            font-size: 0.85em;
+            opacity: 0.9;
+            margin-bottom: 12px;
+        }
+
+        /* Controls - Compact */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .date-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .date-display {
+            font-size: 0.95em;
+            font-weight: 600;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            min-width: 180px;
+            text-align: center;
+        }
+
+        .preset-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            background: white;
+            color: var(--brand-primary);
+            border: none;
+            border-radius: 6px;
+            font-size: 0.8em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-sm);
+            font-family: inherit;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.35);
+        }
+
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 0.75em;
+        }
+
+        /* Content */
+        .content {
+            padding: 30px;
+            flex: 1;
+            overflow: auto;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid var(--brand-primary);
+        }
+
+        /* Available Tools Section */
+        .tools-section {
+            margin-bottom: 40px;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        /* Tool Stack Card */
+        .tool-stack {
+            background: var(--gray-50);
+            border-radius: 12px;
+            padding: 15px;
+            box-shadow: var(--shadow-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-left: 4px solid var(--brand-primary);
+        }
+
+        .tool-stack:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .tool-stack.expanded {
+            grid-column: span 2;
+            background: white;
+            border: 2px solid var(--brand-primary);
+        }
+
+        .stack-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .stack-name {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .stack-count {
+            background: var(--brand-primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .stack-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .tool-card {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-sm);
+            cursor: move;
+            transition: all 0.2s ease;
+            border-left: 4px solid var(--brand-accent);
+            position: relative;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .tool-card.dragging {
+            opacity: 0.5;
+        }
+
+        .tool-card.checked-out {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: var(--gray-100);
+        }
+
+        .tool-name {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 5px;
+        }
+
+        .tool-tag {
+            display: inline-block;
+            background: var(--warning);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .tool-tag.checked-out {
+            background: var(--error);
+        }
+
+        /* Crew Checkout Section */
+        .checkout-section {
+            margin-top: 40px;
+        }
+
+        .crews-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .crew-zone {
+            background: var(--gray-50);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow-md);
+            border: 2px solid var(--gray-200);
+        }
+
+        .crew-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--brand-primary);
+        }
+
+        .crew-name {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: var(--brand-primary);
+        }
+
+        .remove-crew-btn {
+            padding: 5px 10px;
+            background: var(--error);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 0.85em;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .crew-dropzone {
+            min-height: 120px;
+            border: 2px dashed var(--gray-300);
+            border-radius: 8px;
+            padding: 15px;
+            background: white;
+            transition: all 0.2s ease;
+        }
+
+        .crew-dropzone.drag-over {
+            border-color: var(--brand-primary);
+            background: var(--gray-50);
+            border-style: solid;
+        }
+
+        .crew-tools {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .crew-dropzone .tool-card {
+            cursor: move;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: var(--gray-600);
+            font-size: 0.95em;
+            padding: 20px;
+        }
+
+        /* Add Crew/Tool Section */
+        .add-section {
+            margin-top: 20px;
+            padding: 20px;
+            background: var(--gray-50);
+            border-radius: 12px;
+            border: 2px dashed var(--brand-primary);
+        }
+
+        .add-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .input-field {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px;
+            border: 2px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--brand-primary);
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            background: var(--gray-900);
+            color: white;
+            border-radius: 8px;
+            box-shadow: var(--shadow-xl);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .toast.success {
+            background: var(--success);
+        }
+
+        .toast.error {
+            background: var(--error);
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .tool-stack.expanded {
+                grid-column: span 1;
+            }
+
+            .crews-container {
+                grid-template-columns: 1fr;
+            }
+
+            .header {
+                padding: 12px 15px;
+            }
+
+            .header h1 {
+                font-size: 1.3em;
+            }
+
+            .header p {
+                font-size: 0.8em;
+            }
+
+            .date-display {
+                font-size: 0.85em;
+                min-width: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Hand Tool Checkout</h1>
+            <p>Deep Roots Landscape - Daily Tool Management with Drag & Drop</p>
+
+            <div class="controls">
+                <div class="date-controls">
+                    <button class="btn btn-secondary" onclick="changeDate(-1)">← Previous Day</button>
+                    <div class="date-display" id="currentDate"></div>
+                    <button class="btn btn-secondary" onclick="changeDate(1)">Next Day →</button>
+                    <button class="btn btn-secondary" onclick="loadToday()">Today</button>
+                </div>
+
+                <div class="preset-controls">
+                    <button class="btn btn-secondary btn-small" onclick="savePreset(1)">Save Preset 1</button>
+                    <button class="btn btn-secondary btn-small" onclick="savePreset(2)">Save Preset 2</button>
+                    <button class="btn btn-secondary btn-small" onclick="savePreset(3)">Save Preset 3</button>
+                    <span style="color: rgba(255,255,255,0.6); margin: 0 10px;">|</span>
+                    <button class="btn btn-secondary btn-small" onclick="loadPreset(1)">Load 1</button>
+                    <button class="btn btn-secondary btn-small" onclick="loadPreset(2)">Load 2</button>
+                    <button class="btn btn-secondary btn-small" onclick="loadPreset(3)">Load 3</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Available Tools -->
+            <div class="tools-section">
+                <h2 class="section-title">Available Tools (Click to Expand)</h2>
+                <div class="tools-grid" id="toolsGrid"></div>
+
+                <!-- Add New Tool -->
+                <div class="add-section">
+                    <div class="add-form">
+                        <input type="text" id="newToolType" class="input-field" placeholder="Tool Type (e.g., Hammer)">
+                        <input type="text" id="newToolName" class="input-field" placeholder="Tool Name (e.g., Hammer #1)">
+                        <input type="text" id="newToolTag" class="input-field" placeholder="Tag (e.g., T-011)">
+                        <button class="btn" onclick="addNewTool()">➕ Add Tool</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Crew Checkout Zones -->
+            <div class="checkout-section">
+                <h2 class="section-title">Crew Checkout Zones</h2>
+                <div class="crews-container" id="crewsContainer"></div>
+
+                <!-- Add New Crew -->
+                <div class="add-section">
+                    <div class="add-form">
+                        <input type="text" id="newCrewName" class="input-field" placeholder="Crew Name (e.g., Crew A, John's Team)">
+                        <button class="btn" onclick="addCrew()">➕ Add Crew</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Application State
+        let currentDate = new Date();
+        let tools = [];
+        let crews = [];
+        let expandedStacks = new Set();
+        let draggedTool = null;
+
+        // Initialize with default tools - Imported from Google Sheets Inventory
+        function getDefaultTools() {
+            return [
+                // Hammers (14 tools)
+                { id: 1, type: 'Claw Hammer', name: 'Claw Hammer #1', tag: 'T-001', crewId: null },
+                { id: 2, type: 'Claw Hammer', name: 'Claw Hammer #2', tag: 'T-002', crewId: null },
+                { id: 3, type: 'Claw Hammer', name: 'Claw Hammer #3', tag: 'T-003', crewId: null },
+                { id: 4, type: 'Claw Hammer', name: 'Claw Hammer #4', tag: 'T-004', crewId: null },
+                { id: 5, type: 'Claw Hammer', name: 'Claw Hammer #5', tag: 'T-005', crewId: null },
+                { id: 6, type: 'Mini Sledge', name: 'Mini Sledge #1', tag: 'T-006', crewId: null },
+                { id: 7, type: 'Mini Sledge', name: 'Mini Sledge #2', tag: 'T-007', crewId: null },
+                { id: 8, type: 'Dead Blow', name: 'Dead Blow #1', tag: 'T-008', crewId: null },
+                { id: 9, type: 'Dead Blow', name: 'Dead Blow #2', tag: 'T-009', crewId: null },
+                { id: 10, type: 'Dead Blow', name: 'Dead Blow #3', tag: 'T-010', crewId: null },
+                { id: 11, type: 'Dead Blow', name: 'Dead Blow #4', tag: 'T-011', crewId: null },
+                { id: 12, type: 'Framing Hammer', name: 'Framing Hammer #1', tag: 'T-012', crewId: null },
+                { id: 13, type: 'Framing Hammer', name: 'Framing Hammer #2', tag: 'T-013', crewId: null },
+                { id: 14, type: 'Framing Hammer', name: 'Framing Hammer #3', tag: 'T-014', crewId: null },
+
+                // Screwdrivers (8 tools)
+                { id: 15, type: 'Phillips Screwdriver', name: 'Phillips Screwdriver #1', tag: 'T-015', crewId: null },
+                { id: 16, type: 'Phillips Screwdriver', name: 'Phillips Screwdriver #2', tag: 'T-016', crewId: null },
+                { id: 17, type: 'Flathead Screwdriver', name: 'Flathead Screwdriver #1', tag: 'T-017', crewId: null },
+                { id: 18, type: 'Flathead Screwdriver', name: 'Flathead Screwdriver #2', tag: 'T-018', crewId: null },
+                { id: 19, type: 'Impact Bit Set', name: 'Impact Bit Set #1', tag: 'T-019', crewId: null },
+                { id: 20, type: 'Impact Bit Set', name: 'Impact Bit Set #2', tag: 'T-020', crewId: null },
+                { id: 21, type: 'Multi-bit Driver', name: 'Multi-bit Driver #1', tag: 'T-021', crewId: null },
+                { id: 22, type: 'Multi-bit Driver', name: 'Multi-bit Driver #2', tag: 'T-022', crewId: null },
+
+                // Measuring (22 tools)
+                { id: 23, type: 'Level 2ft', name: 'Level 2ft #1', tag: 'T-023', crewId: null },
+                { id: 24, type: 'Level 2ft', name: 'Level 2ft #2', tag: 'T-024', crewId: null },
+                { id: 25, type: 'Level 2ft', name: 'Level 2ft #3', tag: 'T-025', crewId: null },
+                { id: 26, type: 'Level 2ft', name: 'Level 2ft #4', tag: 'T-026', crewId: null },
+                { id: 27, type: 'Level 4ft', name: 'Level 4ft #1', tag: 'T-027', crewId: null },
+                { id: 28, type: 'Level 4ft', name: 'Level 4ft #2', tag: 'T-028', crewId: null },
+                { id: 29, type: 'Level 4ft', name: 'Level 4ft #3', tag: 'T-029', crewId: null },
+                { id: 30, type: 'Level 4ft', name: 'Level 4ft #4', tag: 'T-030', crewId: null },
+                { id: 31, type: 'Level 4ft', name: 'Level 4ft #5', tag: 'T-031', crewId: null },
+                { id: 32, type: 'Level 4ft', name: 'Level 4ft #6', tag: 'T-032', crewId: null },
+                { id: 33, type: 'Framing Square', name: 'Framing Square #1', tag: 'T-033', crewId: null },
+                { id: 34, type: 'Framing Square', name: 'Framing Square #2', tag: 'T-034', crewId: null },
+                { id: 35, type: 'Framing Square', name: 'Framing Square #3', tag: 'T-035', crewId: null },
+                { id: 36, type: 'Chalk Line', name: 'Chalk Line #1', tag: 'T-036', crewId: null },
+                { id: 37, type: 'Chalk Line', name: 'Chalk Line #2', tag: 'T-037', crewId: null },
+                { id: 38, type: 'Chalk Line', name: 'Chalk Line #3', tag: 'T-038', crewId: null },
+                { id: 39, type: 'String Line', name: 'String Line #1', tag: 'T-039', crewId: null },
+                { id: 40, type: 'String Line', name: 'String Line #2', tag: 'T-040', crewId: null },
+                { id: 41, type: 'String Line', name: 'String Line #3', tag: 'T-041', crewId: null },
+                { id: 42, type: 'Tape Measure', name: 'Tape Measure #1', tag: 'T-042', crewId: null },
+                { id: 43, type: 'Tape Measure', name: 'Tape Measure #2', tag: 'T-043', crewId: null },
+                { id: 44, type: 'Tape Measure', name: 'Tape Measure #3', tag: 'T-044', crewId: null },
+
+                // Cutting (14 tools)
+                { id: 45, type: 'Machete', name: 'Machete #1', tag: 'T-045', crewId: null },
+                { id: 46, type: 'Machete', name: 'Machete #2', tag: 'T-046', crewId: null },
+                { id: 47, type: 'Machete', name: 'Machete #3', tag: 'T-047', crewId: null },
+                { id: 48, type: 'Machete', name: 'Machete #4', tag: 'T-048', crewId: null },
+                { id: 49, type: 'Machete', name: 'Machete #5', tag: 'T-049', crewId: null },
+                { id: 50, type: 'Machete', name: 'Machete #6', tag: 'T-050', crewId: null },
+                { id: 51, type: 'Machete', name: 'Machete #7', tag: 'T-051', crewId: null },
+                { id: 52, type: 'Machete', name: 'Machete #8', tag: 'T-052', crewId: null },
+                { id: 53, type: 'Machete', name: 'Machete #9', tag: 'T-053', crewId: null },
+                { id: 54, type: 'Machete', name: 'Machete #10', tag: 'T-054', crewId: null },
+                { id: 55, type: 'Utility Knife', name: 'Utility Knife #1', tag: 'T-055', crewId: null },
+                { id: 56, type: 'Hacksaw', name: 'Hacksaw #1', tag: 'T-056', crewId: null },
+                { id: 57, type: 'Tin Snips', name: 'Tin Snips #1', tag: 'T-057', crewId: null },
+                { id: 58, type: 'Tin Snips', name: 'Tin Snips #2', tag: 'T-058', crewId: null },
+
+                // Pliers (3 tools)
+                { id: 59, type: 'Pliers', name: 'Pliers #1', tag: 'T-059', crewId: null },
+                { id: 60, type: 'Needle Nose Pliers', name: 'Needle Nose Pliers #1', tag: 'T-060', crewId: null },
+                { id: 61, type: 'Wire Strippers', name: 'Wire Strippers #1', tag: 'T-061', crewId: null },
+
+                // Fastening (3 tools)
+                { id: 62, type: 'Wrench Set', name: 'Wrench Set #1', tag: 'T-062', crewId: null },
+                { id: 63, type: 'Wrench Set', name: 'Wrench Set #2', tag: 'T-063', crewId: null },
+                { id: 64, type: 'Adjustable Wrench', name: 'Adjustable Wrench #1', tag: 'T-064', crewId: null },
+
+                // Batteries (14 tools)
+                { id: 65, type: 'DeWalt 20V Battery', name: 'DeWalt 20V Battery #1', tag: 'T-065', crewId: null },
+                { id: 66, type: 'DeWalt 20V Battery', name: 'DeWalt 20V Battery #2', tag: 'T-066', crewId: null },
+                { id: 67, type: 'DeWalt 20V Battery', name: 'DeWalt 20V Battery #3', tag: 'T-067', crewId: null },
+                { id: 68, type: 'DeWalt 20V Battery', name: 'DeWalt 20V Battery #4', tag: 'T-068', crewId: null },
+                { id: 69, type: 'DeWalt 20V Battery', name: 'DeWalt 20V Battery #5', tag: 'T-069', crewId: null },
+                { id: 70, type: 'DeWalt 20V Battery', name: 'DeWalt 20V Battery #6', tag: 'T-070', crewId: null },
+                { id: 71, type: 'Milwaukee M18 Battery', name: 'Milwaukee M18 Battery #1', tag: 'T-071', crewId: null },
+                { id: 72, type: 'Milwaukee M18 Battery', name: 'Milwaukee M18 Battery #2', tag: 'T-072', crewId: null },
+                { id: 73, type: 'Milwaukee M18 Battery', name: 'Milwaukee M18 Battery #3', tag: 'T-073', crewId: null },
+                { id: 74, type: 'Milwaukee M18 Battery', name: 'Milwaukee M18 Battery #4', tag: 'T-074', crewId: null },
+                { id: 75, type: 'Milwaukee M18 Battery', name: 'Milwaukee M18 Battery #5', tag: 'T-075', crewId: null },
+                { id: 76, type: 'Milwaukee M18 Battery', name: 'Milwaukee M18 Battery #6', tag: 'T-076', crewId: null },
+                { id: 77, type: 'Battery Charger', name: 'Battery Charger #1', tag: 'T-077', crewId: null },
+                { id: 78, type: 'Battery Charger', name: 'Battery Charger #2', tag: 'T-078', crewId: null },
+
+                // Power Tools (9 tools)
+                { id: 79, type: 'Paint Gun', name: 'Paint Gun #1', tag: 'T-079', crewId: null },
+                { id: 80, type: 'Paint Gun', name: 'Paint Gun #2', tag: 'T-080', crewId: null },
+                { id: 81, type: 'Paint Gun', name: 'Paint Gun #3', tag: 'T-081', crewId: null },
+                { id: 82, type: 'Paint Gun', name: 'Paint Gun #4', tag: 'T-082', crewId: null },
+                { id: 83, type: 'Paint Gun', name: 'Paint Gun #5', tag: 'T-083', crewId: null },
+                { id: 84, type: 'Impact Driver', name: 'Impact Driver #1', tag: 'T-084', crewId: null },
+                { id: 85, type: 'Drill', name: 'Drill #1', tag: 'T-085', crewId: null },
+                { id: 86, type: 'Drill', name: 'Drill #2', tag: 'T-086', crewId: null },
+                { id: 87, type: 'Circular Saw', name: 'Circular Saw #1', tag: 'T-087', crewId: null },
+
+                // Safety (3 placeholders - currently 0 available)
+                { id: 88, type: 'Safety Glasses', name: 'Safety Glasses #1', tag: 'T-088', crewId: 'OUT_OF_SERVICE' },
+                { id: 89, type: 'Work Gloves', name: 'Work Gloves #1', tag: 'T-089', crewId: 'OUT_OF_SERVICE' },
+                { id: 90, type: 'Ear Protection', name: 'Ear Protection #1', tag: 'T-090', crewId: 'OUT_OF_SERVICE' },
+
+                // Misc (5 tools)
+                { id: 91, type: 'Tool Belt', name: 'Tool Belt #1', tag: 'T-091', crewId: null },
+                { id: 92, type: 'Extension Cord', name: 'Extension Cord #1', tag: 'T-092', crewId: null },
+                { id: 93, type: 'Extension Cord', name: 'Extension Cord #2', tag: 'T-093', crewId: null },
+                { id: 94, type: 'Extension Cord', name: 'Extension Cord #3', tag: 'T-094', crewId: null },
+                { id: 95, type: 'Extension Cord', name: 'Extension Cord #4', tag: 'T-095', crewId: null },
+                { id: 96, type: 'Extension Cord', name: 'Extension Cord #5', tag: 'T-096', crewId: null },
+                { id: 97, type: 'Work Light', name: 'Work Light #1', tag: 'T-097', crewId: null },
+                { id: 98, type: 'Air Paint Gun', name: 'Air Paint Gun #1', tag: 'T-098', crewId: null }
+            ];
+        }
+
+        // Initialize
+        function init() {
+            loadFromLocalStorage();
+            updateDateDisplay();
+            renderTools();
+            renderCrews();
+        }
+
+        // Date Management
+        function updateDateDisplay() {
+            const dateStr = currentDate.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('currentDate').textContent = dateStr;
+        }
+
+        function changeDate(days) {
+            currentDate.setDate(currentDate.getDate() + days);
+            updateDateDisplay();
+            expandedStacks.clear();
+            loadFromLocalStorage();
+            renderTools();
+            renderCrews();
+        }
+
+        function loadToday() {
+            currentDate = new Date();
+            updateDateDisplay();
+            expandedStacks.clear();
+            loadFromLocalStorage();
+            renderTools();
+            renderCrews();
+        }
+
+        // Storage Management
+        function getStorageKey() {
+            return `handtools_${currentDate.toISOString().split('T')[0]}`;
+        }
+
+        function loadFromLocalStorage() {
+            const stored = localStorage.getItem(getStorageKey());
+            if (stored) {
+                const data = JSON.parse(stored);
+                tools = data.tools || getDefaultTools();
+                crews = data.crews || [];
+            } else {
+                tools = getDefaultTools();
+                crews = [];
+            }
+        }
+
+        function saveToLocalStorage() {
+            const data = { tools, crews };
+            localStorage.setItem(getStorageKey(), JSON.stringify(data));
+        }
+
+        // Preset Management
+        function savePreset(num) {
+            const data = { tools, crews };
+            localStorage.setItem(`handtools_preset_${num}`, JSON.stringify(data));
+            showToast(`Preset ${num} saved!`, 'success');
+        }
+
+        function loadPreset(num) {
+            const stored = localStorage.getItem(`handtools_preset_${num}`);
+            if (stored) {
+                const data = JSON.parse(stored);
+                tools = data.tools || getDefaultTools();
+                crews = data.crews || [];
+                saveToLocalStorage();
+                renderTools();
+                renderCrews();
+                showToast(`Preset ${num} loaded!`, 'success');
+            } else {
+                showToast(`Preset ${num} is empty`, 'error');
+            }
+        }
+
+        // Tool Management
+        function addNewTool() {
+            const type = document.getElementById('newToolType').value.trim();
+            const name = document.getElementById('newToolName').value.trim();
+            const tag = document.getElementById('newToolTag').value.trim();
+
+            if (!type || !name || !tag) {
+                showToast('Please fill in all fields', 'error');
+                return;
+            }
+
+            if (tools.some(t => t.tag === tag)) {
+                showToast('A tool with this tag already exists!', 'error');
+                return;
+            }
+
+            const newTool = {
+                id: Math.max(...tools.map(t => t.id), 0) + 1,
+                type,
+                name,
+                tag,
+                crewId: null
+            };
+
+            tools.push(newTool);
+            saveToLocalStorage();
+            renderTools();
+
+            document.getElementById('newToolType').value = '';
+            document.getElementById('newToolName').value = '';
+            document.getElementById('newToolTag').value = '';
+
+            showToast(`Tool "${name}" added!`, 'success');
+        }
+
+        // Group tools by type
+        function groupToolsByType() {
+            const groups = {};
+            tools.forEach(tool => {
+                if (!groups[tool.type]) {
+                    groups[tool.type] = [];
+                }
+                groups[tool.type].push(tool);
+            });
+            return groups;
+        }
+
+        // Render Tools
+        function renderTools() {
+            const grid = document.getElementById('toolsGrid');
+            const toolGroups = groupToolsByType();
+
+            grid.innerHTML = Object.entries(toolGroups).map(([type, groupTools]) => {
+                const isExpanded = expandedStacks.has(type);
+                const availableCount = groupTools.filter(t => !t.crewId).length;
+                const totalCount = groupTools.length;
+
+                if (isExpanded) {
+                    return `
+                        <div class="tool-stack expanded" onclick="toggleStack('${type}', event)">
+                            <div class="stack-header">
+                                <div class="stack-name">🔽 ${type}</div>
+                                <div class="stack-count">${availableCount} / ${totalCount} available</div>
+                            </div>
+                            <div class="stack-items">
+                                ${groupTools.map(tool => `
+                                    <div class="tool-card ${tool.crewId ? 'checked-out' : ''}"
+                                         draggable="${!tool.crewId}"
+                                         data-tool-id="${tool.id}"
+                                         ondragstart="handleToolDragStart(event)"
+                                         ondragend="handleToolDragEnd(event)"
+                                         onclick="event.stopPropagation()">
+                                        <div class="tool-name">${tool.name}</div>
+                                        <div class="tool-tag ${tool.crewId ? 'checked-out' : ''}">${tool.tag}</div>
+                                        ${tool.crewId ? '<div style="font-size: 0.85em; color: var(--error); margin-top: 5px;">Checked Out</div>' : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="tool-stack" onclick="toggleStack('${type}', event)">
+                            <div class="stack-header">
+                                <div class="stack-name">▶️ ${type}</div>
+                                <div class="stack-count">x ${totalCount}</div>
+                            </div>
+                            <div style="font-size: 0.9em; color: var(--gray-600); margin-top: 5px;">
+                                ${availableCount} available • Click to expand
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+        }
+
+        function toggleStack(type, event) {
+            if (event.target.classList.contains('tool-card')) {
+                return;
+            }
+
+            if (expandedStacks.has(type)) {
+                expandedStacks.delete(type);
+            } else {
+                expandedStacks.add(type);
+            }
+            renderTools();
+        }
+
+        // Crew Management
+        function addCrew() {
+            const nameInput = document.getElementById('newCrewName');
+            const name = nameInput.value.trim();
+
+            if (!name) {
+                showToast('Please enter a crew name', 'error');
+                return;
+            }
+
+            crews.push({
+                id: Date.now(),
+                name: name,
+                tools: []
+            });
+
+            nameInput.value = '';
+            saveToLocalStorage();
+            renderCrews();
+            showToast(`Crew "${name}" added!`, 'success');
+        }
+
+        function removeCrew(crewId) {
+            if (confirm('Are you sure? All tools will be returned.')) {
+                // Return all tools from this crew
+                tools.forEach(tool => {
+                    if (tool.crewId === crewId) {
+                        tool.crewId = null;
+                    }
+                });
+
+                crews = crews.filter(c => c.id !== crewId);
+                saveToLocalStorage();
+                renderTools();
+                renderCrews();
+                showToast('Crew removed', 'success');
+            }
+        }
+
+        // Render Crews
+        function renderCrews() {
+            const container = document.getElementById('crewsContainer');
+
+            if (crews.length === 0) {
+                container.innerHTML = '<div class="empty-message">No crews yet. Add a crew to start checking out tools.</div>';
+                return;
+            }
+
+            container.innerHTML = crews.map(crew => {
+                const crewTools = tools.filter(t => t.crewId === crew.id);
+
+                return `
+                    <div class="crew-zone">
+                        <div class="crew-header">
+                            <div class="crew-name">${crew.name}</div>
+                            <button class="remove-crew-btn" onclick="removeCrew(${crew.id})">Remove</button>
+                        </div>
+                        <div class="crew-dropzone"
+                             data-crew-id="${crew.id}"
+                             ondragover="handleCrewDragOver(event)"
+                             ondragleave="handleCrewDragLeave(event)"
+                             ondrop="handleCrewDrop(event)">
+                            <div class="crew-tools">
+                                ${crewTools.length === 0 ?
+                                    '<div class="empty-message">Drop tools here</div>' :
+                                    crewTools.map(tool => `
+                                        <div class="tool-card"
+                                             draggable="true"
+                                             data-tool-id="${tool.id}"
+                                             ondragstart="handleToolDragStart(event)"
+                                             ondragend="handleToolDragEnd(event)">
+                                            <div class="tool-name">${tool.name}</div>
+                                            <div class="tool-tag">${tool.tag}</div>
+                                        </div>
+                                    `).join('')
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Drag and Drop Handlers
+        function handleToolDragStart(event) {
+            const toolId = parseInt(event.target.dataset.toolId);
+            draggedTool = tools.find(t => t.id === toolId);
+            event.target.classList.add('dragging');
+            event.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleToolDragEnd(event) {
+            event.target.classList.remove('dragging');
+            draggedTool = null;
+        }
+
+        function handleCrewDragOver(event) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            event.currentTarget.classList.add('drag-over');
+        }
+
+        function handleCrewDragLeave(event) {
+            event.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleCrewDrop(event) {
+            event.preventDefault();
+            const dropzone = event.currentTarget;
+            dropzone.classList.remove('drag-over');
+
+            if (!draggedTool) return;
+
+            const crewId = parseInt(dropzone.dataset.crewId);
+
+            // Update tool assignment
+            const tool = tools.find(t => t.id === draggedTool.id);
+            if (tool) {
+                tool.crewId = crewId;
+                saveToLocalStorage();
+                renderTools();
+                renderCrews();
+            }
+        }
+
+        // Toast Notifications
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Initialize app
+        init();
+    </script>
+</body>
+</html>

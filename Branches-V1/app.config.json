@@ -1,0 +1,116 @@
+{
+  "_comment": "DEPLOYMENT INSTRUCTIONS: 1) Deploy code.js to Google Apps Script as backend API, 2) Deploy this dashboard to GitHub Pages/Netlify, 3) Update the 'inventory' URL below with your Google Apps Script deployment URL",
+  "app": {
+    "name": "Deep Roots Operations Dashboard",
+    "version": "1.0.0",
+    "description": "Unified dashboard for all Deep Roots Landscape operational tools"
+  },
+  "services": {
+    "inventory": {
+      "_comment": "REQUIRED: This is your primary backend. Deploy code.js to Google Apps Script and paste the Web App URL here. All API calls route through this endpoint.",
+      "name": "Clippings - Inventory Management",
+      "description": "Search inventory, manage stock, track equipment",
+      "icon": "🌱",
+      "url": "https://script.google.com/macros/s/AKfycbzmTe18gSrdI8Ztl_ZoSo4HcXCwmntylvG6mqOAetDjWjUdHeTejKgP9WKTp7-0OHGH/exec",
+      "color": "#4CAF50",
+      "keywords": ["inventory", "plants", "stock", "equipment", "supplies"]
+    },
+    "grading": {
+      "_comment": "Repair vs Replace Tool - Google Apps Script web app",
+      "name": "Repair vs Replace",
+      "description": "Equipment repair cost analysis and replacement decisions",
+      "icon": "🛠️",
+      "url": "https://script.google.com/macros/s/AKfycbz6-tC9CSeqrpZrIhC-4Omhw671fhJ062dxyn6m8EnglwEz4vywkB_g7zlHWVG-vDRh/exec",
+      "color": "#FF9800",
+      "keywords": ["repair", "replace", "equipment", "cost", "analysis", "decision"]
+    },
+    "scheduler": {
+      "_comment": "Crew Scheduler - Local web app with drag and drop for crew assignments",
+      "name": "Daily Scheduler",
+      "description": "Crew scheduling with drag-and-drop for crew members, trucks, equipment, jobs, and salesmen",
+      "icon": "📅",
+      "url": "crew-scheduler.html",
+      "color": "#2196F3",
+      "keywords": ["schedule", "crew", "tasks", "calendar", "planning"]
+    },
+    "tools": {
+      "_comment": "Hand Tool Checkout - Local web app with stacking and drag-and-drop functionality",
+      "name": "Hand Tool Checkout",
+      "description": "Hand tool checkout with stacked tool view, drag-and-drop to crews, and physical tag tracking",
+      "icon": "🔧",
+      "url": "hand-tool-checkout.html",
+      "color": "#9C27B0",
+      "keywords": ["tools", "rental", "checkout", "equipment", "maintenance", "tags", "crew"]
+    },
+    "chessmap": {
+      "_comment": "DRL Chess Map - Real-time crew location tracking and logistics planning",
+      "name": "DRL Chess Map & Logistics",
+      "description": "Real-time crew location tracking, logistics planning, and vendor proximity",
+      "icon": "♟️",
+      "url": "https://dailychessmap.netlify.app/",
+      "color": "#673AB7",
+      "keywords": ["crew", "location", "map", "chess", "tracking", "coordinates", "proximity", "nearest", "closest", "team", "position", "where", "logistics", "transportation", "procurement", "emergency", "errand", "delivery", "route", "shipping"]
+    },
+    "activeJobs": {
+      "_comment": "Active Jobs Dashboard - reads/writes to the Active Work Orders sheet via the inventory backend",
+      "name": "Active Jobs Dashboard",
+      "description": "Work order management with PDF parsing and progress tracking",
+      "icon": "📋",
+      "sheetId": "13bnntgZiXdCA2KQvJXpIBA1rCBzx3ZmeKakzYFFg7QA",
+      "gasUrl": "https://script.google.com/macros/s/AKfycbxWHqo7-YySZyMKrGTQMcnhhEtg4s_p57o5XhP-9tmxU8aSEBDvQ1CKq1l52I1Te6MneQ/exec",
+      "color": "#FF5722"
+    }
+  },
+  "ai": {
+    "enabled": true,
+    "openaiApiKey": "__OPENAI_API_KEY__",
+    "claudeApiKey": "__CLAUDE_API_KEY__",
+    "fallbackMessage": "I can help you with inventory, grading decisions, scheduling, tool rentals, logistics planning, or crew location tracking. What would you like to do?",
+    "routingPrompt": "Analyze this query and determine which tool would be most helpful: inventory management, plant grading, scheduling, tool checkout, logistics planning, or crew location map. Return only: 'inventory', 'grading', 'scheduler', 'tools', 'logistics', 'chessmap', or 'general'."
+  },
+  "appleOverseer": {
+    "enabled": false,
+    "maxConcurrentOperations": 50,
+    "maxOperationDuration": 300000,
+    "enableQualityControl": false,
+    "enableToolCoordination": false
+  },
+  "skills": {
+    "enableDeconstructionSkill": true,
+    "enableForwardThinkerSkill": true,
+    "enableAppleOverseer": true
+  },
+  "agents": {
+    "inventory": {
+      "name": "Clippings",
+      "description": "Inventory, plants, stock, supplies, fleet, trucks",
+      "url": "https://script.google.com/macros/s/AKfycbxa-ldx8OZwPIUh5Bty8tuI91K0eLYqG3DvY7k2RuUp32_ybjcO7m2HsPi4O-m8OaMi/exec",
+      "keywords": ["inventory", "stock", "plants", "supplies", "materials", "mulch", "fertilizer", "arborvitae", "truck", "fleet", "mower"]
+    },
+    "repair": {
+      "name": "GradeBot",
+      "description": "Equipment repair vs replace, asset grading, maintenance costs",
+      "url": "https://script.google.com/macros/s/AKfycbyfn5brMiPgDd6IZDnNxfXZhQgJqEb-1zC8aSGMOMbE8UayiGgv4E7CGA6wrs0V0XhY/exec",
+      "keywords": ["repair", "replace", "asset", "maintenance", "broken", "fix", "cost", "lifecycle", "grading", "grade"]
+    },
+    "jobs": {
+      "name": "Foreman",
+      "description": "Active work orders, job progress, line items, crew dispatch",
+      "url": "https://script.google.com/macros/s/AKfycbyE90S18qOnAtgcwqbd0H5WwadOW7GzdAjfKPWOdHvJYB3FtRqeyi7-20xjdAxEBp6xBQ/exec",
+      "keywords": ["job", "jobs", "work order", "wo", "task", "tasks", "progress", "active", "client", "drainage", "planting", "landscape job", "line items", "crew", "dispatch", "almost done"]
+    }
+  },
+  "deployment": {
+    "_comment": "Deployment strategy: Backend (code.js) goes to Google Apps Script. Frontend (this dashboard) goes to GitHub Pages or Netlify.",
+    "backend": {
+      "platform": "Google Apps Script",
+      "file": "code.js",
+      "instructions": "Deploy code.js to Google Apps Script as a Web App, then update services.inventory.url with the deployment URL"
+    },
+    "frontend": {
+      "platform": "GitHub Pages or Netlify",
+      "files": ["index.html", "js/", "styles/", "config.json"],
+      "instructions": "Deploy these files to static hosting. Update config.json with backend URL before deployment."
+    }
+  }
+}

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Management System</title>
+    <?!= include('styles'); ?>
+</head>
+<body>
+    <!-- Theme Toggle -->
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <svg class="sun-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg class="moon-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+    </button>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-content">
+                <a href="#" class="logo">
+                    <svg class="logo-icon" width="40" height="40" viewBox="0 0 40 40" fill="none">
+                        <rect width="40" height="40" rx="8" fill="url(#gradient1)"/>
+                        <path d="M12 20L18 26L28 14" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        <defs>
+                            <linearGradient id="gradient1" x1="0" y1="0" x2="40" y2="40">
+                                <stop offset="0%" stop-color="#667eea"/>
+                                <stop offset="100%" stop-color="#764ba2"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <span class="logo-text">Asset<span class="logo-separator">Management</span></span>
+                </a>
+
+                <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Toggle menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+
+                <ul class="nav-links">
+                    <li><a href="#dashboard" class="nav-link active">Dashboard</a></li>
+                    <li><a href="#assets" class="nav-link">Assets</a></li>
+                    <li><a href="#repairs" class="nav-link">Add Repair</a></li>
+                    <li><a href="#history" class="nav-link">History</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dashboard Section -->
+    <section id="dashboard" class="hero dashboard-section">
+        <div class="hero-background">
+            <div class="gradient-orb orb-1"></div>
+            <div class="gradient-orb orb-2"></div>
+            <div class="gradient-orb orb-3"></div>
+            <div class="grid-pattern"></div>
+        </div>
+
+        <div class="container">
+            <div class="section-header" style="position: relative; z-index: 1;">
+                <h1 class="section-title" style="color: var(--text-primary); margin-bottom: var(--spacing-2);">Asset Management Dashboard</h1>
+                <p class="section-subtitle">Track repairs, monitor costs, and make data-driven replacement decisions</p>
+            </div>
+
+            <div class="stats-grid" style="position: relative; z-index: 1;">
+                <div class="stat-card" data-aos="fade-up">
+                    <div class="stat-icon gradient-blue">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="4" y="4" width="24" height="24" rx="2"/>
+                            <path d="M4 12h24M12 4v24"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">Total Assets</div>
+                        <div class="stat-number" id="totalAssets">0</div>
+                    </div>
+                </div>
+
+                <div class="stat-card" data-aos="fade-up" data-aos-delay="100">
+                    <div class="stat-icon gradient-green">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="16" cy="16" r="12"/>
+                            <path d="M12 16l3 3 6-6"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">Good Condition</div>
+                        <div class="stat-number" id="goodAssets">0</div>
+                    </div>
+                </div>
+
+                <div class="stat-card" data-aos="fade-up" data-aos-delay="200">
+                    <div class="stat-icon gradient-orange">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 4L4 16l12 12 12-12L16 4z"/>
+                            <path d="M16 12v8M16 24v1"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">Needs Attention</div>
+                        <div class="stat-number" id="warningAssets">0</div>
+                    </div>
+                </div>
+
+                <div class="stat-card" data-aos="fade-up" data-aos-delay="300">
+                    <div class="stat-icon gradient-pink">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="16" cy="16" r="12"/>
+                            <path d="M12 12l8 8M20 12l-8 8"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">Replace Now</div>
+                        <div class="stat-number" id="replaceAssets">0</div>
+                    </div>
+                </div>
+
+                <div class="stat-card wide" data-aos="fade-up" data-aos-delay="400">
+                    <div class="stat-icon gradient-purple">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="16" cy="16" r="12"/>
+                            <path d="M16 8v8l4 4"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">Total Repair Costs</div>
+                        <div class="stat-number" id="totalRepairCost">$0</div>
+                    </div>
+                </div>
+
+                <div class="stat-card wide" data-aos="fade-up" data-aos-delay="500">
+                    <div class="stat-icon gradient-teal">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 28h24M8 24V12M14 24V8M20 24V16M26 24V4"/>
+                        </svg>
+                    </div>
+                    <div class="stat-info">
+                        <div class="stat-label">Average Repair Cost</div>
+                        <div class="stat-number" id="avgRepairCost">$0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Problems -->
+            <div class="top-problems-section" data-aos="fade-up" data-aos-delay="600" style="position: relative; z-index: 1;">
+                <h2 style="font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); color: var(--text-primary); margin-bottom: var(--spacing-6);">Assets Requiring Attention</h2>
+                <div id="topProblemsContainer" class="top-problems-grid">
+                    <div class="loading-message">Loading assets...</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Assets Section -->
+    <section id="assets" class="assets-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Your Assets</h2>
+                <p class="section-subtitle">Monitor all your assets and their repair status</p>
+            </div>
+
+            <div class="assets-table-container">
+                <table class="assets-table">
+                    <thead>
+                        <tr>
+                            <th>Asset ID</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Purchase Date</th>
+                            <th>Replacement Cost</th>
+                            <th>Total Repairs</th>
+                            <th>% of Replace</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="assetsTableBody">
+                        <tr>
+                            <td colspan="9" class="loading-cell">Loading assets...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Add Repair Section -->
+    <section id="repairs" class="calculator-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Add Repair Record</h2>
+                <p class="section-subtitle">Track repairs and monitor costs against replacement value</p>
+            </div>
+
+            <div class="repair-form-container">
+                <form id="addRepairForm" class="calculator-form">
+                    <div class="form-header">
+                        <h3>Repair Information</h3>
+                        <p>Enter details about the repair performed</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="assetSelect">Select Asset *</label>
+                        <select id="assetSelect" class="form-control" required>
+                            <option value="">Choose an asset...</option>
+                        </select>
+                    </div>
+
+                    <div class="asset-info-display" id="assetInfoDisplay" style="display: none;">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Replacement Cost:</span>
+                                <span class="info-value" id="displayReplacementCost">$0</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Current Repairs:</span>
+                                <span class="info-value" id="displayCurrentRepairs">$0</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Current %:</span>
+                                <span class="info-value" id="displayCurrentPercent">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="repairDate">Repair Date *</label>
+                        <input type="date" id="repairDate" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="partName">Part Name/Description</label>
+                        <input type="text" id="partName" class="form-control" placeholder="e.g., Carburetor, Spark plug">
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="partCost">Part Cost ($) *</label>
+                            <input type="number" id="partCost" class="form-control" placeholder="0.00" min="0" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="laborHours">Labor Hours *</label>
+                            <input type="number" id="laborHours" class="form-control" placeholder="0" min="0" step="0.5" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="laborRateType">Labor Rate Type *</label>
+                        <select id="laborRateType" class="form-control" required>
+                            <option value="">Select rate type...</option>
+                            <option value="80">Standard Rate - $80/hour</option>
+                            <option value="120">Senior Rate - $120/hour</option>
+                            <option value="150">Outside Vendor Rate - $150/hour</option>
+                        </select>
+                        <input type="hidden" id="laborRate" value="0">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="outsideVendorName">Shop / Vendor Name</label>
+                        <input type="text" id="outsideVendorName" class="form-control" placeholder="e.g. Puckett's Auto — leave blank if in-house">
+                    </div>
+
+                    <div class="cost-preview" id="costPreview" style="display: none;">
+                        <div class="preview-row">
+                            <span>Part Cost:</span>
+                            <span id="previewPartCost">$0.00</span>
+                        </div>
+                        <div class="preview-row">
+                            <span>Labor Cost:</span>
+                            <span id="previewLaborCost">$0.00</span>
+                        </div>
+                        <div class="preview-row total">
+                            <span>Total Repair Cost:</span>
+                            <span id="previewTotalCost">$0.00</span>
+                        </div>
+                        <div class="preview-row">
+                            <span>New Total Repairs:</span>
+                            <span id="previewNewTotal">$0.00</span>
+                        </div>
+                        <div class="preview-row">
+                            <span>New % of Replacement:</span>
+                            <span id="previewNewPercent">0%</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="repairNotes">Notes (Optional)</label>
+                        <textarea id="repairNotes" class="form-control" rows="3" placeholder="Additional notes about this repair..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-large btn-full" id="submitRepairBtn">
+                        <span>Add Repair Record</span>
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </form>
+
+                <div class="repair-success-message" id="repairSuccessMessage" style="display: none;">
+                    <div class="success-icon">âœ“</div>
+                    <h3>Repair Added Successfully!</h3>
+                    <p id="successMessageText"></p>
+                    <button class="btn btn-secondary" onclick="resetRepairForm()">Add Another Repair</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Repair History Section -->
+    <section id="history" class="history-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Repair History</h2>
+                <p class="section-subtitle">Complete history of all repairs across all assets</p>
+            </div>
+
+            <div class="history-filters">
+                <input type="text" id="historySearch" class="form-control" placeholder="Search by asset ID or part name...">
+                <select id="historyAssetFilter" class="form-control">
+                    <option value="">All Assets</option>
+                </select>
+            </div>
+
+            <div class="history-table-container">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Asset ID</th>
+                            <th>Repair Date</th>
+                            <th>Part Name</th>
+                            <th>Part Cost</th>
+                            <th>Labor Cost</th>
+                            <th>Total Cost</th>
+                            <th>Running Total</th>
+                            <th>% of Replace</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <tr>
+                            <td colspan="9" class="loading-cell">Loading repair history...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <a href="#" class="footer-logo">
+                        <svg class="logo-icon" width="40" height="40" viewBox="0 0 40 40" fill="none">
+                            <rect width="40" height="40" rx="8" fill="url(#gradient2)"/>
+                            <path d="M12 20L18 26L28 14" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                            <defs>
+                                <linearGradient id="gradient2" x1="0" y1="0" x2="40" y2="40">
+                                    <stop offset="0%" stop-color="#667eea"/>
+                                    <stop offset="100%" stop-color="#764ba2"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <span class="logo-text">Asset<span class="logo-separator">Management</span></span>
+                    </a>
+                    <p class="footer-description">Smart asset tracking and repair decision system powered by Google Sheets.</p>
+                </div>
+
+                <div class="footer-section">
+                    <h4 class="footer-heading">Navigation</h4>
+                    <ul class="footer-links">
+                        <li><a href="#dashboard">Dashboard</a></li>
+                        <li><a href="#assets">Assets</a></li>
+                        <li><a href="#repairs">Add Repair</a></li>
+                        <li><a href="#history">History</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h4 class="footer-heading">Information</h4>
+                    <p style="font-size: var(--font-size-sm); color: var(--text-tertiary); line-height: var(--line-height-relaxed);">
+                        This system helps you make data-driven decisions about when to repair vs replace your assets based on cost analysis.
+                    </p>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <p>&copy; 2024 Asset Management System. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <?!= include('javascript'); ?>
+</body>
+</html>

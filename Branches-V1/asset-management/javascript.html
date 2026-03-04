@@ -1,0 +1,726 @@
+<script>
+// ============================================
+// GLOBAL STATE
+// ============================================
+
+let allAssets = [];
+let allRepairs = [];
+let dashboardStats = {};
+
+// ============================================
+// THEME MANAGEMENT
+// ============================================
+
+class ThemeManager {
+  constructor() {
+    this.theme = localStorage.getItem('theme') || 'light';
+    this.init();
+  }
+
+  init() {
+    this.applyTheme(this.theme);
+    this.attachListeners();
+  }
+
+  applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+    this.theme = theme;
+  }
+
+  toggleTheme() {
+    const newTheme = this.theme === 'light' ? 'dark' : 'light';
+    this.applyTheme(newTheme);
+  }
+
+  attachListeners() {
+    const themeToggle = document.getElementById('themeToggle');
+    if (themeToggle) {
+      themeToggle.addEventListener('click', () => this.toggleTheme());
+    }
+  }
+}
+
+// ============================================
+// MOBILE MENU
+// ============================================
+
+class MobileMenu {
+  constructor() {
+    this.toggle = document.getElementById('mobileMenuToggle');
+    this.menu = document.querySelector('.nav-links');
+    this.isOpen = false;
+    this.init();
+  }
+
+  init() {
+    if (this.toggle && this.menu) {
+      this.toggle.addEventListener('click', () => this.toggleMenu());
+
+      const navLinks = this.menu.querySelectorAll('.nav-link');
+      navLinks.forEach(link => {
+        link.addEventListener('click', () => this.closeMenu());
+      });
+
+      document.addEventListener('click', (e) => {
+        if (this.isOpen && !this.toggle.contains(e.target) && !this.menu.contains(e.target)) {
+          this.closeMenu();
+        }
+      });
+    }
+  }
+
+  toggleMenu() {
+    this.isOpen = !this.isOpen;
+    this.menu.classList.toggle('active');
+    this.toggle.classList.toggle('active');
+  }
+
+  closeMenu() {
+    this.isOpen = false;
+    this.menu.classList.remove('active');
+    this.toggle.classList.remove('active');
+  }
+}
+
+// ============================================
+// NAVIGATION
+// ============================================
+
+class NavigationManager {
+  constructor() {
+    this.init();
+  }
+
+  init() {
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', (e) => {
+        const href = anchor.getAttribute('href');
+        if (href === '#') {
+          e.preventDefault();
+          return;
+        }
+
+        const target = document.querySelector(href);
+        if (target) {
+          e.preventDefault();
+          const offsetTop = target.offsetTop - 80;
+          window.scrollTo({
+            top: offsetTop,
+            behavior: 'smooth'
+          });
+
+          // Update active nav link
+          document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
+          });
+          anchor.classList.add('active');
+        }
+      });
+    });
+
+    // Highlight active section on scroll
+    window.addEventListener('scroll', () => this.updateActiveNav());
+  }
+
+  updateActiveNav() {
+    const sections = document.querySelectorAll('section[id]');
+    const scrollY = window.pageYOffset;
+
+    sections.forEach(section => {
+      const sectionHeight = section.offsetHeight;
+      const sectionTop = section.offsetTop - 100;
+      const sectionId = section.getAttribute('id');
+
+      if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
+        document.querySelectorAll('.nav-link').forEach(link => {
+          link.classList.remove('active');
+          if (link.getAttribute('href') === `#${sectionId}`) {
+            link.classList.add('active');
+          }
+        });
+      }
+    });
+  }
+}
+
+// ============================================
+// ANIMATE ON SCROLL
+// ============================================
+
+class AnimateOnScroll {
+  constructor() {
+    this.elements = document.querySelectorAll('[data-aos]');
+    this.init();
+  }
+
+  init() {
+    if (this.elements.length === 0) return;
+
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    this.observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('aos-animate');
+        }
+      });
+    }, observerOptions);
+
+    this.elements.forEach(element => {
+      this.observer.observe(element);
+    });
+  }
+}
+
+// ============================================
+// DASHBOARD FUNCTIONS
+// ============================================
+
+function loadDashboard() {
+  console.log('Loading dashboard...');
+
+  google.script.run
+    .withSuccessHandler(function(stats) {
+      console.log('Dashboard stats received:', stats);
+      dashboardStats = stats;
+      displayDashboardStats(stats);
+    })
+    .withFailureHandler(function(error) {
+      console.error('Failed to load dashboard stats:', error);
+      showError('Failed to load dashboard statistics');
+    })
+    .getDashboardStats();
+}
+
+function displayDashboardStats(stats) {
+  // Update stat numbers
+  document.getElementById('totalAssets').textContent = stats.totalAssets || 0;
+  document.getElementById('goodAssets').textContent = stats.good || 0;
+  document.getElementById('warningAssets').textContent = stats.warnings || 0;
+  document.getElementById('replaceAssets').textContent = stats.needReplacement || 0;
+  document.getElementById('totalRepairCost').textContent = '$' + (stats.totalRepairCost || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  document.getElementById('avgRepairCost').textContent = '$' + (stats.averageRepairCost || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+  // Display top problems
+  displayTopProblems(stats.topProblems || []);
+}
+
+function displayTopProblems(problems) {
+  const container = document.getElementById('topProblemsContainer');
+
+  if (problems.length === 0) {
+    container.innerHTML = '<div class="loading-message">No assets requiring attention</div>';
+    return;
+  }
+
+  let html = '';
+  problems.forEach(asset => {
+    const statusClass = getStatusClass(asset.status);
+    const statusText = getStatusText(asset.status);
+
+    html += `
+      <div class="problem-card">
+        <div class="problem-header">
+          <div>
+            <div class="problem-title">${asset.name || asset.id}</div>
+            <div class="problem-id">${asset.id}</div>
+          </div>
+          <span class="status-badge ${statusClass}">${statusText}</span>
+        </div>
+        <div class="problem-stats">
+          <div class="problem-stat">
+            <div class="problem-stat-label">Total Repairs</div>
+            <div class="problem-stat-value">$${(asset.totalRepairs || 0).toLocaleString()}</div>
+          </div>
+          <div class="problem-stat">
+            <div class="problem-stat-label">% of Replace</div>
+            <div class="problem-stat-value">${((asset.percentOfReplacement || 0) * 100).toFixed(1)}%</div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+function getStatusClass(status) {
+  const statusUpper = (status || '').toUpperCase();
+  if (statusUpper.includes('REPLACE')) return 'replace';
+  if (statusUpper.includes('WARNING')) return 'warning';
+  if (statusUpper.includes('MONITOR')) return 'monitor';
+  return 'good';
+}
+
+function getStatusText(status) {
+  const statusUpper = (status || '').toUpperCase();
+  if (statusUpper.includes('REPLACE')) return 'REPLACE';
+  if (statusUpper.includes('WARNING')) return 'WARNING';
+  if (statusUpper.includes('MONITOR')) return 'MONITOR';
+  return 'GOOD';
+}
+
+// ============================================
+// ASSETS FUNCTIONS
+// ============================================
+
+function loadAssets() {
+  console.log('Loading assets...');
+
+  google.script.run
+    .withSuccessHandler(function(assets) {
+      console.log('Assets received:', assets);
+      allAssets = assets || [];
+      displayAssets(allAssets);
+      populateAssetSelect();
+      populateHistoryFilter();
+    })
+    .withFailureHandler(function(error) {
+      console.error('Failed to load assets:', error);
+      document.getElementById('assetsTableBody').innerHTML =
+        '<tr><td colspan="9" class="loading-cell">Error loading assets: ' + error + '</td></tr>';
+    })
+    .getAssets();
+}
+
+function displayAssets(assets) {
+  const tbody = document.getElementById('assetsTableBody');
+
+  if (!assets || assets.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="loading-cell">No assets found</td></tr>';
+    return;
+  }
+
+  let html = '';
+  assets.forEach(asset => {
+    const statusClass = getStatusClass(asset.status);
+    const purchaseDate = asset.purchaseDate ? new Date(asset.purchaseDate).toLocaleDateString() : 'N/A';
+
+    html += `
+      <tr>
+        <td>${asset.id || 'N/A'}</td>
+        <td>${asset.name || 'Unknown'}</td>
+        <td>${asset.category || 'N/A'}</td>
+        <td>${purchaseDate}</td>
+        <td>$${(asset.replacementCost || 0).toLocaleString()}</td>
+        <td>$${(asset.totalRepairs || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+        <td>${((asset.percentOfReplacement || 0) * 100).toFixed(1)}%</td>
+        <td><span class="status-badge ${statusClass}">${getStatusText(asset.status)}</span></td>
+        <td>
+          <button class="btn btn-danger" onclick="confirmDeleteAssetRepairs('${asset.id}')" style="padding: var(--spacing-2) var(--spacing-3); font-size: var(--font-size-xs);">
+            Clear Repairs
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+}
+
+function confirmDeleteAssetRepairs(assetId) {
+  if (confirm(`Are you sure you want to delete all repairs for ${assetId}? This will reset the asset's repair total to $0.`)) {
+    google.script.run
+      .withSuccessHandler(function(result) {
+        if (result.success) {
+          alert(result.message);
+          loadAssets();
+          loadRepairs();
+          loadDashboard();
+        } else {
+          alert('Error: ' + result.message);
+        }
+      })
+      .withFailureHandler(function(error) {
+        alert('Error deleting repairs: ' + error);
+      })
+      .deleteAssetRepairs(assetId);
+  }
+}
+
+// ============================================
+// REPAIR FORM FUNCTIONS
+// ============================================
+
+function populateAssetSelect() {
+  const select = document.getElementById('assetSelect');
+  if (!select) return;
+
+  let html = '<option value="">Choose an asset...</option>';
+
+  allAssets.forEach(asset => {
+    html += `<option value="${asset.id}"
+              data-replacement-cost="${asset.replacementCost || 0}"
+              data-current-repairs="${asset.totalRepairs || 0}"
+              data-current-percent="${((asset.percentOfReplacement || 0) * 100).toFixed(1)}">
+              ${asset.name || asset.id} - ${asset.id}
+             </option>`;
+  });
+
+  select.innerHTML = html;
+}
+
+// Asset select change handler
+document.addEventListener('DOMContentLoaded', function() {
+  const assetSelect = document.getElementById('assetSelect');
+  if (assetSelect) {
+    assetSelect.addEventListener('change', function() {
+      const selected = this.options[this.selectedIndex];
+      const display = document.getElementById('assetInfoDisplay');
+
+      if (this.value) {
+        document.getElementById('displayReplacementCost').textContent =
+          '$' + Number(selected.dataset.replacementCost || 0).toLocaleString();
+        document.getElementById('displayCurrentRepairs').textContent =
+          '$' + Number(selected.dataset.currentRepairs || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('displayCurrentPercent').textContent =
+          selected.dataset.currentPercent + '%';
+        display.style.display = 'block';
+      } else {
+        display.style.display = 'none';
+      }
+
+      updateCostPreview();
+    });
+  }
+
+  // Cost calculation listeners
+  const costInputs = ['partCost', 'laborHours'];
+  costInputs.forEach(id => {
+    const input = document.getElementById(id);
+    if (input) {
+      input.addEventListener('input', updateCostPreview);
+    }
+  });
+
+  // Labor rate type dropdown handler
+  const laborRateTypeSelect = document.getElementById('laborRateType');
+  if (laborRateTypeSelect) {
+    laborRateTypeSelect.addEventListener('change', function() {
+      const laborRateInput = document.getElementById('laborRate');
+      laborRateInput.value = this.value || 0;
+      updateCostPreview();
+    });
+  }
+
+  // Set today's date as default
+  const dateInput = document.getElementById('repairDate');
+  if (dateInput) {
+    dateInput.valueAsDate = new Date();
+  }
+});
+
+function updateCostPreview() {
+  const assetSelect = document.getElementById('assetSelect');
+  const partCost = parseFloat(document.getElementById('partCost').value) || 0;
+  const laborHours = parseFloat(document.getElementById('laborHours').value) || 0;
+  const laborRate = parseFloat(document.getElementById('laborRate').value) || 0;
+
+  const laborCost = laborHours * laborRate;
+  const totalCost = partCost + laborCost;
+
+  const preview = document.getElementById('costPreview');
+
+  if (assetSelect.value && (partCost > 0 || laborCost > 0)) {
+    const selected = assetSelect.options[assetSelect.selectedIndex];
+    const currentRepairs = parseFloat(selected.dataset.currentRepairs) || 0;
+    const replacementCost = parseFloat(selected.dataset.replacementCost) || 0;
+    const newTotal = currentRepairs + totalCost;
+    const newPercent = replacementCost > 0 ? (newTotal / replacementCost * 100) : 0;
+
+    document.getElementById('previewPartCost').textContent = '$' + partCost.toFixed(2);
+    document.getElementById('previewLaborCost').textContent = '$' + laborCost.toFixed(2);
+    document.getElementById('previewTotalCost').textContent = '$' + totalCost.toFixed(2);
+    document.getElementById('previewNewTotal').textContent = '$' + newTotal.toFixed(2);
+    document.getElementById('previewNewPercent').textContent = newPercent.toFixed(1) + '%';
+
+    preview.style.display = 'block';
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
+// Form submission
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.getElementById('addRepairForm');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      submitRepair();
+    });
+  }
+});
+
+function submitRepair() {
+  const submitBtn = document.getElementById('submitRepairBtn');
+  const originalText = submitBtn.innerHTML;
+
+  // Disable button and show loading
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<span>Adding Repair...</span>';
+
+  const laborRateType = document.getElementById('laborRateType');
+  const laborRateValue = laborRateType.value;
+  const laborRateLabel = laborRateType.options[laborRateType.selectedIndex].text;
+
+  const repairData = {
+    assetId: document.getElementById('assetSelect').value,
+    repairDate: document.getElementById('repairDate').value,
+    partName: document.getElementById('partName').value,
+    partCost: document.getElementById('partCost').value,
+    laborHours: document.getElementById('laborHours').value,
+    laborRate: laborRateValue,
+    laborRateType: laborRateLabel,
+    notes: document.getElementById('repairNotes').value,
+    outsideVendorName: document.getElementById('outsideVendorName').value
+  };
+
+  console.log('Submitting repair:', repairData);
+
+  google.script.run
+    .withSuccessHandler(function(result) {
+      console.log('Repair submission result:', result);
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+
+      if (result.success) {
+        showSuccessMessage(result.message);
+        // Reload data
+        loadAssets();
+        loadRepairs();
+        loadDashboard();
+      } else {
+        alert('Error: ' + result.message);
+      }
+    })
+    .withFailureHandler(function(error) {
+      console.error('Failed to add repair:', error);
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+      alert('Error adding repair: ' + error);
+    })
+    .addRepair(repairData);
+}
+
+function showSuccessMessage(message) {
+  document.getElementById('addRepairForm').style.display = 'none';
+  document.getElementById('repairSuccessMessage').style.display = 'block';
+  document.getElementById('successMessageText').textContent = message;
+}
+
+function resetRepairForm() {
+  document.getElementById('addRepairForm').reset();
+  document.getElementById('addRepairForm').style.display = 'block';
+  document.getElementById('repairSuccessMessage').style.display = 'none';
+  document.getElementById('assetInfoDisplay').style.display = 'none';
+  document.getElementById('costPreview').style.display = 'none';
+
+  // Reset labor rate
+  document.getElementById('laborRate').value = 0;
+  document.getElementById('laborRateType').value = '';
+
+  // Set today's date
+  const dateInput = document.getElementById('repairDate');
+  if (dateInput) {
+    dateInput.valueAsDate = new Date();
+  }
+}
+
+// ============================================
+// REPAIR HISTORY FUNCTIONS
+// ============================================
+
+function loadRepairs() {
+  console.log('Loading repairs...');
+
+  google.script.run
+    .withSuccessHandler(function(repairs) {
+      console.log('Repairs received:', repairs);
+      allRepairs = repairs || [];
+      displayRepairs(allRepairs);
+    })
+    .withFailureHandler(function(error) {
+      console.error('Failed to load repairs:', error);
+      document.getElementById('historyTableBody').innerHTML =
+        '<tr><td colspan="9" class="loading-cell">Error loading repairs: ' + error + '</td></tr>';
+    })
+    .getRepairs();
+}
+
+function displayRepairs(repairs) {
+  const tbody = document.getElementById('historyTableBody');
+
+  if (!repairs || repairs.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="loading-cell">No repair history found</td></tr>';
+    return;
+  }
+
+  let html = '';
+  repairs.forEach(repair => {
+    const repairDate = repair.repairDate ? formatDate(repair.repairDate) : 'N/A';
+
+    html += `
+      <tr>
+        <td>${repair.assetId || 'N/A'}</td>
+        <td>${repairDate}</td>
+        <td>${repair.partName || 'N/A'}</td>
+        <td>$${(repair.partCost || 0).toFixed(2)}</td>
+        <td>$${(repair.laborCost || 0).toFixed(2)}</td>
+        <td>$${(repair.totalCost || 0).toFixed(2)}</td>
+        <td>$${(repair.runningTotal || 0).toFixed(2)}</td>
+        <td>${((repair.percentOfReplacement || 0) * 100).toFixed(1)}%</td>
+        <td>
+          <button class="btn btn-danger" onclick="confirmDeleteRepair('${repair.repairId}')" style="padding: var(--spacing-2) var(--spacing-3); font-size: var(--font-size-xs);">
+            Delete
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+}
+
+function formatDate(dateStr) {
+  try {
+    if (!dateStr) return 'N/A';
+
+    // Handle different date formats
+    let date;
+    if (typeof dateStr === 'string') {
+      // Try parsing YYYY-MM-DD format
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        date = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+      } else {
+        date = new Date(dateStr);
+      }
+    } else {
+      date = new Date(dateStr);
+    }
+
+    if (isNaN(date.getTime())) return 'N/A';
+
+    return (date.getMonth() + 1) + '/' + date.getDate() + '/' + date.getFullYear();
+  } catch (e) {
+    console.error('Error formatting date:', e);
+    return 'N/A';
+  }
+}
+
+function confirmDeleteRepair(repairId) {
+  if (confirm('Are you sure you want to delete this repair? Asset totals will be recalculated.')) {
+    google.script.run
+      .withSuccessHandler(function(result) {
+        if (result.success) {
+          alert(result.message);
+          loadAssets();
+          loadRepairs();
+          loadDashboard();
+        } else {
+          alert('Error: ' + result.message);
+        }
+      })
+      .withFailureHandler(function(error) {
+        alert('Error deleting repair: ' + error);
+      })
+      .deleteRepairById(repairId);
+  }
+}
+
+function populateHistoryFilter() {
+  const filter = document.getElementById('historyAssetFilter');
+  if (!filter) return;
+
+  let html = '<option value="">All Assets</option>';
+
+  allAssets.forEach(asset => {
+    html += `<option value="${asset.id}">${asset.name || asset.id}</option>`;
+  });
+
+  filter.innerHTML = html;
+}
+
+// History filtering
+document.addEventListener('DOMContentLoaded', function() {
+  const searchInput = document.getElementById('historySearch');
+  const filterSelect = document.getElementById('historyAssetFilter');
+
+  if (searchInput) {
+    searchInput.addEventListener('input', filterRepairs);
+  }
+
+  if (filterSelect) {
+    filterSelect.addEventListener('change', filterRepairs);
+  }
+});
+
+function filterRepairs() {
+  const searchTerm = document.getElementById('historySearch').value.toLowerCase();
+  const assetFilter = document.getElementById('historyAssetFilter').value;
+
+  let filtered = allRepairs;
+
+  if (assetFilter) {
+    filtered = filtered.filter(r => r.assetId === assetFilter);
+  }
+
+  if (searchTerm) {
+    filtered = filtered.filter(r =>
+      (r.assetId || '').toLowerCase().includes(searchTerm) ||
+      (r.partName || '').toLowerCase().includes(searchTerm)
+    );
+  }
+
+  displayRepairs(filtered);
+}
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+
+function showError(message) {
+  alert('Error: ' + message);
+}
+
+// ============================================
+// INITIALIZATION
+// ============================================
+
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('Initializing application...');
+
+  // Initialize UI modules
+  new ThemeManager();
+  new MobileMenu();
+  new NavigationManager();
+  new AnimateOnScroll();
+
+  // Load all data
+  loadDashboard();
+  loadAssets();
+  loadRepairs();
+
+  console.log('Application initialized successfully');
+});
+
+// ============================================
+// ERROR HANDLING
+// ============================================
+
+window.addEventListener('error', function(e) {
+  console.error('Application error:', e.error);
+});
+
+window.addEventListener('unhandledrejection', function(e) {
+  console.error('Unhandled promise rejection:', e.reason);
+});
+
+console.log('%c Asset Management System', 'font-size: 24px; font-weight: bold; color: #667eea;');
+console.log('%c Powered by Google Apps Script', 'font-size: 14px; color: #6b7280;');
+</script>

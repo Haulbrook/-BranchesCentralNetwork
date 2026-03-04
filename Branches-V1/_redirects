@@ -1,0 +1,14 @@
+# Netlify Redirects Configuration for Deep Roots Dashboard
+# Static assets must be served before catch-all SPA routing
+
+# Serve static assets first (CSS, JS, images)
+/styles/*  /styles/:splat  200
+/js/*      /js/:splat      200
+/assets/*  /assets/:splat  200
+/images/*  /images/:splat  200
+
+# Service Worker
+/sw.js  /sw.js  200
+
+# Single Page Application routing - catch-all must be LAST
+/*  /index.html  200
