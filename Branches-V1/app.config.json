@@ -7,16 +7,15 @@
   },
   "services": {
     "inventory": {
-      "_comment": "REQUIRED: This is your primary backend. Deploy code.js to Google Apps Script and paste the Web App URL here. All API calls route through this endpoint.",
+      "_comment": "Inventory backend — URL is now server-side (gas-proxy). No URL needed here.",
       "name": "Clippings - Inventory Management",
       "description": "Search inventory, manage stock, track equipment",
       "icon": "🌱",
-      "url": "https://script.google.com/macros/s/AKfycbzmTe18gSrdI8Ztl_ZoSo4HcXCwmntylvG6mqOAetDjWjUdHeTejKgP9WKTp7-0OHGH/exec",
       "color": "#4CAF50",
       "keywords": ["inventory", "plants", "stock", "equipment", "supplies"]
     },
     "grading": {
-      "_comment": "Repair vs Replace Tool - Google Apps Script web app",
+      "_comment": "Repair vs Replace Tool — URL kept here because it loads as an iframe (cannot be proxied)",
       "name": "Repair vs Replace",
       "description": "Equipment repair cost analysis and replacement decisions",
       "icon": "🛠️",
@@ -52,18 +51,16 @@
       "keywords": ["crew", "location", "map", "chess", "tracking", "coordinates", "proximity", "nearest", "closest", "team", "position", "where", "logistics", "transportation", "procurement", "emergency", "errand", "delivery", "route", "shipping"]
     },
     "activeJobs": {
-      "_comment": "Active Jobs Dashboard - reads/writes to the Active Work Orders sheet via the inventory backend",
+      "_comment": "Active Jobs Dashboard — URL is now server-side (gas-proxy)",
       "name": "Active Jobs Dashboard",
       "description": "Work order management with PDF parsing and progress tracking",
       "icon": "📋",
-      "sheetId": "13bnntgZiXdCA2KQvJXpIBA1rCBzx3ZmeKakzYFFg7QA",
-      "gasUrl": "https://script.google.com/macros/s/AKfycbxWHqo7-YySZyMKrGTQMcnhhEtg4s_p57o5XhP-9tmxU8aSEBDvQ1CKq1l52I1Te6MneQ/exec",
       "color": "#FF5722"
     }
   },
   "ai": {
     "enabled": true,
-    "claudeApiKey": "__CLAUDE_API_KEY__",
+    "_comment": "API key is now server-side (CLAUDE_API_KEY env var in Netlify)",
     "fallbackMessage": "I can help you with inventory, grading decisions, scheduling, tool rentals, logistics planning, or crew location tracking. What would you like to do?",
     "routingPrompt": "Analyze this query and determine which tool would be most helpful: inventory management, plant grading, scheduling, tool checkout, logistics planning, or crew location map. Return only: 'inventory', 'grading', 'scheduler', 'tools', 'logistics', 'chessmap', or 'general'."
   },
@@ -80,29 +77,26 @@
     "enableAppleOverseer": true
   },
   "agents": {
+    "_comment": "Agent URLs are now server-side (gas-proxy env vars). Only metadata and keywords remain here.",
     "inventory": {
       "name": "Clippings",
       "description": "Inventory, plants, stock, supplies, fleet, trucks",
-      "url": "https://script.google.com/macros/s/AKfycbxa-ldx8OZwPIUh5Bty8tuI91K0eLYqG3DvY7k2RuUp32_ybjcO7m2HsPi4O-m8OaMi/exec",
       "keywords": ["inventory", "stock", "plants", "supplies", "materials", "mulch", "fertilizer", "arborvitae", "truck", "fleet", "mower"]
     },
     "repair": {
       "name": "GradeBot",
       "description": "Equipment repair vs replace, asset grading, maintenance costs",
-      "url": "https://script.google.com/macros/s/AKfycbyfn5brMiPgDd6IZDnNxfXZhQgJqEb-1zC8aSGMOMbE8UayiGgv4E7CGA6wrs0V0XhY/exec",
       "keywords": ["repair", "replace", "asset", "maintenance", "broken", "fix", "cost", "lifecycle", "grading", "grade"]
     },
     "jobs": {
       "name": "Foreman",
       "description": "Active work orders, job progress, line items, crew dispatch",
-      "url": "https://script.google.com/macros/s/AKfycbyE90S18qOnAtgcwqbd0H5WwadOW7GzdAjfKPWOdHvJYB3FtRqeyi7-20xjdAxEBp6xBQ/exec",
       "keywords": ["job", "jobs", "work order", "wo", "task", "tasks", "progress", "active", "client", "drainage", "planting", "landscape job", "line items", "crew", "dispatch", "almost done"]
     },
     "scheduler": {
       "name": "Scheduler",
       "description": "Crew scheduling, daily assignments, calendar management",
-      "keywords": ["schedule", "calendar", "assign", "availability", "tomorrow", "shift", "day off"],
-      "url": ""
+      "keywords": ["schedule", "calendar", "assign", "availability", "tomorrow", "shift", "day off"]
     }
   },
   "masterAgent": {

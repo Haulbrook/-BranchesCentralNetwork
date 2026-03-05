@@ -59,23 +59,15 @@ class ChatManager {
             && config?.enableMasterAgent !== false;
         console.log(`🧠 Master Agent check: masterEnabled=${masterEnabled}, classExists=${!!window.MasterAgent}, configMasterAgent=${JSON.stringify(config?.masterAgent)}, enableMasterAgent=${config?.enableMasterAgent}`);
         if (masterEnabled && window.MasterAgent) {
-            const apiKey = window.app?.config?.ai?.claudeApiKey
-                || localStorage.getItem('dr_claude_key');
-            if (apiKey) {
-                this.masterAgent = new MasterAgent({
-                    agents: window.app?.config?.agents,
-                    apiKey,
-                    model: config?.masterAgent?.model || 'claude-haiku-4-5-20251001',
-                    costGateThreshold: config?.masterAgent?.costGateThreshold || 4,
-                    conversationMemorySize: config?.masterAgent?.conversationMemorySize || 10,
-                    deconstructionSkill: this.deconstructionSkill,
-                    appleOverseer: this.appleOverseer
-                });
-                console.log('🧠 Master Agent connected to ChatManager');
-            } else {
-                console.log('🧠 Master Agent skipped — no API key');
-                this.masterAgent = null;
-            }
+            this.masterAgent = new MasterAgent({
+                agents: window.app?.config?.agents,
+                model: config?.masterAgent?.model || 'claude-haiku-4-5-20251001',
+                costGateThreshold: config?.masterAgent?.costGateThreshold || 4,
+                conversationMemorySize: config?.masterAgent?.conversationMemorySize || 10,
+                deconstructionSkill: this.deconstructionSkill,
+                appleOverseer: this.appleOverseer
+            });
+            console.log('🧠 Master Agent connected to ChatManager');
         } else {
             this.masterAgent = null;
         }
@@ -248,16 +240,13 @@ class ChatManager {
             }
         }
 
-        // Try OpenAI first if API key is configured
-        const hasClaude = window.app?.config?.ai?.claudeApiKey || localStorage.getItem('dr_claude_key');
-        if (hasClaude) {
-            try {
-                const result = await this.processWithOpenAI(message);
-                return result;
-            } catch (error) {
-                console.error('OpenAI processing failed, falling back to keyword matching:', error);
-                // Fall through to keyword matching below
-            }
+        // Try Claude proxy (always available since key is server-side)
+        try {
+            const result = await this.processWithOpenAI(message);
+            return result;
+        } catch (error) {
+            console.error('Claude processing failed, falling back to keyword matching:', error);
+            // Fall through to keyword matching below
         }
 
         try {
@@ -445,7 +434,7 @@ class ChatManager {
         let bestScore = 0;
 
         for (const [agentKey, agentConfig] of Object.entries(agents)) {
-            if (!agentConfig.keywords || !agentConfig.url) continue;
+            if (!agentConfig.keywords) continue;
 
             let score = 0;
             for (const keyword of agentConfig.keywords) {
@@ -558,7 +547,7 @@ class ChatManager {
             id,
             name: tool.name,
             description: tool.description,
-            available: !!tool.url
+            available: true
         }));
     }
 

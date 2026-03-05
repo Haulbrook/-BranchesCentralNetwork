@@ -11,18 +11,11 @@ class DashboardManager {
         this.pendingWorkOrder = null;
         this.selectedPdfFile = null;
 
-        // Config getters: config.json first, then localStorage fallback
+        // Config: all secrets are now server-side. These flags just indicate
+        // whether the service is available (proxy handles the actual URLs/keys).
         this.woCfg = {
-            get gasUrl()    {
-                return window.app?.config?.services?.activeJobs?.gasUrl
-                    || localStorage.getItem('dr_gas_url')
-                    || '';
-            },
-            get claudeKey() {
-                return window.app?.config?.ai?.claudeApiKey
-                    || localStorage.getItem('dr_claude_key')
-                    || '';
-            }
+            get gasUrl()    { return 'proxy'; /* always available via gas-proxy */ },
+            get claudeKey() { return 'proxy'; /* always available via claude-proxy */ }
         };
     }
 
@@ -131,41 +124,25 @@ class DashboardManager {
     // ═══════════════════════════════════════════════════════════════
 
     /**
-     * Load active jobs — uses direct GAS fetch if dr_gas_url is configured,
-     * otherwise falls back to legacy api.callGoogleScript path.
+     * Load active jobs via server-side gas-proxy.
      */
     async loadActiveJobs() {
         try {
-            const gasUrl = this.woCfg.gasUrl;
-            if (gasUrl) {
-                const res  = await fetch(gasUrl + '?action=getProgress', { cache: 'no-store' });
-                const json = await res.json();
-                if (!json.success) throw new Error(json.error || 'Server error');
-                this.metrics.set('activeJobs', json.data || []);
-                return;
-            }
-
-            // Fallback: legacy API path
             const api = window.app?.api;
-            if (!api) {
-                console.warn('API not available for jobs loading');
-                return;
-            }
-
-            if (!this.hasConfiguredEndpoints()) {
-                console.log('No endpoints configured - skipping jobs load');
-                this.metrics.set('activeJobs', []);
-                return;
-            }
-
-            const result = await api.callGoogleScript('inventory', 'getActiveJobs', []);
-            const jobs = (result && result.jobs) ? result.jobs : (Array.isArray(result) ? result : []);
-            this.metrics.set('activeJobs', jobs);
-
+            const res = await fetch('/.netlify/functions/gas-proxy', {
+                method: 'POST',
+                headers: api?._proxyHeaders() || { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    service: 'activeJobs',
+                    method: 'GET',
+                    params: { action: 'getProgress' }
+                })
+            });
+            const json = await res.json();
+            if (!json.success) throw new Error(json.error || 'Server error');
+            this.metrics.set('activeJobs', json.data || []);
         } catch (error) {
-            if (!error.message?.includes('No Google Apps Script endpoint')) {
-                console.error('Failed to load active jobs:', error);
-            }
+            console.error('Failed to load active jobs:', error);
             this.metrics.set('activeJobs', []);
         }
     }
@@ -271,14 +248,17 @@ class DashboardManager {
 
         document.getElementById('woDetailModal')?.classList.remove('hidden');
 
-        const gasUrl = this.woCfg.gasUrl;
-        if (!gasUrl) {
-            if (bodyEl) bodyEl.innerHTML = '<div class="wo-parse-error">GAS URL not configured. Open Settings → Work Order Dashboard to add it.</div>';
-            return;
-        }
-
         try {
-            const res  = await fetch(gasUrl + '?action=getLineItems&woNumber=' + encodeURIComponent(woNumber));
+            const api = window.app?.api;
+            const res = await fetch('/.netlify/functions/gas-proxy', {
+                method: 'POST',
+                headers: api?._proxyHeaders() || { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    service: 'activeJobs',
+                    method: 'GET',
+                    params: { action: 'getLineItems', woNumber }
+                })
+            });
             const json = await res.json();
             if (!json.success) throw new Error(json.error || 'Server error');
             this.renderDetailBody(wo, json.data || []);
@@ -350,8 +330,6 @@ class DashboardManager {
         const woNumber = row.dataset.wo;
         const rowIndex = parseInt(row.dataset.row);
         const newValue = row.dataset.done !== 'true';
-        const gasUrl   = this.woCfg.gasUrl;
-        if (!gasUrl) return;
 
         row.dataset.done = String(newValue);
         row.classList.toggle('done', newValue);
@@ -361,10 +339,15 @@ class DashboardManager {
         if (savingEl) savingEl.classList.remove('hidden');
 
         try {
-            await fetch(gasUrl, {
+            const api = window.app?.api;
+            await fetch('/.netlify/functions/gas-proxy', {
                 method: 'POST',
-                mode:   'no-cors',
-                body:   JSON.stringify({ action: 'toggleCheckbox', woNumber, rowIndex, value: newValue })
+                headers: api?._proxyHeaders() || { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    service: 'activeJobs',
+                    method: 'POST',
+                    body: { action: 'toggleCheckbox', woNumber, rowIndex, value: newValue }
+                })
             });
             setTimeout(async () => {
                 await this.loadActiveJobs();
@@ -477,12 +460,6 @@ class DashboardManager {
      * into a structured work order JSON
      */
     async parseWithClaude() {
-        const claudeKey = this.woCfg.claudeKey;
-        if (!claudeKey) {
-            this.showParseError('Claude API key not set — open Settings → Work Order Dashboard to add it.');
-            return;
-        }
-
         const isPdf   = !document.getElementById('woPdfMode')?.classList.contains('hidden');
         const rawText = document.getElementById('woRawInput')?.value.trim() || '';
         if (isPdf && !this.selectedPdfFile) { this.showParseError('Please select a PDF file first.'); return; }
@@ -536,19 +513,18 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
                 content = instruction + '\n\nWork order text:\n"""\n' + rawText + '\n"""';
             }
 
-            const res = await fetch('https://api.anthropic.com/v1/messages', {
+            const api = window.app?.api;
+            const res = await fetch('/.netlify/functions/claude-proxy', {
                 method: 'POST',
-                headers: {
-                    'content-type':                              'application/json',
-                    'x-api-key':                                 claudeKey,
-                    'anthropic-version':                         '2023-06-01',
-                    'anthropic-beta':                            'pdfs-2024-09-25',
-                    'anthropic-dangerous-direct-browser-access': 'true'
-                },
+                headers: api?._proxyHeaders() || { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    model:      isPdf ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001',
-                    max_tokens: 2048,
-                    messages:   [{ role: 'user', content }]
+                    type: 'parse',
+                    payload: {
+                        model:      isPdf ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001',
+                        max_tokens: 2048,
+                        messages:   [{ role: 'user', content }],
+                        beta:       isPdf ? 'pdfs-2024-09-25' : undefined
+                    }
                 })
             });
 
@@ -628,12 +604,6 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
      * Confirm and POST the new work order to GAS
      */
     async confirmAddWO() {
-        const gasUrl  = this.woCfg.gasUrl;
-        if (!gasUrl) {
-            this.showToast('GAS URL not configured — open Settings to add it.', 'error');
-            return;
-        }
-
         const woNumber = document.getElementById('pfWonumber')?.value.trim() || '';
         const jobName  = document.getElementById('pfJobname')?.value.trim()  || '';
         if (!woNumber) { this.showToast('WO Number is required.', 'error'); return; }
@@ -675,10 +645,15 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
         if (btn)     btn.disabled = true;
 
         try {
-            await fetch(gasUrl, {
+            const api = window.app?.api;
+            await fetch('/.netlify/functions/gas-proxy', {
                 method: 'POST',
-                mode:   'no-cors',
-                body:   JSON.stringify({ action: 'addWorkOrder', data })
+                headers: api?._proxyHeaders() || { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    service: 'activeJobs',
+                    method: 'POST',
+                    body: { action: 'addWorkOrder', data }
+                })
             });
             document.getElementById('addWoModal')?.classList.add('hidden');
             this.showToast('WO #' + woNumber + ' queued — refreshing in 2s…', 'success');
@@ -947,14 +922,16 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
     }
 
     async loadActivityFeed() {
-        // getRecentActivity lives in the Clippings/inventory GAS (doPost uses function/parameters keys)
-        const gasUrl = window.app?.config?.services?.inventory?.url;
-        if (!gasUrl) return;
-
         try {
-            const res = await fetch(gasUrl, {
+            const api = window.app?.api;
+            const res = await fetch('/.netlify/functions/gas-proxy', {
                 method: 'POST',
-                body: JSON.stringify({ function: 'getRecentActivity', parameters: [10] })
+                headers: api?._proxyHeaders() || { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    service: 'inventory',
+                    method: 'POST',
+                    body: { function: 'getRecentActivity', parameters: [10] }
+                })
             });
             const json = await res.json();
             if (!json.success) return;

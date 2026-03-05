@@ -6,9 +6,6 @@
 class MasterAgent {
     constructor(config = {}) {
         this.agents = config.agents || {};
-        this.apiKey = config.apiKey
-            || window.app?.config?.ai?.claudeApiKey
-            || localStorage.getItem('dr_claude_key');
         this.deconstructionSkill = config.deconstructionSkill || null;
         this.appleOverseer = config.appleOverseer || null;
         this.model = config.model || 'claude-haiku-4-5-20251001';
@@ -31,11 +28,6 @@ class MasterAgent {
      */
     async orchestrate(message, context = {}) {
         try {
-            if (!this.apiKey) {
-                console.log('🧠 Master: no API key, skipping');
-                return { handled: false };
-            }
-
             // Cost gate: check if we even need the master
             const gate = this.shouldUseMaster(message);
             if (!gate.useMaster) {
@@ -243,7 +235,7 @@ Rules:
         if (!api) throw new Error('API manager not available');
 
         const agentCalls = plan.agents
-            .filter(a => this.agents[a.key]?.url) // Only call agents with URLs
+            .filter(a => this.agents[a.key]) // Only call configured agents
             .map(a => ({
                 key: a.key,
                 query: a.subQuery || plan.originalMessage
@@ -437,7 +429,6 @@ Instructions:
      * Update configuration (called when settings change)
      */
     updateConfig(config = {}) {
-        if (config.apiKey) this.apiKey = config.apiKey;
         if (config.agents) this.agents = config.agents;
         if (config.model) this.model = config.model;
         if (config.costGateThreshold) this.costGateThreshold = config.costGateThreshold;

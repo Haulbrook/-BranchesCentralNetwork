@@ -254,16 +254,6 @@ class UIManager {
     }
 
     populateSettingsForm() {
-        // Tool URLs are hardcoded — no fields to populate
-
-        // Load Claude API Key — config.json first, localStorage fallback
-        const claudeKeyField = document.getElementById('claudeApiKey');
-        if (claudeKeyField) {
-            const configKey = window.app?.config?.ai?.claudeApiKey;
-            const savedKey = localStorage.getItem('dr_claude_key');
-            claudeKeyField.value = configKey || savedKey || '';
-        }
-
         // Load theme preference
         const darkMode = document.getElementById('darkMode');
         if (darkMode) {

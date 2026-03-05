@@ -279,7 +279,6 @@ class ConfigManager {
                     name: "Clippings - Inventory Management",
                     description: "Search inventory, manage stock, track equipment",
                     icon: "🌱",
-                    url: "https://script.google.com/macros/s/AKfycbzmTe18gSrdI8Ztl_ZoSo4HcXCwmntylvG6mqOAetDjWjUdHeTejKgP9WKTp7-0OHGH/exec",
                     color: "#4CAF50",
                     keywords: ["inventory", "plants", "stock", "equipment", "supplies"],
                     enabled: true
@@ -288,7 +287,6 @@ class ConfigManager {
                     name: "Grade & Sell Decision Tool",
                     description: "Plant quality assessment and pricing decisions",
                     icon: "⭐",
-                    url: "https://script.google.com/macros/s/AKfycbz6-tC9CSeqrpZrIhC-4Omhw671fhJ062dxyn6m8EnglwEz4vywkB_g7zlHWVG-vDRh/exec",
                     color: "#FF9800",
                     keywords: ["grade", "quality", "pricing", "assessment", "sell", "plants"],
                     enabled: true

@@ -227,10 +227,8 @@
       chatInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
           const settings = JSON.parse(localStorage.getItem('dashboardSettings') || '{}');
-          const hasApiKey = settings.claudeApiKey || settings.openaiApiKey;
-          const hasAgents = window.app?.config?.agents && Object.keys(window.app.config.agents).length > 0;
-
-          if (!hasApiKey && !hasAgents) {
+          // API keys are now server-side — always allow chat
+          if (false) {
             e.preventDefault();
             
             // Show friendly message

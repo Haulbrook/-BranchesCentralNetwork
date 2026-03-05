@@ -36,6 +36,36 @@ class DashboardApp {
         try {
             console.log('🚀 Initializing Dashboard App...');
 
+            // Initialize auth (Supabase)
+            this.auth = new AuthManager();
+            const authEnabled = this.auth.init();
+
+            if (authEnabled) {
+                this.auth.renderLoginScreen();
+                const isAuthed = await this.auth.isAuthenticated();
+                if (!isAuthed) {
+                    // Show login, hide loading screen
+                    this.auth._showLoginScreen();
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    // Wait for auth state change to continue init
+                    this.auth.supabase.auth.onAuthStateChange((event) => {
+                        if (event === 'SIGNED_IN' && !this.isInitialized) {
+                            this._continueInit();
+                        }
+                    });
+                    return;
+                }
+            }
+
+            await this._continueInit();
+        } catch (error) {
+            console.error('❌ Initialization error:', error);
+            this.handleInitializationError(error);
+        }
+    }
+
+    async _continueInit() {
+        try {
             // Show loading screen
             this.showLoadingScreen(true);
 
@@ -539,8 +569,16 @@ Recommendations: ${report.recommendations.length}
 
     async initializeUser() {
         try {
-            // Try to get user info from Google Apps Script or mock for development
-            this.user = await this.getUserInfo();
+            // Use Supabase auth user if available
+            if (this.auth?.user) {
+                this.user = {
+                    name: this.auth.user.user_metadata?.full_name || this.auth.user.email?.split('@')[0] || 'User',
+                    email: this.auth.user.email || '',
+                    avatar: '🌱'
+                };
+            } else {
+                this.user = await this.getUserInfo();
+            }
             this.ui.updateUserInfo(this.user);
         } catch (error) {
             console.warn('⚠️ Using guest user:', error);
@@ -611,11 +649,14 @@ Recommendations: ${report.recommendations.length}
         // Settings
         document.getElementById('settingsBtn')?.addEventListener('click', () => {
             this.ui.showSettingsModal();
-            // Populate WO Dashboard settings — config.json first, localStorage fallback
-            const workOrdersGasUrl = document.getElementById('workOrdersGasUrl');
-            if (workOrdersGasUrl) workOrdersGasUrl.value = this.config?.services?.activeJobs?.gasUrl || localStorage.getItem('dr_gas_url') || '';
-            const claudeApiKey = document.getElementById('claudeApiKey');
-            if (claudeApiKey) claudeApiKey.value = this.config?.ai?.claudeApiKey || localStorage.getItem('dr_claude_key') || '';
+        });
+
+        // Logout
+        document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+            if (this.auth) {
+                await this.auth.signOut();
+                window.location.reload();
+            }
         });
 
         // Mobile menu
@@ -726,22 +767,22 @@ Recommendations: ${report.recommendations.length}
             const toolId = btn.dataset.tool;
             const tool = this.config.services[toolId];
 
-            const isConfigured = tool && tool.url && tool.url !== '' && !tool.url.includes('YOUR_') && !tool.url.includes('_HERE');
+            // Native tools (inventory) don't need a URL; proxy-backed tools are always available
+            const nativeToolIds = ['inventory'];
+            const isConfigured = tool && (nativeToolIds.includes(toolId) || (tool.url && tool.url !== '' && !tool.url.includes('YOUR_') && !tool.url.includes('_HERE')));
 
             if (!isConfigured) {
-                // Tool not configured - style as disabled but DON'T use btn.disabled
                 btn.classList.add('tool-disabled');
                 btn.style.opacity = '0.5';
                 btn.style.cursor = 'not-allowed';
                 btn.title = 'Tool not configured yet';
                 console.log(`  ❌ ${toolId}: Not configured`);
             } else {
-                // Tool configured - enable fully
                 btn.classList.remove('tool-disabled');
                 btn.style.opacity = '1';
                 btn.style.cursor = 'pointer';
                 btn.title = tool.description || tool.name;
-                console.log(`  ✅ ${toolId}: ${tool.url.substring(0, 50)}...`);
+                console.log(`  ✅ ${toolId}: configured`);
             }
         });
     }
@@ -803,13 +844,17 @@ Recommendations: ${report.recommendations.length}
             return;
         }
 
-        if (!tool.url || tool.url === '' || tool.url.includes('YOUR_') || tool.url.includes('_HERE')) {
+        // Native tools don't need a URL; iframe tools do
+        const nativeTools = { inventory: 'InventoryView' };
+        const isNative = nativeTools[toolId] && window[nativeTools[toolId]];
+
+        if (!isNative && (!tool.url || tool.url === '' || tool.url.includes('YOUR_') || tool.url.includes('_HERE'))) {
             console.error(`❌ Tool ${toolId} not configured`);
             alert('Tool not configured. Please set the URL in settings.');
             return;
         }
 
-        console.log(`✅ Tool ${toolId} configured, loading: ${tool.url.substring(0, 50)}...`);
+        console.log(`✅ Tool ${toolId} ready`);
 
         this.currentTool = toolId;
 
@@ -830,11 +875,10 @@ Recommendations: ${report.recommendations.length}
         document.getElementById('toolDescription').textContent = tool.description;
 
         // Native views for specific tools (no iframe, no Google auth needed)
-        const nativeTools = { inventory: 'InventoryView' };
         const nativeViewEl = document.getElementById('nativeToolView');
         const iframeContainer = document.querySelector('.tool-iframe-container');
 
-        if (nativeTools[toolId] && window[nativeTools[toolId]]) {
+        if (isNative) {
             // Show native view, hide iframe
             iframeContainer.classList.add('hidden');
             nativeViewEl.classList.remove('hidden');
@@ -1015,17 +1059,6 @@ Recommendations: ${report.recommendations.length}
             enableMasterAgent: document.getElementById('enableMasterAgent')?.checked ?? true
         };
 
-        // Save Claude API Key separately (more secure)
-        const claudeKeyInput = document.getElementById('claudeApiKey');
-        if (claudeKeyInput && claudeKeyInput.value && claudeKeyInput.value.trim() !== '') {
-            localStorage.setItem('dr_claude_key', claudeKeyInput.value.trim());
-            console.log('✅ Claude API key saved');
-        }
-
-        // Save Work Order Dashboard GAS URL
-        const workOrdersGasUrl = document.getElementById('workOrdersGasUrl');
-        if (workOrdersGasUrl) localStorage.setItem('dr_gas_url', workOrdersGasUrl.value.trim());
-
         // Save to localStorage
         localStorage.setItem('dashboardSettings', JSON.stringify(settings));
 
@@ -1143,8 +1176,8 @@ Recommendations: ${report.recommendations.length}
                 version: "1.0.0"
             },
             services: {
-                inventory: { name: "Inventory Management", icon: "🌱", url: "https://script.google.com/macros/s/AKfycbzmTe18gSrdI8Ztl_ZoSo4HcXCwmntylvG6mqOAetDjWjUdHeTejKgP9WKTp7-0OHGH/exec", color: "#4CAF50" },
-                grading: { name: "Grade & Sell", icon: "⭐", url: "https://script.google.com/macros/s/AKfycbz6-tC9CSeqrpZrIhC-4Omhw671fhJ062dxyn6m8EnglwEz4vywkB_g7zlHWVG-vDRh/exec", color: "#FF9800" },
+                inventory: { name: "Inventory Management", icon: "🌱", color: "#4CAF50" },
+                grading: { name: "Grade & Sell", icon: "⭐", color: "#FF9800" },
                 scheduler: { name: "Scheduler", icon: "📅", url: "crew-scheduler.html", color: "#2196F3" },
                 tools: { name: "Tool Checkout", icon: "🔧", url: "hand-tool-checkout.html", color: "#9C27B0" },
                 chessmap: { name: "DRL Chess Map & Logistics", icon: "♟️", url: "https://dailychessmap.netlify.app/", color: "#673AB7" }

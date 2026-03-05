@@ -94,20 +94,8 @@ class APIManager {
         };
     }
 
-    // Google Apps Script Integration
-    // NOTE: This calls the backend Google Apps Script via doPost()
-    // The script must be deployed as a web app with:
-    // - Execute as: User accessing the web app
-    // - Who has access: Anyone (or specific users)
+    // Google Apps Script Integration — routed through server-side proxy
     async callGoogleScript(scriptId, functionName, parameters = []) {
-        // Use the inventory endpoint as the primary backend
-        // All functions are routed through the same doPost() endpoint
-        const endpoint = this.endpoints.get('inventory');
-
-        if (!endpoint) {
-            throw new Error('No Google Apps Script endpoint configured. Please add your script URL in config.json under services.inventory.url');
-        }
-
         const requestData = {
             function: functionName,
             parameters: parameters,
@@ -115,7 +103,16 @@ class APIManager {
         };
 
         try {
-            const response = await this.makeRequest('POST', endpoint, requestData);
+            // Route through gas-proxy. scriptId maps to a service name (inventory, grading, etc.)
+            const response = await fetch('/.netlify/functions/gas-proxy', {
+                method: 'POST',
+                headers: this._proxyHeaders(),
+                body: JSON.stringify({
+                    service: scriptId,
+                    method: 'POST',
+                    body: requestData
+                })
+            });
             return this.handleGoogleScriptResponse(response);
         } catch (error) {
             console.error('Google Apps Script call failed:', error);
@@ -134,24 +131,9 @@ class APIManager {
     }
 
     /**
-     * Get the Claude API key (config.json first, localStorage fallback)
-     */
-    getClaudeApiKey() {
-        return window.app?.config?.ai?.claudeApiKey
-            || localStorage.getItem('dr_claude_key')
-            || '';
-    }
-
-    /**
-     * Claude Integration — tool-use chat call via Anthropic Messages API
-     * Replaces former OpenAI callOpenAI() method
+     * Claude Integration — tool-use chat call via server-side proxy
      */
     async callOpenAI(message, context = {}) {
-        const apiKey = this.getClaudeApiKey();
-        if (!apiKey) {
-            throw new Error('Claude API key not configured. Please add it in Settings.');
-        }
-
         // Build conversation messages (Anthropic format: no system role in messages)
         const messages = [];
 
@@ -163,21 +145,19 @@ class APIManager {
         const tools = this.getClaudeTools(context);
 
         try {
-            const response = await fetch('https://api.anthropic.com/v1/messages', {
+            const response = await fetch('/.netlify/functions/claude-proxy', {
                 method: 'POST',
-                headers: {
-                    'content-type': 'application/json',
-                    'x-api-key': apiKey,
-                    'anthropic-version': '2023-06-01',
-                    'anthropic-dangerous-direct-browser-access': 'true'
-                },
+                headers: this._proxyHeaders(),
                 body: JSON.stringify({
-                    model: 'claude-haiku-4-5-20251001',
-                    max_tokens: 500,
-                    system: this.getChatSystemPrompt(context),
-                    messages,
-                    tools,
-                    tool_choice: { type: 'any' }
+                    type: 'chat',
+                    payload: {
+                        model: 'claude-haiku-4-5-20251001',
+                        max_tokens: 500,
+                        system: this.getChatSystemPrompt(context),
+                        messages,
+                        tools,
+                        tool_choice: { type: 'any' }
+                    }
                 })
             });
 
@@ -299,11 +279,6 @@ User: "schedule tomorrow" -> Call open_tool with toolId='scheduler'`;
      * Kept as callOpenAIChat for backwards compat with masterAgent.js
      */
     async callOpenAIChat(messages, options = {}) {
-        const apiKey = this.getClaudeApiKey();
-        if (!apiKey) {
-            throw new Error('Claude API key not configured');
-        }
-
         // Separate system message from conversation messages
         let systemPrompt = '';
         const convMessages = [];
@@ -320,29 +295,24 @@ User: "schedule tomorrow" -> Call open_tool with toolId='scheduler'`;
             convMessages.unshift({ role: 'user', content: '(continue)' });
         }
 
-        const body = {
-            model: 'claude-haiku-4-5-20251001',
-            max_tokens: options.maxTokens || 800,
-            messages: convMessages,
-            temperature: options.temperature ?? 0.2
-        };
-
-        if (systemPrompt) body.system = systemPrompt;
-
         // For JSON mode, append instruction to system prompt
         if (options.jsonMode) {
-            body.system = (body.system || '') + '\n\nIMPORTANT: Respond with valid JSON only. No markdown, no commentary — just the JSON object.';
+            systemPrompt = (systemPrompt || '') + '\n\nIMPORTANT: Respond with valid JSON only. No markdown, no commentary — just the JSON object.';
         }
 
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
+        const response = await fetch('/.netlify/functions/claude-proxy', {
             method: 'POST',
-            headers: {
-                'content-type': 'application/json',
-                'x-api-key': apiKey,
-                'anthropic-version': '2023-06-01',
-                'anthropic-dangerous-direct-browser-access': 'true'
-            },
-            body: JSON.stringify(body)
+            headers: this._proxyHeaders(),
+            body: JSON.stringify({
+                type: 'analysis',
+                payload: {
+                    model: 'claude-haiku-4-5-20251001',
+                    max_tokens: options.maxTokens || 800,
+                    messages: convMessages,
+                    temperature: options.temperature ?? 0.2,
+                    system: systemPrompt || undefined
+                }
+            })
         });
 
         if (!response.ok) {
@@ -407,37 +377,54 @@ User: "schedule tomorrow" -> Call open_tool with toolId='scheduler'`;
     }
 
     /**
-     * Claude Agent Integration
-     * Calls a deployed Claude agent via GET (Apps Script web app)
+     * Claude Agent Integration — routed through gas-proxy
      */
     async callAgent(agentKey, query, sessionId) {
-        const agentConfig = window.app?.config?.agents?.[agentKey];
-        if (!agentConfig?.url) {
+        // Map agent keys to gas-proxy service names
+        const agentServiceMap = {
+            inventory: 'inventoryAgent',
+            repair: 'repairAgent',
+            jobs: 'jobsAgent'
+        };
+        const service = agentServiceMap[agentKey];
+        if (!service) {
             throw new Error(`Agent '${agentKey}' not configured`);
         }
 
-        const params = new URLSearchParams({
-            q: query,
-            session: sessionId || 'branches-' + Date.now()
+        const response = await fetch('/.netlify/functions/gas-proxy', {
+            method: 'POST',
+            headers: this._proxyHeaders(),
+            body: JSON.stringify({
+                service,
+                method: 'GET',
+                params: {
+                    q: query,
+                    session: sessionId || 'branches-' + Date.now()
+                }
+            })
         });
-        const url = agentConfig.url + '?' + params.toString();
-
-        const response = await fetch(url);
         return response.json();
     }
 
     /**
-     * Haiku-powered query routing
-     * Calls backend to determine which agent should handle a query
+     * Haiku-powered query routing — routed through gas-proxy
      */
     async routeQuery(query) {
-        const backendUrl = window.app?.config?.services?.inventory?.url;
-        if (!backendUrl) return null;
-
-        const params = new URLSearchParams({ route: query });
-        const response = await fetch(backendUrl + '?' + params.toString());
-        const data = await response.json();
-        return data.response;  // { agent: "inventory"|"repair"|"jobs"|null, reason: "..." }
+        try {
+            const response = await fetch('/.netlify/functions/gas-proxy', {
+                method: 'POST',
+                headers: this._proxyHeaders(),
+                body: JSON.stringify({
+                    service: 'inventory',
+                    method: 'GET',
+                    params: { route: query }
+                })
+            });
+            const data = await response.json();
+            return data.response;  // { agent: "inventory"|"repair"|"jobs"|null, reason: "..." }
+        } catch (e) {
+            return null;
+        }
     }
 
     // Generic HTTP methods
@@ -731,6 +718,18 @@ User: "schedule tomorrow" -> Call open_tool with toolId='scheduler'`;
             isOnline: this.isOnline,
             endpoints: Array.from(this.endpoints.keys())
         };
+    }
+
+    /**
+     * Build headers for proxy calls (includes auth token when available)
+     */
+    _proxyHeaders() {
+        const headers = { 'Content-Type': 'application/json' };
+        // Phase 2: attach Supabase JWT if user is authenticated
+        if (window._authToken) {
+            headers['Authorization'] = 'Bearer ' + window._authToken;
+        }
+        return headers;
     }
 }
 
