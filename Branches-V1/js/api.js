@@ -134,88 +134,89 @@ class APIManager {
     }
 
     /**
-     * OpenAI Integration
-     * Calls OpenAI API for intelligent chat responses
+     * Get the Claude API key (config.json first, localStorage fallback)
+     */
+    getClaudeApiKey() {
+        return window.app?.config?.ai?.claudeApiKey
+            || localStorage.getItem('dr_claude_key')
+            || '';
+    }
+
+    /**
+     * Claude Integration — tool-use chat call via Anthropic Messages API
+     * Replaces former OpenAI callOpenAI() method
      */
     async callOpenAI(message, context = {}) {
-        const apiKey = window.app?.config?.ai?.openaiApiKey
-            || localStorage.getItem('openaiApiKey');
-
+        const apiKey = this.getClaudeApiKey();
         if (!apiKey) {
-            throw new Error('OpenAI API key not configured. Please add it in Settings.');
+            throw new Error('Claude API key not configured. Please add it in Settings.');
         }
 
-        // Build conversation history for context
-        const messages = [
-            {
-                role: 'system',
-                content: this.getOpenAISystemPrompt(context)
-            }
-        ];
+        // Build conversation messages (Anthropic format: no system role in messages)
+        const messages = [];
 
-        // Add conversation history if provided
         if (context.history && Array.isArray(context.history)) {
-            messages.push(...context.history.slice(-10)); // Last 10 messages for context
+            messages.push(...context.history.slice(-10));
         }
+        messages.push({ role: 'user', content: message });
 
-        // Add current message
-        messages.push({
-            role: 'user',
-            content: message
-        });
+        const tools = this.getClaudeTools(context);
 
         try {
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
+                    'content-type': 'application/json',
+                    'x-api-key': apiKey,
+                    'anthropic-version': '2023-06-01',
+                    'anthropic-dangerous-direct-browser-access': 'true'
                 },
                 body: JSON.stringify({
-                    model: 'gpt-4o-mini', // Using mini for cost-effectiveness; can upgrade to gpt-4 if needed
-                    messages: messages,
-                    temperature: 0.3,
+                    model: 'claude-haiku-4-5-20251001',
                     max_tokens: 500,
-                    tools: this.getOpenAITools(context),
-                    tool_choice: 'required' // Force using a tool
+                    system: this.getChatSystemPrompt(context),
+                    messages,
+                    tools,
+                    tool_choice: { type: 'any' }
                 })
             });
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.error?.message || 'OpenAI API request failed');
+                throw new Error(error.error?.message || 'Claude API request failed');
             }
 
             const data = await response.json();
 
-            // Handle tool calls (new API format)
-            if (data.choices[0].message.tool_calls && data.choices[0].message.tool_calls.length > 0) {
-                const toolCall = data.choices[0].message.tool_calls[0];
+            // Check for tool use in content blocks
+            const toolBlock = data.content?.find(b => b.type === 'tool_use');
+            if (toolBlock) {
                 return {
                     type: 'function_call',
-                    function: toolCall.function.name,
-                    arguments: JSON.parse(toolCall.function.arguments),
-                    message: data.choices[0].message
+                    function: toolBlock.name,
+                    arguments: toolBlock.input,
+                    message: data
                 };
             }
 
-            // Fallback for text response (shouldn't happen with tool_choice: 'required')
+            // Text response fallback
+            const textBlock = data.content?.find(b => b.type === 'text');
             return {
                 type: 'message',
-                content: data.choices[0].message.content || 'No response',
+                content: textBlock?.text || 'No response',
                 usage: data.usage
             };
 
         } catch (error) {
-            console.error('OpenAI API error:', error);
+            console.error('Claude API error:', error);
             throw error;
         }
     }
 
     /**
-     * Get system prompt for OpenAI based on context
+     * System prompt for chat tool-use calls
      */
-    getOpenAISystemPrompt(context) {
+    getChatSystemPrompt(context) {
         const tools = context.tools || [];
         const toolsList = tools.map(t => `- ${t.name}: ${t.description}`).join('\n');
 
@@ -240,74 +241,169 @@ IMPORTANT INSTRUCTIONS:
 - Be brief - the user will see the tool open automatically
 
 Examples:
-User: "show me the crew map" → Call open_tool with toolId='chessmap'
-User: "what tools do I need?" → Call open_tool with toolId='tools'
-User: "find boxwood" → Call search_inventory with query='boxwood'
-User: "schedule tomorrow" → Call open_tool with toolId='scheduler'`;
+User: "show me the crew map" -> Call open_tool with toolId='chessmap'
+User: "what tools do I need?" -> Call open_tool with toolId='tools'
+User: "find boxwood" -> Call search_inventory with query='boxwood'
+User: "schedule tomorrow" -> Call open_tool with toolId='scheduler'`;
     }
 
     /**
-     * Define tools (functions) that OpenAI can call - New API format
+     * Define tools for Claude tool-use (Anthropic format)
      */
-    getOpenAITools(context) {
+    getClaudeTools(context) {
         return [
             {
-                type: 'function',
-                function: {
-                    name: 'open_tool',
-                    description: 'Open a dashboard tool. Use this for ANY query about inventory, scheduling, tools, crew, or locations.',
-                    parameters: {
-                        type: 'object',
-                        properties: {
-                            toolId: {
-                                type: 'string',
-                                enum: ['inventory', 'grading', 'scheduler', 'tools', 'chessmap'],
-                                description: 'Which tool: inventory (plants/materials/search), grading (repair decisions), scheduler (crew/scheduling), tools (equipment checkout/what tools needed), chessmap (crew locations/nearest crew)'
-                            },
-                            reason: {
-                                type: 'string',
-                                description: 'Brief reason'
-                            }
+                name: 'open_tool',
+                description: 'Open a dashboard tool. Use this for ANY query about inventory, scheduling, tools, crew, or locations.',
+                input_schema: {
+                    type: 'object',
+                    properties: {
+                        toolId: {
+                            type: 'string',
+                            enum: ['inventory', 'grading', 'scheduler', 'tools', 'chessmap'],
+                            description: 'Which tool: inventory (plants/materials/search), grading (repair decisions), scheduler (crew/scheduling), tools (equipment checkout/what tools needed), chessmap (crew locations/nearest crew)'
                         },
-                        required: ['toolId']
-                    }
+                        reason: { type: 'string', description: 'Brief reason' }
+                    },
+                    required: ['toolId']
                 }
             },
             {
-                type: 'function',
-                function: {
-                    name: 'search_inventory',
-                    description: 'Search inventory for specific items.',
-                    parameters: {
-                        type: 'object',
-                        properties: {
-                            query: {
-                                type: 'string',
-                                description: 'Item to search'
-                            }
-                        },
-                        required: ['query']
-                    }
+                name: 'search_inventory',
+                description: 'Search inventory for specific items.',
+                input_schema: {
+                    type: 'object',
+                    properties: {
+                        query: { type: 'string', description: 'Item to search' }
+                    },
+                    required: ['query']
                 }
             },
             {
-                type: 'function',
-                function: {
-                    name: 'check_crew_location',
-                    description: 'Find crew locations or nearest crew.',
-                    parameters: {
-                        type: 'object',
-                        properties: {
-                            query: {
-                                type: 'string',
-                                description: 'Location to search'
-                            }
-                        },
-                        required: ['query']
-                    }
+                name: 'check_crew_location',
+                description: 'Find crew locations or nearest crew.',
+                input_schema: {
+                    type: 'object',
+                    properties: {
+                        query: { type: 'string', description: 'Location to search' }
+                    },
+                    required: ['query']
                 }
             }
         ];
+    }
+
+    /**
+     * Lightweight Claude chat call (no tool use)
+     * Used by MasterAgent for analysis and synthesis
+     * Kept as callOpenAIChat for backwards compat with masterAgent.js
+     */
+    async callOpenAIChat(messages, options = {}) {
+        const apiKey = this.getClaudeApiKey();
+        if (!apiKey) {
+            throw new Error('Claude API key not configured');
+        }
+
+        // Separate system message from conversation messages
+        let systemPrompt = '';
+        const convMessages = [];
+        for (const msg of messages) {
+            if (msg.role === 'system') {
+                systemPrompt += (systemPrompt ? '\n\n' : '') + msg.content;
+            } else {
+                convMessages.push(msg);
+            }
+        }
+
+        // Claude requires messages to start with user role
+        if (convMessages.length === 0 || convMessages[0].role !== 'user') {
+            convMessages.unshift({ role: 'user', content: '(continue)' });
+        }
+
+        const body = {
+            model: 'claude-haiku-4-5-20251001',
+            max_tokens: options.maxTokens || 800,
+            messages: convMessages,
+            temperature: options.temperature ?? 0.2
+        };
+
+        if (systemPrompt) body.system = systemPrompt;
+
+        // For JSON mode, append instruction to system prompt
+        if (options.jsonMode) {
+            body.system = (body.system || '') + '\n\nIMPORTANT: Respond with valid JSON only. No markdown, no commentary — just the JSON object.';
+        }
+
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'content-type': 'application/json',
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01',
+                'anthropic-dangerous-direct-browser-access': 'true'
+            },
+            body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error?.message || 'Claude chat call failed');
+        }
+
+        const data = await response.json();
+        const content = data.content?.[0]?.text || '';
+
+        if (options.jsonMode) {
+            try {
+                // Extract JSON from response (may have markdown wrapping)
+                const jsonMatch = content.match(/\{[\s\S]*\}/);
+                return jsonMatch ? JSON.parse(jsonMatch[0]) : content;
+            } catch (e) {
+                return content;
+            }
+        }
+
+        return content;
+    }
+
+    /**
+     * Call multiple agents in parallel via Promise.allSettled
+     * Returns { agentKey: { response, confidence, sources, error } }
+     */
+    async callAgentsParallel(agentCalls, sessionId) {
+        const results = {};
+
+        const promises = agentCalls.map(async ({ key, query }) => {
+            try {
+                const data = await this.callAgent(key, query, sessionId);
+                return { key, data };
+            } catch (error) {
+                return { key, error: error.message };
+            }
+        });
+
+        const settled = await Promise.allSettled(promises);
+
+        for (const result of settled) {
+            if (result.status === 'fulfilled') {
+                const { key, data, error } = result.value;
+                if (error) {
+                    results[key] = { error };
+                } else {
+                    results[key] = {
+                        response: data.response || data.answer || JSON.stringify(data),
+                        confidence: data.confidence ?? null,
+                        sources: data.sources || [],
+                        error: null
+                    };
+                }
+            } else {
+                // Promise rejected (shouldn't happen with try/catch above)
+                results[result.reason?.key || 'unknown'] = { error: result.reason?.message || 'Unknown error' };
+            }
+        }
+
+        return results;
     }
 
     /**

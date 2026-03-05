@@ -254,27 +254,14 @@ class UIManager {
     }
 
     populateSettingsForm() {
-        const config = window.app?.config?.services;
-        if (config) {
-            const inventoryUrl = document.getElementById('inventoryUrl');
-            const gradingUrl = document.getElementById('gradingUrl');
-            const schedulerUrl = document.getElementById('schedulerUrl');
-            const toolsUrl = document.getElementById('toolsUrl');
-            const chessmapUrl = document.getElementById('chessmapUrl');
+        // Tool URLs are hardcoded — no fields to populate
 
-            if (inventoryUrl) inventoryUrl.value = config.inventory?.url || '';
-            if (gradingUrl) gradingUrl.value = config.grading?.url || '';
-            if (schedulerUrl) schedulerUrl.value = config.scheduler?.url || '';
-            if (toolsUrl) toolsUrl.value = config.tools?.url || '';
-            if (chessmapUrl) chessmapUrl.value = config.chessmap?.url || '';
-        }
-
-        // Load OpenAI API Key — config.json first, localStorage fallback
-        const openaiApiKey = document.getElementById('openaiApiKey');
-        if (openaiApiKey) {
-            const configKey = window.app?.config?.ai?.openaiApiKey;
-            const savedKey = localStorage.getItem('openaiApiKey');
-            openaiApiKey.value = configKey || savedKey || '';
+        // Load Claude API Key — config.json first, localStorage fallback
+        const claudeKeyField = document.getElementById('claudeApiKey');
+        if (claudeKeyField) {
+            const configKey = window.app?.config?.ai?.claudeApiKey;
+            const savedKey = localStorage.getItem('dr_claude_key');
+            claudeKeyField.value = configKey || savedKey || '';
         }
 
         // Load theme preference
@@ -300,6 +287,11 @@ class UIManager {
             const enableAppleOverseer = document.getElementById('enableAppleOverseer');
             if (enableAppleOverseer) {
                 enableAppleOverseer.checked = appConfig.enableAppleOverseer !== false;
+            }
+
+            const enableMasterAgent = document.getElementById('enableMasterAgent');
+            if (enableMasterAgent) {
+                enableMasterAgent.checked = appConfig.enableMasterAgent !== false;
             }
         }
     }

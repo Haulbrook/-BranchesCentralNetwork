@@ -748,6 +748,7 @@ Recommendations: ${report.recommendations.length}
 
     showDashboardView() {
         this.currentTool = null;
+        document.getElementById('gasAuthHint')?.remove();
         document.getElementById('dashboardView')?.classList.remove('hidden');
         document.getElementById('chatInterface')?.classList.add('hidden');
         document.getElementById('toolContainer')?.classList.add('hidden');
@@ -772,6 +773,7 @@ Recommendations: ${report.recommendations.length}
     showChatInterface() {
         console.log('💬 Showing chat interface');
         this.currentTool = null;
+        document.getElementById('gasAuthHint')?.remove();
         document.getElementById('dashboardView')?.classList.add('hidden');
         document.getElementById('chatInterface')?.classList.remove('hidden');
         document.getElementById('toolContainer')?.classList.add('hidden');
@@ -827,17 +829,44 @@ Recommendations: ${report.recommendations.length}
         document.getElementById('toolTitle').textContent = tool.name;
         document.getElementById('toolDescription').textContent = tool.description;
 
+        // Native views for specific tools (no iframe, no Google auth needed)
+        const nativeTools = { inventory: 'InventoryView' };
+        const nativeViewEl = document.getElementById('nativeToolView');
+        const iframeContainer = document.querySelector('.tool-iframe-container');
 
-        // Load tool in iframe
-        this.loadToolInIframe(tool.url);
+        if (nativeTools[toolId] && window[nativeTools[toolId]]) {
+            // Show native view, hide iframe
+            iframeContainer.classList.add('hidden');
+            nativeViewEl.classList.remove('hidden');
+            document.getElementById('toolIframe').src = '';
+            document.getElementById('gasAuthHint')?.remove();
+
+            // Mount native view
+            if (!this._nativeViews) this._nativeViews = {};
+            if (!this._nativeViews[toolId]) {
+                this._nativeViews[toolId] = new window[nativeTools[toolId]]();
+            }
+            this._nativeViews[toolId].mount(nativeViewEl);
+        } else {
+            // Iframe-based tool
+            nativeViewEl.classList.add('hidden');
+            iframeContainer.classList.remove('hidden');
+            this.loadToolInIframe(tool.url);
+        }
     }
 
     loadToolInIframe(url) {
         const iframe = document.getElementById('toolIframe');
         const loading = document.querySelector('.tool-loading');
+        const isGAS = url.includes('script.google.com');
+
+        // Remove any previous auth-hint bar
+        document.getElementById('gasAuthHint')?.remove();
 
         // Show loading
         loading.style.display = 'flex';
+        // Reset loading content in case a previous error replaced it
+        loading.innerHTML = '<div class="loading-spinner" aria-hidden="true"></div><p>Loading tool...</p>';
 
         let hasLoaded = false;
 
@@ -846,24 +875,35 @@ Recommendations: ${report.recommendations.length}
             hasLoaded = true;
             loading.style.display = 'none';
             iframe.removeEventListener('load', onLoad);
+
+            // For GAS tools: we can't inspect cross-origin content to know if
+            // Google showed a sign-in wall vs the real app. Add a persistent
+            // hint bar so users have an escape hatch.
+            if (isGAS) {
+                this.showGasAuthHint(url);
+            }
         };
 
         iframe.addEventListener('load', onLoad);
 
         // Handle load errors (including X-Frame-Options)
         const onError = (errorType = 'unknown') => {
+            const gasMessage = isGAS
+                ? 'This Google Apps Script tool may require you to be signed into Google. Try opening it in a new tab to sign in.'
+                : 'This tool cannot be displayed in an embedded frame due to security restrictions.';
+
             loading.innerHTML = `
                 <div style="text-align: center; color: var(--text-secondary); padding: 2rem;">
-                    <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
-                    <h3 style="margin-bottom: 1rem;">Cannot Load in Frame</h3>
-                    <p style="margin-bottom: 1.5rem; max-width: 400px; margin-left: auto; margin-right: auto;">
-                        This tool cannot be displayed in an embedded frame due to security restrictions.
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">${isGAS ? '🔑' : '🔒'}</div>
+                    <h3 style="margin-bottom: 1rem;">${isGAS ? 'Google Sign-In Required' : 'Cannot Load in Frame'}</h3>
+                    <p style="margin-bottom: 1.5rem; max-width: 440px; margin-left: auto; margin-right: auto;">
+                        ${gasMessage}
                     </p>
                     <button onclick="window.open('${url}', '_blank')" class="btn btn-primary" style="margin-right: 0.5rem;">
-                        ↗️ Open in New Tab
+                        Open in New Tab
                     </button>
                     <button onclick="window.app.showDashboardView()" class="btn btn-secondary">
-                        ← Back to Dashboard
+                        Back to Dashboard
                     </button>
                 </div>
             `;
@@ -882,7 +922,6 @@ Recommendations: ${report.recommendations.length}
                 try {
                     const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
                     if (!iframeDoc || iframeDoc.body === null) {
-                        // Likely blocked by X-Frame-Options
                         onError('x-frame-options');
                     }
                 } catch (e) {
@@ -891,12 +930,15 @@ Recommendations: ${report.recommendations.length}
                     if (e.name === 'SecurityError') {
                         hasLoaded = true;
                         loading.style.display = 'none';
+                        if (isGAS) {
+                            this.showGasAuthHint(url);
+                        }
                     } else {
                         onError('blocked');
                     }
                 }
             }
-        }, 3000); // Give it 3 seconds to load
+        }, 3000);
 
         // Final timeout fallback
         setTimeout(() => {
@@ -906,12 +948,50 @@ Recommendations: ${report.recommendations.length}
         }, 10000);
     }
 
+    /**
+     * Show a slim hint bar above the iframe for GAS tools,
+     * giving users a quick "Open in New Tab" escape hatch
+     * when Google auth walls appear inside the iframe.
+     */
+    showGasAuthHint(url) {
+        if (document.getElementById('gasAuthHint')) return;
+
+        const container = document.querySelector('.tool-iframe-container');
+        if (!container) return;
+
+        const hint = document.createElement('div');
+        hint.id = 'gasAuthHint';
+        hint.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:rgba(255,193,7,0.12);border-bottom:1px solid rgba(255,193,7,0.3);font-size:0.85rem;color:var(--text-secondary);gap:12px;';
+        hint.innerHTML = `
+            <span>Not loading correctly? This tool requires a Google sign-in.</span>
+            <div style="display:flex;gap:8px;flex-shrink:0;">
+                <button onclick="window.open('${url}','_blank')" class="btn btn-primary" style="padding:4px 14px;font-size:0.82rem;">Open in New Tab</button>
+                <button onclick="this.closest('#gasAuthHint').remove()" class="btn btn-secondary" style="padding:4px 10px;font-size:0.82rem;">Dismiss</button>
+            </div>
+        `;
+
+        container.insertBefore(hint, container.firstChild);
+    }
+
     refreshCurrentTool() {
-        if (this.currentTool) {
-            const tool = this.config.services[this.currentTool];
-            if (tool && tool.url) {
-                this.loadToolInIframe(tool.url);
+        if (!this.currentTool) return;
+
+        // If it's a native view, re-mount it
+        const nativeView = this._nativeViews?.[this.currentTool];
+        if (nativeView) {
+            const el = document.getElementById('nativeToolView');
+            if (el) {
+                nativeView.mount(el);
+                // If browse data was loaded, refresh it
+                if (nativeView.items?.length > 0) nativeView.loadBrowse();
             }
+            return;
+        }
+
+        // Iframe-based refresh
+        const tool = this.config.services[this.currentTool];
+        if (tool && tool.url) {
+            this.loadToolInIframe(tool.url);
         }
     }
 
@@ -928,39 +1008,26 @@ Recommendations: ${report.recommendations.length}
 
     async saveSettings() {
         const settings = {
-            services: {
-                inventory: { url: document.getElementById('inventoryUrl').value },
-                grading: { url: document.getElementById('gradingUrl').value },
-                scheduler: { url: document.getElementById('schedulerUrl').value },
-                tools: { url: document.getElementById('toolsUrl').value },
-                chessmap: { url: document.getElementById('chessmapUrl').value }
-            },
             darkMode: document.getElementById('darkMode').checked,
             enableAppleOverseer: document.getElementById('enableAppleOverseer')?.checked ?? true,
             enableDeconstructionSkill: document.getElementById('enableDeconstructionSkill')?.checked ?? true,
-            enableForwardThinkerSkill: document.getElementById('enableForwardThinkerSkill')?.checked ?? true
+            enableForwardThinkerSkill: document.getElementById('enableForwardThinkerSkill')?.checked ?? true,
+            enableMasterAgent: document.getElementById('enableMasterAgent')?.checked ?? true
         };
 
-        // Save OpenAI API Key separately (more secure)
-        const openaiApiKey = document.getElementById('openaiApiKey');
-        if (openaiApiKey && openaiApiKey.value && openaiApiKey.value.trim() !== '') {
-            localStorage.setItem('openaiApiKey', openaiApiKey.value.trim());
-            console.log('✅ OpenAI API key saved');
+        // Save Claude API Key separately (more secure)
+        const claudeKeyInput = document.getElementById('claudeApiKey');
+        if (claudeKeyInput && claudeKeyInput.value && claudeKeyInput.value.trim() !== '') {
+            localStorage.setItem('dr_claude_key', claudeKeyInput.value.trim());
+            console.log('✅ Claude API key saved');
         }
 
-        // Save Work Order Dashboard settings
+        // Save Work Order Dashboard GAS URL
         const workOrdersGasUrl = document.getElementById('workOrdersGasUrl');
         if (workOrdersGasUrl) localStorage.setItem('dr_gas_url', workOrdersGasUrl.value.trim());
-        const claudeApiKey = document.getElementById('claudeApiKey');
-        if (claudeApiKey && claudeApiKey.value.trim()) localStorage.setItem('dr_claude_key', claudeApiKey.value.trim());
 
         // Save to localStorage
         localStorage.setItem('dashboardSettings', JSON.stringify(settings));
-        localStorage.setItem('inventoryUrl', settings.services.inventory.url);
-        localStorage.setItem('gradingUrl', settings.services.grading.url);
-        localStorage.setItem('schedulerUrl', settings.services.scheduler.url);
-        localStorage.setItem('toolsUrl', settings.services.tools.url);
-        localStorage.setItem('chessmapUrl', settings.services.chessmap.url);
 
         // Apply dark mode
         if (settings.darkMode) {
@@ -972,10 +1039,10 @@ Recommendations: ${report.recommendations.length}
         }
 
         // Update config
-        Object.assign(this.config.services, settings.services);
         this.config.enableAppleOverseer = settings.enableAppleOverseer;
         this.config.enableDeconstructionSkill = settings.enableDeconstructionSkill;
         this.config.enableForwardThinkerSkill = settings.enableForwardThinkerSkill;
+        this.config.enableMasterAgent = settings.enableMasterAgent;
 
         // Reinitialize skills with new settings
         await this.initializeSkills();
@@ -1076,11 +1143,11 @@ Recommendations: ${report.recommendations.length}
                 version: "1.0.0"
             },
             services: {
-                inventory: { name: "Inventory Management", icon: "🌱", url: "", color: "#4CAF50" },
-                grading: { name: "Grade & Sell", icon: "⭐", url: "", color: "#FF9800" },
-                scheduler: { name: "Scheduler", icon: "📅", url: "", color: "#2196F3" },
-                tools: { name: "Tool Checkout", icon: "🔧", url: "", color: "#9C27B0" },
-                chessmap: { name: "DRL Chess Map & Logistics", icon: "♟️", url: "", color: "#673AB7" }
+                inventory: { name: "Inventory Management", icon: "🌱", url: "https://script.google.com/macros/s/AKfycbzmTe18gSrdI8Ztl_ZoSo4HcXCwmntylvG6mqOAetDjWjUdHeTejKgP9WKTp7-0OHGH/exec", color: "#4CAF50" },
+                grading: { name: "Grade & Sell", icon: "⭐", url: "https://script.google.com/macros/s/AKfycbz6-tC9CSeqrpZrIhC-4Omhw671fhJ062dxyn6m8EnglwEz4vywkB_g7zlHWVG-vDRh/exec", color: "#FF9800" },
+                scheduler: { name: "Scheduler", icon: "📅", url: "crew-scheduler.html", color: "#2196F3" },
+                tools: { name: "Tool Checkout", icon: "🔧", url: "hand-tool-checkout.html", color: "#9C27B0" },
+                chessmap: { name: "DRL Chess Map & Logistics", icon: "♟️", url: "https://dailychessmap.netlify.app/", color: "#673AB7" }
             },
             ai: {
                 enabled: true,

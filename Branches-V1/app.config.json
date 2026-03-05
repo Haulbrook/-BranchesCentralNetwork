@@ -63,7 +63,6 @@
   },
   "ai": {
     "enabled": true,
-    "openaiApiKey": "__OPENAI_API_KEY__",
     "claudeApiKey": "__CLAUDE_API_KEY__",
     "fallbackMessage": "I can help you with inventory, grading decisions, scheduling, tool rentals, logistics planning, or crew location tracking. What would you like to do?",
     "routingPrompt": "Analyze this query and determine which tool would be most helpful: inventory management, plant grading, scheduling, tool checkout, logistics planning, or crew location map. Return only: 'inventory', 'grading', 'scheduler', 'tools', 'logistics', 'chessmap', or 'general'."
@@ -98,7 +97,19 @@
       "description": "Active work orders, job progress, line items, crew dispatch",
       "url": "https://script.google.com/macros/s/AKfycbyE90S18qOnAtgcwqbd0H5WwadOW7GzdAjfKPWOdHvJYB3FtRqeyi7-20xjdAxEBp6xBQ/exec",
       "keywords": ["job", "jobs", "work order", "wo", "task", "tasks", "progress", "active", "client", "drainage", "planting", "landscape job", "line items", "crew", "dispatch", "almost done"]
+    },
+    "scheduler": {
+      "name": "Scheduler",
+      "description": "Crew scheduling, daily assignments, calendar management",
+      "keywords": ["schedule", "calendar", "assign", "availability", "tomorrow", "shift", "day off"],
+      "url": ""
     }
+  },
+  "masterAgent": {
+    "enabled": true,
+    "model": "claude-haiku-4-5-20251001",
+    "costGateThreshold": 4,
+    "conversationMemorySize": 10
   },
   "deployment": {
     "_comment": "Deployment strategy: Backend (code.js) goes to Google Apps Script. Frontend (this dashboard) goes to GitHub Pages or Netlify.",

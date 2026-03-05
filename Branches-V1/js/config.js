@@ -53,19 +53,7 @@ class ConfigManager {
                 this.config = this.mergeConfigs(this.config, settings);
             }
 
-            // Load individual tool URLs
-            const toolUrls = {
-                inventory: localStorage.getItem('inventoryUrl'),
-                grading: localStorage.getItem('gradingUrl'),
-                scheduler: localStorage.getItem('schedulerUrl'),
-                tools: localStorage.getItem('toolsUrl')
-            };
-
-            Object.entries(toolUrls).forEach(([key, url]) => {
-                if (url && this.config.services[key]) {
-                    this.config.services[key].url = url;
-                }
-            });
+            // Tool URLs are hardcoded in getDefaultConfig() — no localStorage override
         } catch (error) {
             console.warn('Error loading local settings:', error);
         }
@@ -291,7 +279,7 @@ class ConfigManager {
                     name: "Clippings - Inventory Management",
                     description: "Search inventory, manage stock, track equipment",
                     icon: "🌱",
-                    url: "",
+                    url: "https://script.google.com/macros/s/AKfycbzmTe18gSrdI8Ztl_ZoSo4HcXCwmntylvG6mqOAetDjWjUdHeTejKgP9WKTp7-0OHGH/exec",
                     color: "#4CAF50",
                     keywords: ["inventory", "plants", "stock", "equipment", "supplies"],
                     enabled: true
@@ -300,7 +288,7 @@ class ConfigManager {
                     name: "Grade & Sell Decision Tool",
                     description: "Plant quality assessment and pricing decisions",
                     icon: "⭐",
-                    url: "",
+                    url: "https://script.google.com/macros/s/AKfycbz6-tC9CSeqrpZrIhC-4Omhw671fhJ062dxyn6m8EnglwEz4vywkB_g7zlHWVG-vDRh/exec",
                     color: "#FF9800",
                     keywords: ["grade", "quality", "pricing", "assessment", "sell", "plants"],
                     enabled: true
@@ -309,7 +297,7 @@ class ConfigManager {
                     name: "Daily Scheduler",
                     description: "Crew scheduling and task management",
                     icon: "📅",
-                    url: "",
+                    url: "crew-scheduler.html",
                     color: "#2196F3",
                     keywords: ["schedule", "crew", "tasks", "calendar", "planning"],
                     enabled: true
@@ -318,7 +306,7 @@ class ConfigManager {
                     name: "Tool Rental Checkout",
                     description: "Hand tool rental and checkout system",
                     icon: "🔧",
-                    url: "",
+                    url: "hand-tool-checkout.html",
                     color: "#9C27B0",
                     keywords: ["tools", "rental", "checkout", "equipment", "maintenance"],
                     enabled: true
@@ -327,7 +315,7 @@ class ConfigManager {
                     name: "DRL Chess Map & Logistics",
                     description: "Real-time crew location tracking, logistics planning, and vendor proximity",
                     icon: "♟️",
-                    url: "",
+                    url: "https://dailychessmap.netlify.app/",
                     color: "#673AB7",
                     keywords: ["crew", "location", "map", "chess", "tracking", "logistics"],
                     enabled: true

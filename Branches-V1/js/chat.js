@@ -22,6 +22,7 @@ class ChatManager {
         this.deconstructionSkill = null;
         this.forwardThinkerSkill = null;
         this.appleOverseer = null;
+        this.masterAgent = null;
     }
 
     /**
@@ -51,6 +52,32 @@ class ChatManager {
             if (this.forwardThinkerSkill && this.forwardThinkerSkill.connectOverseer) {
                 this.forwardThinkerSkill.connectOverseer(this.appleOverseer);
             }
+        }
+
+        // Initialize Master Agent if available and enabled
+        const masterEnabled = config?.masterAgent?.enabled !== false
+            && config?.enableMasterAgent !== false;
+        console.log(`🧠 Master Agent check: masterEnabled=${masterEnabled}, classExists=${!!window.MasterAgent}, configMasterAgent=${JSON.stringify(config?.masterAgent)}, enableMasterAgent=${config?.enableMasterAgent}`);
+        if (masterEnabled && window.MasterAgent) {
+            const apiKey = window.app?.config?.ai?.claudeApiKey
+                || localStorage.getItem('dr_claude_key');
+            if (apiKey) {
+                this.masterAgent = new MasterAgent({
+                    agents: window.app?.config?.agents,
+                    apiKey,
+                    model: config?.masterAgent?.model || 'claude-haiku-4-5-20251001',
+                    costGateThreshold: config?.masterAgent?.costGateThreshold || 4,
+                    conversationMemorySize: config?.masterAgent?.conversationMemorySize || 10,
+                    deconstructionSkill: this.deconstructionSkill,
+                    appleOverseer: this.appleOverseer
+                });
+                console.log('🧠 Master Agent connected to ChatManager');
+            } else {
+                console.log('🧠 Master Agent skipped — no API key');
+                this.masterAgent = null;
+            }
+        } else {
+            this.masterAgent = null;
         }
     }
 
@@ -152,6 +179,45 @@ class ChatManager {
     async processMessage(message) {
         let response = { content: '', type: 'general' };
 
+        // Step 0: Try Master Agent orchestration for multi-domain queries
+        if (this.masterAgent) {
+            try {
+                const masterResult = await this.masterAgent.orchestrate(message, {
+                    history: this.messageHistory.slice(-10).map(m => ({
+                        role: m.sender === 'user' ? 'user' : 'assistant',
+                        content: m.content
+                    })),
+                    sessionId: this.currentConversationId
+                });
+
+                if (masterResult.handled && masterResult.response) {
+                    let masterResponse = masterResult.response;
+
+                    // Apply Forward Thinker skill if available
+                    if (this.forwardThinkerSkill) {
+                        try {
+                            const actionType = this.forwardThinkerSkill.classifyAction(message);
+                            const ftContext = {
+                                toolId: masterResponse.agentsUsed?.[0] || 'general',
+                                confidence: 0.9,
+                                currentTime: new Date().toISOString(),
+                                hasResults: true,
+                                requiresNotification: message.toLowerCase().includes('notify') || message.toLowerCase().includes('alert')
+                            };
+                            const forwardThinking = this.forwardThinkerSkill.predictNextSteps(message, ftContext);
+                            if (forwardThinking?.success) {
+                                masterResponse.content += this.formatForwardThinkingResponse(forwardThinking.predictions);
+                            }
+                        } catch (e) { /* non-critical */ }
+                    }
+
+                    return masterResponse;
+                }
+            } catch (error) {
+                console.warn('🧠 Master Agent failed, falling back to pipeline:', error);
+            }
+        }
+
         // Step 1: Try Haiku-powered agent routing via backend
         let agentRoute = null;
         try {
@@ -183,8 +249,8 @@ class ChatManager {
         }
 
         // Try OpenAI first if API key is configured
-        const hasOpenAI = window.app?.config?.ai?.openaiApiKey || localStorage.getItem('openaiApiKey');
-        if (hasOpenAI) {
+        const hasClaude = window.app?.config?.ai?.claudeApiKey || localStorage.getItem('dr_claude_key');
+        if (hasClaude) {
             try {
                 const result = await this.processWithOpenAI(message);
                 return result;
@@ -709,8 +775,8 @@ class ChatManager {
             return content;
         }
 
-        // Agent responses: badge is HTML, rest is markdown — split and format
-        if (type === 'agent_response') {
+        // Agent/master responses: badge is HTML, rest is markdown — split and format
+        if (type === 'agent_response' || type === 'master_synthesis' || type === 'master_single' || type === 'master_fallback') {
             const badgeEnd = content.indexOf('</div>');
             if (badgeEnd !== -1) {
                 const badge = content.slice(0, badgeEnd + 6);

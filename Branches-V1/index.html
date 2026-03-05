@@ -27,7 +27,7 @@
     <meta name="twitter:image" content="https://branchesv1.netlify.app/images/og-image.svg">
     <meta name="twitter:image:alt" content="Deep Roots Operations Dashboard - Landscaping management platform">
 
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://api.anthropic.com https://api.openai.com https://api.open-meteo.com; img-src 'self' data: https:; frame-src 'self' https://script.google.com https://script.googleusercontent.com https://dailychessmap.netlify.app;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://api.anthropic.com https://api.open-meteo.com; img-src 'self' data: https:; frame-src 'self' https://script.google.com https://script.googleusercontent.com https://dailychessmap.netlify.app;">
     <title>Deep Roots Operations Dashboard</title>
     <!-- Force light mode as default -->
     <script>
@@ -36,18 +36,18 @@
         }
     </script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
-    <link rel="stylesheet" href="styles/main.css?v=20260224f">
-    <link rel="stylesheet" href="styles/components.css?v=20260224f">
+    <link rel="stylesheet" href="styles/main.css?v=20260305b">
+    <link rel="stylesheet" href="styles/components.css?v=20260305b">
     <!-- Enhanced v2.0 Professional Components -->
-    <link rel="stylesheet" href="styles/enhanced-theme.css?v=20260224f">
-    <link rel="stylesheet" href="styles/enhanced-components.css?v=20260224f">
+    <link rel="stylesheet" href="styles/enhanced-theme.css?v=20260305b">
+    <link rel="stylesheet" href="styles/enhanced-components.css?v=20260305b">
     <!-- AI Skills Styles -->
-    <link rel="stylesheet" href="styles/wizard.css?v=20260224f">
-    <link rel="stylesheet" href="styles/skills.css?v=20260224f">
+    <link rel="stylesheet" href="styles/wizard.css?v=20260305b">
+    <link rel="stylesheet" href="styles/skills.css?v=20260305b">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="branches-v1-fixes.css?v=20260227a">
+    <link rel="stylesheet" href="branches-v1-fixes.css?v=20260305b">
 </head>
 <body>
     <!-- Skip to main content link for accessibility -->
@@ -125,6 +125,14 @@
                         <!-- Recent queries will be populated dynamically -->
                     </div>
                 </div>
+
+                <div class="nav-section" role="group" aria-labelledby="settings-heading">
+                    <h3 id="settings-heading" class="sr-only">Settings</h3>
+                    <button id="settingsBtn" class="nav-item" aria-label="Open settings">
+                        <span class="nav-icon" aria-hidden="true">⚙️</span>
+                        <span class="nav-text">Settings</span>
+                    </button>
+                </div>
             </nav>
 
             <div class="sidebar-footer">
@@ -135,8 +143,6 @@
                         <div class="user-email" id="userEmail">...</div>
                     </div>
                 </div>
-                <button id="overseerBtn" class="settings-btn" aria-label="Open Apple Overseer" style="margin-right:4px;">🍎<span id="overseerStatusBadge" class="overseer-status-badge"></span></button>
-                <button id="settingsBtn" class="settings-btn" aria-label="Open settings">⚙️</button>
             </div>
         </aside>
 
@@ -301,6 +307,8 @@
                         <p>Loading tool...</p>
                     </div>
                 </div>
+                <!-- Native tool views (replace iframe for specific tools) -->
+                <div id="nativeToolView" class="native-tool-view hidden"></div>
             </section>
         </main>
     </div>
@@ -314,29 +322,6 @@
             </div>
             <div class="modal-body">
                 <div class="setting-group">
-                    <h3>Tool Configuration</h3>
-                    <div class="setting-item">
-                        <label for="inventoryUrl">Inventory Tool URL:</label>
-                        <input type="url" id="inventoryUrl" placeholder="https://script.google.com/...">
-                    </div>
-                    <div class="setting-item">
-                        <label for="gradingUrl">Grading Tool URL:</label>
-                        <input type="url" id="gradingUrl" placeholder="https://script.google.com/...">
-                    </div>
-                    <div class="setting-item">
-                        <label for="schedulerUrl">Scheduler Tool URL:</label>
-                        <input type="url" id="schedulerUrl" placeholder="https://script.google.com/...">
-                    </div>
-                    <div class="setting-item">
-                        <label for="toolsUrl">Tools Checkout URL:</label>
-                        <input type="url" id="toolsUrl" placeholder="https://script.google.com/...">
-                    </div>
-                    <div class="setting-item">
-                        <label for="chessmapUrl">DRL Chess Map URL:</label>
-                        <input type="url" id="chessmapUrl" placeholder="https://dailychessmap.netlify.app/">
-                    </div>
-                </div>
-                <div class="setting-group">
                     <h3>Appearance</h3>
                     <div class="setting-item">
                         <label for="darkMode">Dark Mode:</label>
@@ -346,13 +331,13 @@
                 <div class="setting-group">
                     <h3>AI Configuration</h3>
                     <div class="setting-item">
-                        <label for="openaiApiKey">🤖 OpenAI API Key:</label>
-                        <input type="password" id="openaiApiKey" placeholder="sk-..." autocomplete="off">
+                        <label for="claudeApiKey">🤖 Claude API Key:</label>
+                        <input type="password" id="claudeApiKey" placeholder="sk-ant-..." autocomplete="off">
                         <p style="font-size: 12px; color: var(--text-secondary, #666); margin-top: 5px;">
-                            Enable intelligent AI chat responses. Get your key at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">platform.openai.com/api-keys</a>
+                            Enable intelligent AI chat responses. Get your key at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer">console.anthropic.com</a>
                         </p>
                         <div class="security-notice" style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 8px; margin-top: 8px; font-size: 12px;">
-                            <strong>⚠️ Security Notice:</strong> API keys stored in browser localStorage may be visible to browser extensions or scripts. For production use, consider implementing server-side API key management. Use a key with limited permissions and set spending limits in your OpenAI dashboard.
+                            <strong>⚠️ Security Notice:</strong> API keys stored in browser localStorage may be visible to browser extensions or scripts. For production use, consider implementing server-side API key management. Use a key with limited permissions and set spending limits in your Anthropic dashboard.
                         </div>
                     </div>
                 </div>
@@ -363,13 +348,6 @@
                         <input type="url" id="workOrdersGasUrl" placeholder="https://script.google.com/macros/s/…/exec">
                         <p style="font-size: 12px; color: var(--text-secondary, #666); margin-top: 5px;">
                             Deploy → New Deployment → Web App · Execute as: Me · Who has access: Anyone
-                        </p>
-                    </div>
-                    <div class="setting-item">
-                        <label for="claudeApiKey">Anthropic Claude API Key:</label>
-                        <input type="password" id="claudeApiKey" placeholder="sk-ant-…" autocomplete="off">
-                        <p style="font-size: 12px; color: var(--text-secondary, #666); margin-top: 5px;">
-                            Used for parsing work order PDFs. Stored in this browser only.
                         </p>
                     </div>
                 </div>
@@ -398,6 +376,13 @@
                     <div class="setting-item">
                         <label for="enableForwardThinkerSkill">Enable Predictive Suggestions:</label>
                         <input type="checkbox" id="enableForwardThinkerSkill">
+                    </div>
+                    <div class="setting-item">
+                        <label for="enableMasterAgent">🧠 Enable Master Agent Orchestration:</label>
+                        <input type="checkbox" id="enableMasterAgent" checked>
+                        <p style="font-size: 12px; color: var(--text-secondary, #666); margin-top: 5px;">
+                            Routes complex queries to multiple agents in parallel and synthesizes cross-domain responses
+                        </p>
                     </div>
                 </div>
             </div>
@@ -602,21 +587,25 @@
     <div id="toastContainer" class="toast-container" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
     <!-- Scripts -->
-    <script src="js/config.js?v=20260224f"></script>
-    <script src="js/utils.js?v=20260224f"></script>
-    <script src="js/api.js?v=20260301a"></script>
-    <script src="js/ui.js?v=20260224f"></script>
+    <script src="js/config.js?v=20260305b"></script>
+    <script src="js/utils.js?v=20260305b"></script>
+    <script src="js/api.js?v=20260305b"></script>
+    <script src="js/ui.js?v=20260305b"></script>
     <!-- AI Skills -->
-    <script src="js/setupWizard.js?v=20260224f"></script>
-    <script src="js/deconstructionRebuildSkill.js?v=20260224f"></script>
-    <script src="js/forwardThinkerSkill.js?v=20260224f"></script>
+    <script src="js/setupWizard.js?v=20260305b"></script>
+    <script src="js/deconstructionRebuildSkill.js?v=20260305b"></script>
+    <script src="js/forwardThinkerSkill.js?v=20260305b"></script>
     <!-- Apple Overseer -->
-    <script src="js/appleOverseer.js?v=20260224f"></script>
+    <script src="js/appleOverseer.js?v=20260305b"></script>
+    <!-- Master Agent Orchestration -->
+    <script src="js/masterAgent.js?v=20260305b"></script>
+    <!-- Native Tool Views -->
+    <script src="js/inventoryView.js?v=20260305a"></script>
     <!-- Core Components -->
-    <script src="js/chat.js?v=20260301a"></script>
-    <script src="js/tools.js?v=20260224f"></script>
-    <script src="js/dashboard.js?v=20260224g"></script>
-    <script src="js/main.js?v=20260301b"></script>
+    <script src="js/chat.js?v=20260305b"></script>
+    <script src="js/tools.js?v=20260305b"></script>
+    <script src="js/dashboard.js?v=20260305b"></script>
+    <script src="js/main.js?v=20260305b"></script>
 
     <!-- Dashboard and Toast initialization handled by main.js and dashboard.js -->
 
@@ -631,6 +620,6 @@
         }
     </script>
     -->
-    <script src="branches-v1-fixes.js?v=20260227a"></script>
+    <script src="branches-v1-fixes.js?v=20260305b"></script>
 </body>
 </html>

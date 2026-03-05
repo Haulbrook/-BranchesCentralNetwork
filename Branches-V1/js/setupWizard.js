@@ -54,12 +54,12 @@ class SetupWizard {
                 description: 'Configure AI capabilities for advanced reasoning and analysis.',
                 fields: [
                     {
-                        name: 'openaiApiKey',
-                        label: 'OpenAI API Key (Optional)',
+                        name: 'claudeApiKey',
+                        label: 'Claude API Key (Optional)',
                         type: 'password',
-                        placeholder: 'sk-...',
+                        placeholder: 'sk-ant-...',
                         required: false,
-                        helpText: 'For enhanced AI capabilities in deconstruction and forward thinking'
+                        helpText: 'For enhanced AI capabilities in chat, routing, and forward thinking'
                     },
                     {
                         name: 'enableDeconstructionSkill',
