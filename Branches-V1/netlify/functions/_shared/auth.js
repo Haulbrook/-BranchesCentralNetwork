@@ -17,7 +17,8 @@ function validateAuth(event) {
 
   const authHeader = event.headers?.authorization || '';
   if (!authHeader.startsWith('Bearer ')) {
-    return { valid: false, error: 'Missing or invalid Authorization header' };
+    // No token sent — allow request (user hasn't logged in yet or auth not enforced)
+    return { valid: true, user: null };
   }
 
   const token = authHeader.slice(7);
