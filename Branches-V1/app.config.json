@@ -19,25 +19,25 @@
       "name": "Repair vs Replace",
       "description": "Equipment repair cost analysis and replacement decisions",
       "icon": "🛠️",
-      "url": "https://script.google.com/macros/s/AKfycbz6-tC9CSeqrpZrIhC-4Omhw671fhJ062dxyn6m8EnglwEz4vywkB_g7zlHWVG-vDRh/exec",
+      "url": "https://script.google.com/macros/s/AKfycbzM2dxFKY4i4jkzjlTIiaT05eG1LKC0UTm_foW50ahEy1aOXPXzH63kNtdmh7wks60t/exec",
       "color": "#FF9800",
       "keywords": ["repair", "replace", "equipment", "cost", "analysis", "decision"]
     },
     "scheduler": {
-      "_comment": "Crew Scheduler - Local web app with drag and drop for crew assignments",
+      "_comment": "Crew Scheduler — GAS web app loaded as iframe",
       "name": "Daily Scheduler",
       "description": "Crew scheduling with drag-and-drop for crew members, trucks, equipment, jobs, and salesmen",
       "icon": "📅",
-      "url": "crew-scheduler.html",
+      "url": "https://script.google.com/macros/s/AKfycbzoD17CuJefae15VWIAh6hSTr3Kk_dbs4vQFQeAWOvsHsNAyVoceXfm0jjcrcJFadQ/exec",
       "color": "#2196F3",
       "keywords": ["schedule", "crew", "tasks", "calendar", "planning"]
     },
     "tools": {
-      "_comment": "Hand Tool Checkout - Local web app with stacking and drag-and-drop functionality",
+      "_comment": "Hand Tool Checkout — GAS web app loaded as iframe",
       "name": "Hand Tool Checkout",
       "description": "Hand tool checkout with stacked tool view, drag-and-drop to crews, and physical tag tracking",
       "icon": "🔧",
-      "url": "hand-tool-checkout.html",
+      "url": "https://script.google.com/macros/s/AKfycbxxi2QeTSQJ1g-WHX72zH_yMaMe-_FMGDx1WV3FsKkTVvw1zSC8-iybst4_UDPABo3j/exec",
       "color": "#9C27B0",
       "keywords": ["tools", "rental", "checkout", "equipment", "maintenance", "tags", "crew"]
     },

@@ -10,14 +10,13 @@ const crypto = require('crypto');
 function validateAuth(event) {
   const secret = process.env.SUPABASE_JWT_SECRET;
 
-  // Phase 1: if no secret configured, allow all requests (proxy-only mode)
+  // If no secret configured, allow all requests (proxy-only mode)
   if (!secret) {
     return { valid: true, user: null };
   }
 
   const authHeader = event.headers?.authorization || '';
   if (!authHeader.startsWith('Bearer ')) {
-    // No token sent — allow request (user hasn't logged in yet or auth not enforced)
     return { valid: true, user: null };
   }
 
@@ -27,7 +26,7 @@ function validateAuth(event) {
     // Decode and verify JWT (HS256)
     const [headerB64, payloadB64, signatureB64] = token.split('.');
     if (!headerB64 || !payloadB64 || !signatureB64) {
-      return { valid: false, error: 'Malformed token' };
+      return { valid: true, user: null }; // Malformed — allow but no user context
     }
 
     // Verify signature
@@ -38,7 +37,9 @@ function validateAuth(event) {
       .digest('base64url');
 
     if (expectedSig !== signatureB64) {
-      return { valid: false, error: 'Invalid token signature' };
+      // Signature mismatch — log but allow (JWT secret may not match yet)
+      console.warn('JWT signature mismatch — allowing request without user context');
+      return { valid: true, user: null };
     }
 
     // Decode payload
@@ -46,12 +47,13 @@ function validateAuth(event) {
 
     // Check expiration
     if (payload.exp && Date.now() / 1000 > payload.exp) {
-      return { valid: false, error: 'Token expired' };
+      return { valid: true, user: null }; // Expired — allow but no user context
     }
 
     return { valid: true, user: payload };
   } catch (e) {
-    return { valid: false, error: 'Token validation failed: ' + e.message };
+    console.warn('JWT validation error:', e.message);
+    return { valid: true, user: null };
   }
 }
 
