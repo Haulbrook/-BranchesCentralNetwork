@@ -477,9 +477,9 @@
                 <!-- Add New Tool -->
                 <div class="add-section">
                     <div class="add-form">
-                        <input type="text" id="newToolType" class="input-field" placeholder="Tool Type (e.g., Hammer)">
-                        <input type="text" id="newToolName" class="input-field" placeholder="Tool Name (e.g., Hammer #1)">
-                        <input type="text" id="newToolTag" class="input-field" placeholder="Tag (e.g., T-011)">
+                        <input type="text" id="newToolType" class="input-field" maxlength="50" placeholder="Tool Type (e.g., Hammer)">
+                        <input type="text" id="newToolName" class="input-field" maxlength="100" placeholder="Tool Name (e.g., Hammer #1)">
+                        <input type="text" id="newToolTag" class="input-field" maxlength="20" placeholder="Tag (e.g., T-011)">
                         <button class="btn" onclick="addNewTool()">➕ Add Tool</button>
                     </div>
                 </div>
@@ -493,7 +493,7 @@
                 <!-- Add New Crew -->
                 <div class="add-section">
                     <div class="add-form">
-                        <input type="text" id="newCrewName" class="input-field" placeholder="Crew Name (e.g., Crew A, John's Team)">
+                        <input type="text" id="newCrewName" class="input-field" maxlength="100" placeholder="Crew Name (e.g., Crew A, John's Team)">
                         <button class="btn" onclick="addCrew()">➕ Add Crew</button>
                     </div>
                 </div>
@@ -508,6 +508,22 @@
         let crews = [];
         let expandedStacks = new Set();
         let draggedTool = null;
+        let _idCounter = 0;
+
+        function generateId() {
+            return Date.now() * 1000 + (++_idCounter % 1000);
+        }
+
+        // Security: HTML escape for user-provided values
+        function escapeHtml(text) {
+            if (typeof text !== 'string') return String(text);
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
 
         // Initialize with default tools - Imported from Google Sheets Inventory
         function getDefaultTools() {
@@ -677,9 +693,16 @@
         function loadFromLocalStorage() {
             const stored = localStorage.getItem(getStorageKey());
             if (stored) {
-                const data = JSON.parse(stored);
-                tools = data.tools || getDefaultTools();
-                crews = data.crews || [];
+                try {
+                    const data = JSON.parse(stored);
+                    tools = data.tools || getDefaultTools();
+                    crews = data.crews || [];
+                } catch (e) {
+                    console.warn('Corrupted tool data, resetting:', e.message);
+                    tools = getDefaultTools();
+                    crews = [];
+                    localStorage.removeItem(getStorageKey());
+                }
             } else {
                 tools = getDefaultTools();
                 crews = [];
@@ -701,13 +724,19 @@
         function loadPreset(num) {
             const stored = localStorage.getItem(`handtools_preset_${num}`);
             if (stored) {
-                const data = JSON.parse(stored);
-                tools = data.tools || getDefaultTools();
-                crews = data.crews || [];
-                saveToLocalStorage();
-                renderTools();
-                renderCrews();
-                showToast(`Preset ${num} loaded!`, 'success');
+                try {
+                    const data = JSON.parse(stored);
+                    tools = data.tools || getDefaultTools();
+                    crews = data.crews || [];
+                    saveToLocalStorage();
+                    renderTools();
+                    renderCrews();
+                    showToast(`Preset ${num} loaded!`, 'success');
+                } catch (e) {
+                    console.warn('Corrupted preset data:', e.message);
+                    localStorage.removeItem(`handtools_preset_${num}`);
+                    showToast(`Preset ${num} is corrupted and was removed`, 'error');
+                }
             } else {
                 showToast(`Preset ${num} is empty`, 'error');
             }
@@ -721,6 +750,11 @@
 
             if (!type || !name || !tag) {
                 showToast('Please fill in all fields', 'error');
+                return;
+            }
+
+            if (type.length > 50 || name.length > 100 || tag.length > 20) {
+                showToast('Input exceeds maximum length', 'error');
                 return;
             }
 
@@ -770,11 +804,13 @@
                 const availableCount = groupTools.filter(t => !t.crewId).length;
                 const totalCount = groupTools.length;
 
+                const safeType = escapeHtml(type);
+
                 if (isExpanded) {
                     return `
-                        <div class="tool-stack expanded" onclick="toggleStack('${type}', event)">
+                        <div class="tool-stack expanded" data-stack-type="${safeType}" onclick="toggleStack(this.dataset.stackType, event)">
                             <div class="stack-header">
-                                <div class="stack-name">🔽 ${type}</div>
+                                <div class="stack-name">🔽 ${safeType}</div>
                                 <div class="stack-count">${availableCount} / ${totalCount} available</div>
                             </div>
                             <div class="stack-items">
@@ -785,8 +821,8 @@
                                          ondragstart="handleToolDragStart(event)"
                                          ondragend="handleToolDragEnd(event)"
                                          onclick="event.stopPropagation()">
-                                        <div class="tool-name">${tool.name}</div>
-                                        <div class="tool-tag ${tool.crewId ? 'checked-out' : ''}">${tool.tag}</div>
+                                        <div class="tool-name">${escapeHtml(tool.name)}</div>
+                                        <div class="tool-tag ${tool.crewId ? 'checked-out' : ''}">${escapeHtml(tool.tag)}</div>
                                         ${tool.crewId ? '<div style="font-size: 0.85em; color: var(--error); margin-top: 5px;">Checked Out</div>' : ''}
                                     </div>
                                 `).join('')}
@@ -795,9 +831,9 @@
                     `;
                 } else {
                     return `
-                        <div class="tool-stack" onclick="toggleStack('${type}', event)">
+                        <div class="tool-stack" data-stack-type="${safeType}" onclick="toggleStack(this.dataset.stackType, event)">
                             <div class="stack-header">
-                                <div class="stack-name">▶️ ${type}</div>
+                                <div class="stack-name">▶️ ${safeType}</div>
                                 <div class="stack-count">x ${totalCount}</div>
                             </div>
                             <div style="font-size: 0.9em; color: var(--gray-600); margin-top: 5px;">
@@ -832,8 +868,18 @@
                 return;
             }
 
+            if (name.length > 100) {
+                showToast('Crew name must be 100 characters or less', 'error');
+                return;
+            }
+
+            if (crews.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+                showToast('A crew with this name already exists', 'error');
+                return;
+            }
+
             crews.push({
-                id: Date.now(),
+                id: generateId(),
                 name: name,
                 tools: []
             });
@@ -876,7 +922,7 @@
                 return `
                     <div class="crew-zone">
                         <div class="crew-header">
-                            <div class="crew-name">${crew.name}</div>
+                            <div class="crew-name">${escapeHtml(crew.name)}</div>
                             <button class="remove-crew-btn" onclick="removeCrew(${crew.id})">Remove</button>
                         </div>
                         <div class="crew-dropzone"
@@ -893,8 +939,8 @@
                                              data-tool-id="${tool.id}"
                                              ondragstart="handleToolDragStart(event)"
                                              ondragend="handleToolDragEnd(event)">
-                                            <div class="tool-name">${tool.name}</div>
-                                            <div class="tool-tag">${tool.tag}</div>
+                                            <div class="tool-name">${escapeHtml(tool.name)}</div>
+                                            <div class="tool-tag">${escapeHtml(tool.tag)}</div>
                                         </div>
                                     `).join('')
                                 }

@@ -130,18 +130,28 @@ class UIManager {
 
     showNotification(message, type = 'info', duration = 5000) {
         const notification = this.createNotification(message, type);
+
+        // Stack notifications vertically based on existing ones
+        const existing = document.querySelectorAll('.notification');
+        let topOffset = 20;
+        existing.forEach(n => {
+            topOffset += n.offsetHeight + 10;
+        });
+        notification.style.top = topOffset + 'px';
+
         document.body.appendChild(notification);
-        
+        this.notifications.push(notification);
+
         // Animate in
         setTimeout(() => {
             notification.classList.add('show');
         }, 100);
-        
+
         // Auto remove
         setTimeout(() => {
             this.removeNotification(notification);
         }, duration);
-        
+
         return notification;
     }
 
@@ -197,7 +207,20 @@ class UIManager {
             if (notification.parentNode) {
                 notification.parentNode.removeChild(notification);
             }
+            // Remove from tracked array and reposition remaining
+            this.notifications = this.notifications.filter(n => n !== notification);
+            this._repositionNotifications();
         }, 300);
+    }
+
+    _repositionNotifications() {
+        let topOffset = 20;
+        this.notifications.forEach(n => {
+            if (n.parentNode) {
+                n.style.top = topOffset + 'px';
+                topOffset += n.offsetHeight + 10;
+            }
+        });
     }
 
     showMessage(message, type = 'info') {
@@ -249,6 +272,10 @@ class UIManager {
 
     hideAllModals() {
         document.querySelectorAll('.modal').forEach(modal => {
+            modal.classList.add('hidden');
+        });
+        // Also close WO modals which use a different class
+        document.querySelectorAll('.wo-modal-overlay').forEach(modal => {
             modal.classList.add('hidden');
         });
     }

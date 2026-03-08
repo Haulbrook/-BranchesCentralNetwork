@@ -37,8 +37,15 @@ class AuthManager {
             window._authToken = session?.access_token || null;
 
             if (event === 'SIGNED_IN') {
-                this._hideLoginScreen();
+                // Only hide login screen if app is already initialized;
+                // otherwise _continueInit() in main.js handles the reveal.
+                const loginScreen = document.getElementById('loginScreen');
+                if (loginScreen) loginScreen.classList.add('hidden');
+                // Don't unhide #app here — let _continueInit → tryRevealApp handle it
+                // to avoid showing uninitialized dashboard
+                this.startTokenRefresh();
             } else if (event === 'SIGNED_OUT') {
+                this.stopTokenRefresh();
                 this._showLoginScreen();
             }
         });
@@ -83,6 +90,7 @@ class AuthManager {
      */
     async signOut() {
         if (!this.supabase) return;
+        this.stopTokenRefresh();
         await this.supabase.auth.signOut();
         window._authToken = null;
         this.user = null;
@@ -94,6 +102,39 @@ class AuthManager {
      */
     getToken() {
         return this.session?.access_token || null;
+    }
+
+    /**
+     * Start periodic token refresh (call after auth is confirmed)
+     * Supabase JWTs expire after 1 hour by default; refresh every 50 minutes.
+     */
+    startTokenRefresh() {
+        if (this._refreshInterval) return;
+        this._refreshInterval = setInterval(async () => {
+            if (!this.supabase) return;
+            try {
+                const { data, error } = await this.supabase.auth.refreshSession();
+                if (error) {
+                    console.warn('Token refresh failed:', error.message);
+                } else if (data?.session) {
+                    this.session = data.session;
+                    this.user = data.session.user || null;
+                    window._authToken = data.session.access_token || null;
+                }
+            } catch (e) {
+                console.warn('Token refresh error:', e);
+            }
+        }, 50 * 60 * 1000); // 50 minutes
+    }
+
+    /**
+     * Stop token refresh interval
+     */
+    stopTokenRefresh() {
+        if (this._refreshInterval) {
+            clearInterval(this._refreshInterval);
+            this._refreshInterval = null;
+        }
     }
 
     /**

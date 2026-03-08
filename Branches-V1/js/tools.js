@@ -66,13 +66,17 @@ class ToolManager {
 
     getAllowedOrigins() {
         const config = window.app?.config?.services;
-        const origins = ['https://script.google.com', 'https://docs.google.com'];
-        
+        const origins = [
+            window.location.origin, // Allow own-origin (local tools like crew-scheduler, hand-tool-checkout)
+            'https://script.google.com',
+            'https://docs.google.com'
+        ];
+
         if (config) {
             Object.values(config).forEach(service => {
                 if (service.url) {
                     try {
-                        const url = new URL(service.url);
+                        const url = new URL(service.url, window.location.origin);
                         if (!origins.includes(url.origin)) {
                             origins.push(url.origin);
                         }
@@ -82,7 +86,7 @@ class ToolManager {
                 }
             });
         }
-        
+
         return origins;
     }
 
@@ -103,10 +107,19 @@ class ToolManager {
         window.app?.ui?.showNotification(`${toolId} tool loaded successfully`, 'success', 3000);
     }
 
+    _escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = String(text);
+        return div.innerHTML;
+    }
+
     handleToolError(toolId, data) {
         console.error(`❌ Tool ${toolId} error:`, data);
         this.loadedTools.set(toolId, { status: 'error', error: data, loadTime: Date.now() });
-        
+
+        const safeMessage = this._escapeHtml(data.message || 'Unknown error');
+        const safeToolId = this._escapeHtml(toolId);
+
         // Show error in UI
         const loading = document.querySelector('.tool-loading');
         if (loading) {
@@ -114,15 +127,15 @@ class ToolManager {
                 <div style="text-align: center; color: var(--text-secondary);">
                     <div style="font-size: 3rem; margin-bottom: 1rem;">❌</div>
                     <p>Tool failed to load</p>
-                    <p style="font-size: 0.875rem; margin-top: 0.5rem;">${data.message || 'Unknown error'}</p>
+                    <p style="font-size: 0.875rem; margin-top: 0.5rem;">${safeMessage}</p>
                     <button onclick="window.app.refreshCurrentTool()" class="btn btn-primary" style="margin-top: 1rem;">
                         Try Again
                     </button>
                 </div>
             `;
         }
-        
-        window.app?.ui?.showNotification(`Failed to load ${toolId} tool: ${data.message}`, 'error');
+
+        window.app?.ui?.showNotification(`Failed to load ${safeToolId} tool: ${safeMessage}`, 'error');
     }
 
     handleToolData(toolId, data) {
@@ -338,16 +351,30 @@ class ToolManager {
         if (iframe && iframe.contentWindow) {
             const tool = this.loadedTools.get(toolId);
             if (tool && tool.status === 'ready') {
+                const targetOrigin = this.getIframeOrigin(iframe);
                 iframe.contentWindow.postMessage({
                     type: 'dashboard_message',
                     toolId,
                     ...message
-                }, '*');
+                }, targetOrigin);
             } else {
                 // Queue message if tool isn't ready
                 this.queueMessage(toolId, message);
             }
         }
+    }
+
+    getIframeOrigin(iframe) {
+        if (iframe && iframe.src) {
+            try {
+                return new URL(iframe.src).origin;
+            } catch (e) {
+                console.warn('Could not determine iframe origin:', e.message);
+            }
+        }
+        // Fallback to allowed origins list rather than wildcard
+        const allowed = this.getAllowedOrigins();
+        return allowed[0] || 'https://script.google.com';
     }
 
     refreshToolIfNeeded() {

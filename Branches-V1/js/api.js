@@ -63,13 +63,16 @@ class APIManager {
             
             const config = {
                 ...options,
-                headers,
-                timeout: this.timeout
+                headers
             };
-            
-            // Add timeout handling
+
+            // Add timeout handling — preserve caller's signal if provided
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), this.timeout);
+            if (options.signal) {
+                // If caller provided a signal, abort our controller when theirs aborts
+                options.signal.addEventListener('abort', () => controller.abort(), { once: true });
+            }
             config.signal = controller.signal;
             
             try {

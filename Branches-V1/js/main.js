@@ -48,9 +48,9 @@ class DashboardApp {
                     this.auth._showLoginScreen();
                     document.getElementById('loadingScreen').style.display = 'none';
                     // Wait for auth state change to continue init
-                    this.auth.supabase.auth.onAuthStateChange((event) => {
+                    this.auth.supabase.auth.onAuthStateChange(async (event) => {
                         if (event === 'SIGNED_IN' && !this.isInitialized) {
-                            this._continueInit();
+                            await this._continueInit();
                         }
                     });
                     return;
@@ -802,18 +802,18 @@ Recommendations: ${report.recommendations.length}
 
         // Update header
 
-        // Refresh dashboard if available
+        // Refresh dashboard if available (await loads before rendering)
         if (this.dashboard) {
-            this.dashboard.loadMetrics();
-            this.dashboard.renderMetricsCards();
-            this.dashboard.loadActiveJobs();
-            this.dashboard.renderJobCards();
+            this.dashboard.resumeAutoRefresh();
+            this.dashboard.loadMetrics().then(() => this.dashboard.renderMetricsCards());
+            this.dashboard.loadActiveJobs().then(() => this.dashboard.renderJobCards());
         }
     }
 
     showChatInterface() {
         console.log('💬 Showing chat interface');
         this.currentTool = null;
+        if (this.dashboard) this.dashboard.pauseAutoRefresh();
         document.getElementById('gasAuthHint')?.remove();
         document.getElementById('dashboardView')?.classList.add('hidden');
         document.getElementById('chatInterface')?.classList.remove('hidden');
@@ -837,6 +837,7 @@ Recommendations: ${report.recommendations.length}
 
     async openTool(toolId) {
         console.log(`🔧 Opening tool: ${toolId}`);
+        if (this.dashboard) this.dashboard.pauseAutoRefresh();
 
         const tool = this.config.services[toolId];
         if (!tool) {
@@ -1059,8 +1060,12 @@ Recommendations: ${report.recommendations.length}
             enableMasterAgent: document.getElementById('enableMasterAgent')?.checked ?? true
         };
 
-        // Save to localStorage
-        localStorage.setItem('dashboardSettings', JSON.stringify(settings));
+        // Merge with existing localStorage to avoid destroying service config
+        let existing = {};
+        try {
+            existing = JSON.parse(localStorage.getItem('dashboardSettings') || '{}');
+        } catch (e) { /* ignore parse errors */ }
+        localStorage.setItem('dashboardSettings', JSON.stringify({ ...existing, ...settings }));
 
         // Apply dark mode
         if (settings.darkMode) {
@@ -1098,7 +1103,9 @@ Recommendations: ${report.recommendations.length}
         
         // Escape: Close modals or go back
         if (e.key === 'Escape') {
-            if (!document.querySelector('.modal.hidden')) {
+            const openModal = document.querySelector('.modal:not(.hidden)');
+            const openWoModal = document.querySelector('.wo-modal-overlay:not(.hidden)');
+            if (openModal || openWoModal) {
                 this.ui.hideAllModals();
             } else if (this.currentTool) {
                 this.showChatInterface();

@@ -75,8 +75,8 @@ class ChatManager {
 
     init() {
         this.setupEventListeners();
-        this.loadChatHistory();
         this.startNewConversation();
+        this.loadChatHistory();
     }
 
     setupEventListeners() {
@@ -758,41 +758,46 @@ class ChatManager {
         return messageDiv;
     }
 
+    _escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = String(text);
+        return div.innerHTML;
+    }
+
+    _applyMarkdown(text) {
+        let formatted = text
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // **bold**
+            .replace(/\*(.*?)\*/g, '<em>$1</em>') // *italic*
+            .replace(/`(.*?)`/g, '<code>$1</code>') // `code`
+            .replace(/\n/g, '<br>'); // line breaks
+
+        // Handle lists
+        if (formatted.includes('•')) {
+            formatted = formatted.replace(/(•.*?)(<br>|$)/g, '<li>$1</li>');
+            formatted = formatted.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+        }
+
+        return formatted;
+    }
+
     formatMessageContent(content, type) {
         // Return HTML table directly without markdown formatting
         if (type === 'inventory_table') {
             return content;
         }
 
-        // Agent/master responses: badge is HTML, rest is markdown — split and format
+        // Agent/master responses: badge is trusted HTML, rest needs escaping
         if (type === 'agent_response' || type === 'master_synthesis' || type === 'master_single' || type === 'master_fallback') {
             const badgeEnd = content.indexOf('</div>');
             if (badgeEnd !== -1) {
                 const badge = content.slice(0, badgeEnd + 6);
                 const rest = content.slice(badgeEnd + 6).replace(/^\n+/, '');
-                const formatted = rest
-                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
-                    .replace(/`(.*?)`/g, '<code>$1</code>')
-                    .replace(/\n/g, '<br>');
-                return badge + formatted;
+                return badge + this._applyMarkdown(this._escapeHtml(rest));
             }
         }
 
-        // Basic markdown-like formatting
-        let formatted = content
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // **bold**
-            .replace(/\*(.*?)\*/g, '<em>$1</em>') // *italic*
-            .replace(/`(.*?)`/g, '<code>$1</code>') // `code`
-            .replace(/\n/g, '<br>'); // line breaks
-        
-        // Handle lists
-        if (formatted.includes('•')) {
-            formatted = formatted.replace(/(•.*?)(<br>|$)/g, '<li>$1</li>');
-            formatted = formatted.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
-        }
-        
-        return formatted;
+        // Escape HTML first, then apply markdown formatting
+        return this._applyMarkdown(this._escapeHtml(content));
     }
 
     async handleBrowseInventory() {

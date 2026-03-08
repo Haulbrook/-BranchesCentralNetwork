@@ -522,7 +522,7 @@
                 <!-- Add New Crew -->
                 <div class="add-crew-section">
                     <div class="add-crew-form">
-                        <input type="text" id="newCrewName" class="input-field" placeholder="Enter new crew name (e.g., Crew A, Maintenance Team)">
+                        <input type="text" id="newCrewName" class="input-field" maxlength="100" placeholder="Enter new crew name (e.g., Crew A, Maintenance Team)">
                         <button class="btn" onclick="addCrew()">➕ Add Crew</button>
                     </div>
                 </div>
@@ -544,6 +544,22 @@
 
         let draggedElement = null;
         let draggedData = null;
+        let _idCounter = 0;
+
+        function generateId() {
+            return Date.now() * 1000 + (++_idCounter % 1000);
+        }
+
+        // Security: HTML escape for user-provided values
+        function escapeHtml(text) {
+            if (typeof text !== 'string') return String(text);
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
 
         // Initialize
         function init() {
@@ -588,8 +604,14 @@
         function loadFromLocalStorage() {
             const stored = localStorage.getItem(getStorageKey());
             if (stored) {
-                const data = JSON.parse(stored);
-                crews = data.crews || [];
+                try {
+                    const data = JSON.parse(stored);
+                    crews = data.crews || [];
+                } catch (e) {
+                    console.warn('Corrupted schedule data, resetting:', e.message);
+                    crews = [];
+                    localStorage.removeItem(getStorageKey());
+                }
             } else {
                 crews = [];
             }
@@ -610,12 +632,18 @@
         function loadPreset(num) {
             const stored = localStorage.getItem(`scheduler_preset_${num}`);
             if (stored) {
-                const data = JSON.parse(stored);
-                crews = data.crews || [];
-                saveToLocalStorage();
-                renderResources();
-                renderCrews();
-                showToast(`Preset ${num} loaded!`, 'success');
+                try {
+                    const data = JSON.parse(stored);
+                    crews = data.crews || [];
+                    saveToLocalStorage();
+                    renderResources();
+                    renderCrews();
+                    showToast(`Preset ${num} loaded!`, 'success');
+                } catch (e) {
+                    console.warn('Corrupted preset data:', e.message);
+                    localStorage.removeItem(`scheduler_preset_${num}`);
+                    showToast(`Preset ${num} is corrupted and was removed`, 'error');
+                }
             } else {
                 showToast(`Preset ${num} is empty`, 'error');
             }
@@ -631,8 +659,18 @@
                 return;
             }
 
+            if (name.length > 100) {
+                showToast('Crew name must be 100 characters or less', 'error');
+                return;
+            }
+
+            if (crews.some(c => c.name.toLowerCase() === name.toLowerCase())) {
+                showToast('A crew with this name already exists', 'error');
+                return;
+            }
+
             crews.push({
-                id: Date.now(),
+                id: generateId(),
                 name: name,
                 members: [],
                 trucks: [],
@@ -692,11 +730,11 @@
                 const multiUseClass = multiUse ? 'multi-use' : '';
                 return `<div class="card ${cardClass} ${usedClass} ${multiUseClass}"
                              draggable="${!isUsed || multiUse}"
-                             data-item="${item}"
+                             data-item="${escapeHtml(item)}"
                              data-type="${cardClass}"
                              ondragstart="handleDragStart(event)"
                              ondragend="handleDragEnd(event)">
-                    ${item}
+                    ${escapeHtml(item)}
                 </div>`;
             }).join('');
         }
@@ -713,7 +751,7 @@
             container.innerHTML = crews.map(crew => `
                 <div class="crew-card">
                     <div class="crew-header">
-                        <div class="crew-name">${crew.name}</div>
+                        <div class="crew-name">${escapeHtml(crew.name)}</div>
                         <button class="remove-crew-btn" onclick="removeCrew(${crew.id})">Remove</button>
                     </div>
 
@@ -729,12 +767,12 @@
                             ${crew.members.map(m => `
                                 <div class="card crew-member"
                                      draggable="true"
-                                     data-item="${m}"
+                                     data-item="${escapeHtml(m)}"
                                      data-type="crew-member"
                                      data-crew-id="${crew.id}"
                                      ondragstart="handleDragStart(event)"
                                      ondragend="handleDragEnd(event)">
-                                    ${m}
+                                    ${escapeHtml(m)}
                                 </div>
                             `).join('')}
                         </div>
@@ -752,12 +790,12 @@
                             ${crew.trucks.map(t => `
                                 <div class="card truck"
                                      draggable="true"
-                                     data-item="${t}"
+                                     data-item="${escapeHtml(t)}"
                                      data-type="truck"
                                      data-crew-id="${crew.id}"
                                      ondragstart="handleDragStart(event)"
                                      ondragend="handleDragEnd(event)">
-                                    ${t}
+                                    ${escapeHtml(t)}
                                 </div>
                             `).join('')}
                         </div>
@@ -775,12 +813,12 @@
                             ${crew.equipment.map(e => `
                                 <div class="card equipment"
                                      draggable="true"
-                                     data-item="${e}"
+                                     data-item="${escapeHtml(e)}"
                                      data-type="equipment"
                                      data-crew-id="${crew.id}"
                                      ondragstart="handleDragStart(event)"
                                      ondragend="handleDragEnd(event)">
-                                    ${e}
+                                    ${escapeHtml(e)}
                                 </div>
                             `).join('')}
                         </div>
@@ -798,12 +836,12 @@
                             ${crew.jobs.map(j => `
                                 <div class="card job"
                                      draggable="true"
-                                     data-item="${j}"
+                                     data-item="${escapeHtml(j)}"
                                      data-type="job"
                                      data-crew-id="${crew.id}"
                                      ondragstart="handleDragStart(event)"
                                      ondragend="handleDragEnd(event)">
-                                    ${j}
+                                    ${escapeHtml(j)}
                                 </div>
                             `).join('')}
                         </div>
@@ -821,12 +859,12 @@
                             ${crew.salesmen.map(s => `
                                 <div class="card salesman"
                                      draggable="true"
-                                     data-item="${s}"
+                                     data-item="${escapeHtml(s)}"
                                      data-type="salesman"
                                      data-crew-id="${crew.id}"
                                      ondragstart="handleDragStart(event)"
                                      ondragend="handleDragEnd(event)">
-                                    ${s}
+                                    ${escapeHtml(s)}
                                 </div>
                             `).join('')}
                         </div>

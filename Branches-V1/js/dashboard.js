@@ -340,7 +340,7 @@ class DashboardManager {
 
         try {
             const api = window.app?.api;
-            await fetch('/.netlify/functions/gas-proxy', {
+            const res = await fetch('/.netlify/functions/gas-proxy', {
                 method: 'POST',
                 headers: api?._proxyHeaders() || { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -349,6 +349,13 @@ class DashboardManager {
                     body: { action: 'toggleCheckbox', woNumber, rowIndex, value: newValue }
                 })
             });
+            // Check for GAS-level errors (200 OK with success:false)
+            if (res.headers.get('content-type')?.includes('application/json')) {
+                const json = await res.json();
+                if (json.success === false) {
+                    throw new Error(json.error || 'GAS returned an error');
+                }
+            }
             setTimeout(async () => {
                 await this.loadActiveJobs();
                 this.renderJobCards();
@@ -854,12 +861,33 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
     }
 
     /**
+     * Pause auto-refresh (call when leaving dashboard view)
+     */
+    pauseAutoRefresh() {
+        if (this.refreshInterval) {
+            clearInterval(this.refreshInterval);
+            this.refreshInterval = null;
+        }
+        if (this.weatherInterval) {
+            clearInterval(this.weatherInterval);
+            this.weatherInterval = null;
+        }
+    }
+
+    /**
+     * Resume auto-refresh (call when returning to dashboard view)
+     */
+    resumeAutoRefresh() {
+        if (!this.refreshInterval) {
+            this.setupAutoRefresh();
+        }
+    }
+
+    /**
      * Cleanup
      */
     destroy() {
-        if (this.refreshInterval) {
-            clearInterval(this.refreshInterval);
-        }
+        this.pauseAutoRefresh();
     }
 
     /**
