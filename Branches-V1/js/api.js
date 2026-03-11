@@ -383,6 +383,11 @@ User: "schedule tomorrow" -> Call open_tool with toolId='scheduler'`;
      * Claude Agent Integration — routed through gas-proxy
      */
     async callAgent(agentKey, query, sessionId) {
+        // Jobs agent: use live WO data + Claude instead of broken GAS RAG
+        if (agentKey === 'jobs') {
+            return this._handleJobsAgent(query, sessionId);
+        }
+
         // Map agent keys to gas-proxy service names
         const agentServiceMap = {
             inventory: 'inventoryAgent',
@@ -407,6 +412,60 @@ User: "schedule tomorrow" -> Call open_tool with toolId='scheduler'`;
             })
         });
         return response.json();
+    }
+
+    /**
+     * Jobs agent — pull live WO data from activeJobs GAS, then use Claude
+     * to answer the user's question with real data context.
+     */
+    async _handleJobsAgent(query, sessionId) {
+        // Fetch live work order data
+        const woRes = await fetch('/.netlify/functions/gas-proxy', {
+            method: 'POST',
+            headers: this._proxyHeaders(),
+            body: JSON.stringify({
+                service: 'activeJobs',
+                method: 'GET',
+                params: { action: 'getProgress' }
+            })
+        });
+        const woJson = await woRes.json();
+        const jobs = woJson.data || [];
+
+        // Build a compact summary for Claude
+        const jobSummary = jobs.map(j =>
+            `WO#${j.woNumber} "${j.jobName}" — ${j.client || 'N/A'} | ${j.completedItems}/${j.totalItems} items (${j.percentage}%) | ${j.address || ''} | Status: ${j.details?.['Job Status'] || 'Active'} | Salesman: ${j.details?.Salesman || 'N/A'} | Notes: ${j.details?.Notes || ''}`
+        ).join('\n');
+
+        const systemPrompt = `You are the Foreman agent for Deep Roots Landscape. Answer questions about active work orders using ONLY the data below. Be concise, use bold and bullets for readability.
+
+LIVE WORK ORDER DATA (${jobs.length} active jobs):
+${jobSummary}
+
+Rules:
+- Answer ONLY from the data above — do not invent jobs or numbers
+- For "almost done" queries, list jobs with percentage >= 50%
+- For specific WO lookups, match by WO number or job name
+- Include WO#, job name, client, and percentage in your answers
+- If asked about something not in the data, say so clearly`;
+
+        const result = await this.callOpenAIChat([
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: query }
+        ], { temperature: 0.1, maxTokens: 500 });
+
+        const responseText = typeof result === 'string' ? result : result.content || String(result);
+
+        return {
+            agent: 'Foreman',
+            version: '2.0.0',
+            prompt: query,
+            response: responseText,
+            confidence: 0.95,
+            sources: jobs.map(j => `WO#${j.woNumber}`),
+            session_id: sessionId,
+            timestamp: new Date().toISOString()
+        };
     }
 
     /**
