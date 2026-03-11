@@ -49,7 +49,7 @@ class DashboardApp {
                     document.getElementById('loadingScreen').style.display = 'none';
                     // Wait for auth state change to continue init
                     this.auth.supabase.auth.onAuthStateChange(async (event) => {
-                        if (event === 'SIGNED_IN' && !this.isInitialized) {
+                        if (event === 'SIGNED_IN' && !this.isInitialized && !this._initInProgress) {
                             await this._continueInit();
                         }
                     });
@@ -65,6 +65,8 @@ class DashboardApp {
     }
 
     async _continueInit() {
+        if (this._initInProgress) return;
+        this._initInProgress = true;
         try {
             // Show loading screen
             this.showLoadingScreen(true);
@@ -76,13 +78,19 @@ class DashboardApp {
             this.api.init();
             console.log('✅ API Manager initialized with endpoints:', this.api.endpoints);
 
-            // Run setup wizard if needed
+            // Run setup wizard if needed (timeout after 5s to prevent blocking)
             if (this.setupWizard) {
-                const wizardConfig = await this.setupWizard.start();
-                if (wizardConfig) {
-                    // Merge wizard config with app config
-                    this.config = { ...this.config, ...wizardConfig };
-                    console.log('✅ Setup wizard completed', wizardConfig);
+                try {
+                    const wizardConfig = await Promise.race([
+                        this.setupWizard.start(),
+                        new Promise(resolve => setTimeout(() => resolve(null), 5000))
+                    ]);
+                    if (wizardConfig) {
+                        this.config = { ...this.config, ...wizardConfig };
+                        console.log('✅ Setup wizard completed', wizardConfig);
+                    }
+                } catch (e) {
+                    console.warn('⚠️ Setup wizard failed, continuing:', e);
                 }
             }
 
@@ -1053,7 +1061,7 @@ Recommendations: ${report.recommendations.length}
 
     async saveSettings() {
         const settings = {
-            darkMode: document.getElementById('darkMode').checked,
+            darkMode: document.getElementById('darkMode')?.checked ?? false,
             enableAppleOverseer: document.getElementById('enableAppleOverseer')?.checked ?? true,
             enableDeconstructionSkill: document.getElementById('enableDeconstructionSkill')?.checked ?? true,
             enableForwardThinkerSkill: document.getElementById('enableForwardThinkerSkill')?.checked ?? true,
@@ -1124,15 +1132,16 @@ Recommendations: ${report.recommendations.length}
             // Listen for intro video end
             const video = document.getElementById('introVideo');
             if (video) {
-                video.addEventListener('ended', () => {
+                const markVideoDone = () => {
+                    if (this.videoEnded) return;
                     this.videoEnded = true;
                     this.tryRevealApp();
-                }, { once: true });
-                // Fallback in case video fails to load/play
-                video.addEventListener('error', () => {
-                    this.videoEnded = true;
-                    this.tryRevealApp();
-                }, { once: true });
+                };
+                video.addEventListener('ended', markVideoDone, { once: true });
+                video.addEventListener('error', markVideoDone, { once: true });
+                // Fallback: if video stalls, fails to autoplay, or buffers too long,
+                // reveal the app after 8 seconds no matter what.
+                setTimeout(markVideoDone, 8000);
             } else {
                 this.videoEnded = true;
             }
@@ -1160,7 +1169,7 @@ Recommendations: ${report.recommendations.length}
             <div class="loading-content" style="color: white; text-align: center;">
                 <div style="font-size: 3rem; margin-bottom: 1rem;">❌</div>
                 <h2>Failed to Load Dashboard</h2>
-                <p style="margin: 1rem 0;">${error.message || 'Unknown error occurred'}</p>
+                <p style="margin: 1rem 0;">${(error.message || 'Unknown error occurred').replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]))}</p>
                 <button onclick="location.reload()" style="
                     background: white;
                     color: var(--primary-color);

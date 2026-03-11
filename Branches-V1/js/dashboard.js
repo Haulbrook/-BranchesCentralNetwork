@@ -7,7 +7,7 @@ class DashboardManager {
     constructor() {
         this.metrics = new Map();
         this.refreshInterval = null;
-        this.updateInterval = 30000; // 30 seconds
+        this.updateInterval = 60000; // 60 seconds (GAS proxy calls are slow)
         this.pendingWorkOrder = null;
         this.selectedPdfFile = null;
 
@@ -140,10 +140,85 @@ class DashboardManager {
             });
             const json = await res.json();
             if (!json.success) throw new Error(json.error || 'Server error');
-            this.metrics.set('activeJobs', json.data || []);
+
+            const serverJobs = json.data || [];
+
+            // Merge with locally-known WO metadata so fields like
+            // client/address persist even if GAS doesn't return them.
+            const cache = this._getWoMetaCache();
+            const serverWoNums = new Set(serverJobs.map(j => String(j.woNumber)));
+
+            serverJobs.forEach(job => {
+                const woKey = String(job.woNumber);
+                const saved = cache[woKey];
+                if (!saved) return;
+
+                // Check if server now returns real data BEFORE merging
+                const serverHasName = !!(job.jobName && job.jobName !== '—');
+                const serverHasClient = !!(job.client || (job.details && (job.details['Client'] || job.details['client'])));
+
+                if (!serverHasName && saved.jobName) job.jobName = saved.jobName;
+                if (!job.client  && saved.client)  job.client  = saved.client;
+                if (!job.address && saved.address)  job.address = saved.address;
+                if (!job.category && saved.category) job.category = saved.category;
+                if (!job.details || Object.keys(job.details).length === 0) {
+                    job.details = { ...saved.details, ...(job.details || {}) };
+                }
+
+                // Only clear cache once server genuinely returns both fields
+                if (serverHasName && serverHasClient) {
+                    delete cache[woKey];
+                    this._saveWoMetaCache(cache);
+                }
+            });
+
+            // Inject cached WOs that the server doesn't know about yet.
+            // Track misses — if the server doesn't return a cached WO after
+            // 3 successful fetches, assume it was deleted and drop the cache.
+            let cacheChanged = false;
+            Object.keys(cache).forEach(woKey => {
+                if (serverWoNums.has(woKey)) {
+                    // Server knows about it — reset miss counter
+                    if (cache[woKey]._misses) {
+                        cache[woKey]._misses = 0;
+                        cacheChanged = true;
+                    }
+                    return;
+                }
+                const saved = cache[woKey];
+                if (!saved || !saved.jobName) return;
+
+                saved._misses = (saved._misses || 0) + 1;
+                cacheChanged = true;
+
+                if (saved._misses >= 3) {
+                    // Server has had 3 chances to return this WO — it's gone
+                    delete cache[woKey];
+                    return;
+                }
+
+                serverJobs.push({
+                    woNumber:       woKey,
+                    jobName:        saved.jobName || '',
+                    client:         saved.client || '',
+                    address:        saved.address || '',
+                    category:       saved.category || '',
+                    totalItems:     saved.totalItems || 0,
+                    completedItems: 0,
+                    percentage:     0,
+                    lastUpdated:    saved.addedAt || '',
+                    details:        saved.details || {}
+                });
+            });
+            if (cacheChanged) this._saveWoMetaCache(cache);
+
+            this.metrics.set('activeJobs', serverJobs);
         } catch (error) {
             console.error('Failed to load active jobs:', error);
-            this.metrics.set('activeJobs', []);
+            // Keep existing data on failure — don't wipe the cards
+            if (!this.metrics.has('activeJobs')) {
+                this.metrics.set('activeJobs', []);
+            }
         }
     }
 
@@ -662,12 +737,64 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
                     body: { action: 'addWorkOrder', data }
                 })
             });
+
+            // Cache WO metadata in localStorage so it persists across refreshes
+            // and hard reloads. GAS getProgress often returns empty jobName/client.
+            const cache = this._getWoMetaCache();
+            cache[data.woNumber] = {
+                jobName:    data.jobName,
+                client:     data.client,
+                address:    data.address,
+                category:   data.category,
+                totalItems: lineItems.length,
+                addedAt:    new Date().toString(),
+                details: {
+                    'Client':   data.client,
+                    'Job Name': data.jobName,
+                    'Address':  data.address,
+                    'Category': data.category,
+                    'Status':   data.status,
+                    'Job Notes':data.jobNotes,
+                    'Sales Rep':data.salesRep
+                }
+            };
+            this._saveWoMetaCache(cache);
+
+            // Optimistically inject the new WO into local data so cards
+            // render immediately with jobName, client, address, etc.
+            const currentJobs = this.metrics.get('activeJobs') || [];
+            currentJobs.push({
+                woNumber:       data.woNumber,
+                jobName:        data.jobName,
+                client:         data.client,
+                category:       data.category,
+                status:         data.status,
+                address:        data.address,
+                totalItems:     lineItems.length,
+                completedItems: 0,
+                percentage:     0,
+                lastUpdated:    new Date().toString(),
+                details: {
+                    'Client':   data.client,
+                    'Job Name': data.jobName,
+                    'Address':  data.address,
+                    'Category': data.category,
+                    'Status':   data.status,
+                    'Job Notes':data.jobNotes,
+                    'Sales Rep':data.salesRep
+                }
+            });
+            this.metrics.set('activeJobs', currentJobs);
+            this.renderJobCards();
+
             document.getElementById('addWoModal')?.classList.add('hidden');
-            this.showToast('WO #' + woNumber + ' queued — refreshing in 2s…', 'success');
+            this.showToast('WO #' + woNumber + ' added — syncing with server…', 'success');
+
+            // Refresh from GAS after delay to get canonical server data
             setTimeout(async () => {
                 await this.loadActiveJobs();
                 this.renderJobCards();
-            }, 2000);
+            }, 5000);
         } catch (ex) {
             this.showToast('Failed: ' + ex.message, 'error');
         } finally {
@@ -709,6 +836,18 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
             if (v && normKeys.includes(normK)) return v;
         }
         return '';
+    }
+
+    /** Get persisted WO metadata cache from localStorage */
+    _getWoMetaCache() {
+        try { return JSON.parse(localStorage.getItem('_woMetaCache') || '{}'); }
+        catch { return {}; }
+    }
+
+    /** Save WO metadata cache to localStorage */
+    _saveWoMetaCache(cache) {
+        try { localStorage.setItem('_woMetaCache', JSON.stringify(cache)); }
+        catch { /* quota exceeded — ignore */ }
     }
 
     /**
@@ -802,10 +941,19 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
      */
     setupAutoRefresh() {
         this.refreshInterval = setInterval(async () => {
-            await this.loadMetrics();
-            this.renderMetricsCards();
-            await this.loadActiveJobs();
-            this.renderJobCards();
+            // Run independently so a metrics failure doesn't kill active jobs
+            try {
+                await this.loadMetrics();
+                this.renderMetricsCards();
+            } catch (e) {
+                console.warn('Auto-refresh metrics failed:', e);
+            }
+            try {
+                await this.loadActiveJobs();
+                this.renderJobCards();
+            } catch (e) {
+                console.warn('Auto-refresh active jobs failed:', e);
+            }
         }, this.updateInterval);
 
         this.weatherInterval = setInterval(() => this.checkWeather(), 30 * 60 * 1000);

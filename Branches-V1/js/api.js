@@ -9,7 +9,7 @@ class APIManager {
         this.requestQueue = [];
         this.isOnline = navigator.onLine;
         this.retryAttempts = 3;
-        this.timeout = 30000; // 30 seconds
+        this.timeout = 60000; // 60 seconds (GAS calls go through Netlify proxy + GAS redirect)
         
         this.setupNetworkListeners();
     }
@@ -159,7 +159,7 @@ class APIManager {
                         system: this.getChatSystemPrompt(context),
                         messages,
                         tools,
-                        tool_choice: { type: 'any' }
+                        tool_choice: { type: 'auto' }
                     }
                 })
             });

@@ -170,13 +170,14 @@
   function fixLoadingStates() {
     const LOADING_TIMEOUT = 10000; // 10 seconds
     
-    // Find all loading indicators
+    // Find all loading indicators (skip ones inside modals — those are user-triggered)
     const loadingElements = document.querySelectorAll(
       '.loading, [data-loading], .spinner, .loading-indicator'
     );
-    
+
     loadingElements.forEach(el => {
       setTimeout(() => {
+        if (el.closest('#addWoModal, .wo-modal-overlay, #jobCardsGrid, .metrics-grid')) return;
         if (el.style.display !== 'none' && el.parentNode) {
           el.innerHTML = `
             <div style="color: #999; font-size: 14px; padding: 20px; text-align: center;">
