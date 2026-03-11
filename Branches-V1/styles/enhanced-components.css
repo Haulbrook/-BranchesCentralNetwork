@@ -2442,6 +2442,115 @@
     font-size: 0.88rem;
 }
 
+/* ── Inventory Item Cards ─────────────────────────────── */
+.inv-cards-header {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-2);
+    border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+.inv-cards-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+.inv-card {
+    background: var(--surface-color, #fff);
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    min-height: 64px;
+}
+.inv-card-critical {
+    border-left: 5px solid #f44336;
+    background: rgba(244,67,54,0.06);
+}
+.inv-card-warn {
+    border-left: 5px solid #ff9800;
+    background: rgba(255,152,0,0.06);
+}
+.inv-card-ok {
+    border-left: 5px solid #4caf50;
+}
+/* Quantity block — fixed width left column */
+.inv-card-qty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 64px;
+    flex-shrink: 0;
+}
+.inv-card-qty-num {
+    font-family: 'DM Mono', 'SF Mono', monospace;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+}
+.inv-card-critical .inv-card-qty-num { color: #d32f2f; }
+.inv-card-warn .inv-card-qty-num { color: #e65100; }
+.inv-card-ok .inv-card-qty-num { color: #2e7d32; }
+.inv-card-qty-unit {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: 2px;
+}
+/* Info block — takes remaining space */
+.inv-card-info {
+    flex: 1;
+    min-width: 0;
+}
+.inv-card-name {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.25;
+}
+.inv-card-meta {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-top: 2px;
+}
+.inv-card-loc { white-space: nowrap; }
+.inv-card-notes {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-top: 1px;
+}
+/* Status badge — right side */
+.inv-card-top {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+    gap: 2px;
+}
+.inv-card-status {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.inv-card-critical .inv-card-status { color: #d32f2f; }
+.inv-card-warn .inv-card-status { color: #e65100; }
+.inv-card-ok .inv-card-status { color: #2e7d32; }
+.inv-card-min {
+    color: var(--text-tertiary, #999);
+    font-size: 0.78rem;
+    font-weight: 400;
+}
+
 /* Responsive */
 @media (max-width: 640px) {
     .inv-header { padding: var(--space-4) var(--space-4) 0; }
@@ -2449,4 +2558,5 @@
     .inv-tabs { overflow-x: auto; }
     .inv-search-row { flex-direction: column; }
     .inv-input-sm { max-width: 100%; }
+    .inv-cards-grid { grid-template-columns: 1fr; }
 }

@@ -221,7 +221,22 @@ class InventoryView {
 
         // The GAS askInventory returns { answer, source, success }
         const answer = data.answer || data;
+
+        // If it returned structured items
+        if (Array.isArray(answer)) {
+            this.renderItemsList(el, answer);
+            return;
+        }
+
         if (typeof answer === 'string') {
+            // Try to parse the text answer into structured item cards
+            const parsed = this.parseAnswerToItems(answer);
+            if (parsed.items.length > 0) {
+                this.renderItemCards(el, parsed.items, parsed.header, query);
+                return;
+            }
+
+            // Fallback: render as formatted text
             el.innerHTML = `
                 <div class="inv-result-card">
                     <div class="inv-result-query">Results for: <strong>${this.esc(query)}</strong></div>
@@ -231,14 +246,90 @@ class InventoryView {
             return;
         }
 
-        // If it returned structured items
-        if (Array.isArray(answer)) {
-            this.renderItemsList(el, answer);
-            return;
-        }
-
         // Fallback: display as text
         el.innerHTML = `<div class="inv-result-card"><pre class="inv-pre">${this.esc(JSON.stringify(data, null, 2))}</pre></div>`;
+    }
+
+    /**
+     * Parse the GAS text answer into structured items.
+     * Format: "⚠️ • Name: Quantity: N Unit [LOW STOCK - Min: X] • Location: Loc • Notes: Note"
+     * or:     "• Name: Quantity: N Unit • Location: Loc"
+     */
+    parseAnswerToItems(text) {
+        const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+        const items = [];
+        let header = '';
+
+        for (const line of lines) {
+            // Match item lines that start with bullet (with or without ⚠️)
+            const isWarning = line.startsWith('⚠️');
+            const bulletMatch = line.match(/^(?:⚠️\s*)?[•●]\s*(.+)/);
+            if (!bulletMatch) {
+                // Non-item line — treat as header/summary
+                if (items.length === 0) header += (header ? '\n' : '') + line;
+                continue;
+            }
+
+            const raw = bulletMatch[1];
+            const nameMatch = raw.match(/^([^:]+?):\s*Quantity:\s*/);
+            const name = nameMatch ? nameMatch[1].trim() : raw.split(':')[0].trim();
+            const qtyMatch = raw.match(/Quantity:\s*([\d.]+)\s*([^•\[]*)/);
+            const qty = qtyMatch ? qtyMatch[1].trim() : '';
+            const unit = qtyMatch ? qtyMatch[2].trim() : '';
+            const lowStock = /\[LOW STOCK/i.test(raw);
+            const minMatch = raw.match(/Min:\s*(\d+)/);
+            const minStock = minMatch ? minMatch[1] : '';
+            const locMatch = raw.match(/Location:\s*([^•\n]+)/);
+            const location = locMatch ? locMatch[1].trim() : '';
+            const notesMatch = raw.match(/Notes:\s*([^•\n]+)/);
+            const notes = notesMatch ? notesMatch[1].trim() : '';
+
+            items.push({ name, qty, unit, location, notes, lowStock, minStock, isWarning });
+        }
+
+        return { items, header };
+    }
+
+    /**
+     * Render parsed items as visual cards
+     */
+    renderItemCards(el, items, header, query) {
+        let html = '';
+        if (header) {
+            html += `<div class="inv-cards-header">${this.esc(header)}</div>`;
+        }
+
+        html += '<div class="inv-cards-grid">';
+        items.forEach(item => {
+            const statusClass = item.lowStock
+                ? (parseInt(item.qty) === 0 ? 'inv-card-critical' : 'inv-card-warn')
+                : 'inv-card-ok';
+            const statusLabel = item.lowStock
+                ? (parseInt(item.qty) === 0 ? 'OUT OF STOCK' : 'LOW STOCK')
+                : 'In Stock';
+            const statusIcon = item.lowStock
+                ? (parseInt(item.qty) === 0 ? '🔴' : '🟡')
+                : '🟢';
+
+            html += `
+                <div class="inv-card ${statusClass}">
+                    <div class="inv-card-qty">
+                        <span class="inv-card-qty-num">${this.esc(item.qty || '0')}</span>
+                        <span class="inv-card-qty-unit">${this.esc(item.unit)}</span>
+                    </div>
+                    <div class="inv-card-info">
+                        <div class="inv-card-name">${this.esc(item.name)}</div>
+                        ${item.location ? `<div class="inv-card-meta"><span class="inv-card-loc">📍 ${this.esc(item.location)}</span></div>` : ''}
+                        ${item.notes ? `<div class="inv-card-notes">${this.esc(item.notes)}</div>` : ''}
+                    </div>
+                    <div class="inv-card-top">
+                        <span class="inv-card-status">${statusIcon} ${statusLabel}</span>
+                        ${item.minStock ? `<span class="inv-card-min">Min: ${this.esc(item.minStock)}</span>` : ''}
+                    </div>
+                </div>`;
+        });
+        html += '</div>';
+        el.innerHTML = html;
     }
 
     renderUpdateResults(el, data, query) {
