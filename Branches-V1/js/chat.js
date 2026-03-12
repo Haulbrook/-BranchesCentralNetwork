@@ -438,8 +438,12 @@ class ChatManager {
 
             let score = 0;
             for (const keyword of agentConfig.keywords) {
-                if (words.includes(keyword)) {
+                if (keyword.includes(' ')) {
+                    if (messageLower.includes(keyword)) score += 2;
+                } else if (words.includes(keyword)) {
                     score += 2; // exact word match
+                } else if (words.some(w => (w.length >= 4 && keyword.startsWith(w)) || (keyword.length >= 4 && w.startsWith(keyword)))) {
+                    score += 2; // stem-fuzzy: material↔materials
                 } else if (messageLower.includes(keyword)) {
                     score += 1; // substring match
                 }
@@ -787,7 +791,7 @@ class ChatManager {
         }
 
         // Agent/master responses: badge is trusted HTML, rest needs escaping
-        if (type === 'agent_response' || type === 'master_synthesis' || type === 'master_single' || type === 'master_fallback') {
+        if (type === 'agent_response' || type === 'master_synthesis' || type === 'master_single' || type === 'master_fallback' || type === 'master_error') {
             const badgeEnd = content.indexOf('</div>');
             if (badgeEnd !== -1) {
                 const badge = content.slice(0, badgeEnd + 6);

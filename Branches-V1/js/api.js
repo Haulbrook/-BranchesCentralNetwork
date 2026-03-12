@@ -9,7 +9,7 @@ class APIManager {
         this.requestQueue = [];
         this.isOnline = navigator.onLine;
         this.retryAttempts = 3;
-        this.timeout = 60000; // 60 seconds (GAS calls go through Netlify proxy + GAS redirect)
+        this.timeout = 120000; // 120 seconds (large WO parsing + GAS addWorkOrder can be slow)
         
         this.setupNetworkListeners();
     }
@@ -388,11 +388,16 @@ User: "schedule tomorrow" -> Call open_tool with toolId='scheduler'`;
             return this._handleJobsAgent(query, sessionId);
         }
 
+        // Scheduler agent: use live schedule data + Claude
+        if (agentKey === 'scheduler') {
+            return this._handleSchedulerAgent(query, sessionId);
+        }
+
         // Map agent keys to gas-proxy service names
+        // Note: 'jobs' is handled above via _handleJobsAgent (live WO data + Claude)
         const agentServiceMap = {
             inventory: 'inventoryAgent',
-            repair: 'repairAgent',
-            jobs: 'jobsAgent'
+            repair: 'repairAgent'
         };
         const service = agentServiceMap[agentKey];
         if (!service) {
@@ -419,10 +424,12 @@ User: "schedule tomorrow" -> Call open_tool with toolId='scheduler'`;
      * to answer the user's question with real data context.
      */
     async _handleJobsAgent(query, sessionId) {
+        const headers = this._proxyHeaders();
+
         // Fetch live work order data
         const woRes = await fetch('/.netlify/functions/gas-proxy', {
             method: 'POST',
-            headers: this._proxyHeaders(),
+            headers,
             body: JSON.stringify({
                 service: 'activeJobs',
                 method: 'GET',
@@ -432,22 +439,192 @@ User: "schedule tomorrow" -> Call open_tool with toolId='scheduler'`;
         const woJson = await woRes.json();
         const jobs = woJson.data || [];
 
+        // Detect if query needs line-item detail (materials, items, what's left, etc.)
+        const qLower = query.toLowerCase();
+        const needsLineItems = /material|item|supply|supplie|what.*need|what.*left|what.*remain|line item|load list|plant|mulch|sod|stone|paver|shrub|tree|arborvitae|fertilize/.test(qLower);
+
         // Build a compact summary for Claude
-        const jobSummary = jobs.map(j =>
+        let jobSummary = jobs.map(j =>
             `WO#${j.woNumber} "${j.jobName}" — ${j.client || 'N/A'} | ${j.completedItems}/${j.totalItems} items (${j.percentage}%) | ${j.address || ''} | Status: ${j.details?.['Job Status'] || 'Active'} | Salesman: ${j.details?.Salesman || 'N/A'} | Notes: ${j.details?.Notes || ''}`
         ).join('\n');
+
+        // If line items needed, fetch them for active jobs (in parallel, cap at 8)
+        let lineItemSection = '';
+        if (needsLineItems && jobs.length > 0) {
+            const jobsToFetch = jobs.slice(0, 8);
+            const liResults = await Promise.allSettled(
+                jobsToFetch.map(j =>
+                    fetch('/.netlify/functions/gas-proxy', {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({
+                            service: 'activeJobs',
+                            method: 'GET',
+                            params: { action: 'getLineItems', woNumber: j.woNumber }
+                        })
+                    }).then(r => r.json()).then(data => ({ woNumber: j.woNumber, jobName: j.jobName, items: data.data || [] }))
+                )
+            );
+
+            const lineItemBlocks = liResults
+                .filter(r => r.status === 'fulfilled' && r.value.items.length > 0)
+                .map(r => {
+                    const { woNumber, jobName, items } = r.value;
+                    const itemLines = items.map(li => {
+                        const done = li._done ? '[DONE]' : '[TODO]';
+                        return `  ${done} #${li.lineNumber || '?'} ${li.itemName || li.description || 'Unknown'} — Qty: ${li.quantity || '?'} ${li.unit || ''} | ${li.description || ''}`;
+                    }).join('\n');
+                    return `WO#${woNumber} "${jobName}" line items:\n${itemLines}`;
+                });
+
+            if (lineItemBlocks.length > 0) {
+                lineItemSection = '\n\nLINE ITEM DETAILS:\n' + lineItemBlocks.join('\n\n');
+            }
+        }
 
         const systemPrompt = `You are the Foreman agent for Deep Roots Landscape. Answer questions about active work orders using ONLY the data below. Be concise, use bold and bullets for readability.
 
 LIVE WORK ORDER DATA (${jobs.length} active jobs):
-${jobSummary}
+${jobSummary}${lineItemSection}
 
 Rules:
 - Answer ONLY from the data above — do not invent jobs or numbers
 - For "almost done" queries, list jobs with percentage >= 50%
 - For specific WO lookups, match by WO number or job name
 - Include WO#, job name, client, and percentage in your answers
+- When asked about materials needed, ONLY list [TODO] items — [DONE] items are already completed and should be excluded
+- When listing materials, include item name, quantity, and unit
+- You can mention how many items are already [DONE] as a summary (e.g. "25 of 49 items completed")
 - If asked about something not in the data, say so clearly`;
+
+        const result = await this.callOpenAIChat([
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: query }
+        ], { temperature: 0.1, maxTokens: 1500 });
+
+        const responseText = typeof result === 'string' ? result : result.content || String(result);
+
+        return {
+            agent: 'Foreman',
+            version: '3.0.0',
+            prompt: query,
+            response: responseText,
+            confidence: 0.95,
+            sources: jobs.map(j => `WO#${j.woNumber}`),
+            session_id: sessionId,
+            timestamp: new Date().toISOString()
+        };
+    }
+
+    /**
+     * Scheduler agent — pull live schedule data from Crew Scheduler GAS,
+     * then use Claude to answer crew/scheduling questions with real data.
+     */
+    async _handleSchedulerAgent(query, sessionId) {
+        const headers = this._proxyHeaders();
+
+        // Fetch today's state (crews, members, jobs, trucks, equipment, absent)
+        // and the current week for historical context — in parallel
+        const today = new Date();
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - today.getDay() + 1); // Monday
+        const weekStartStr = weekStart.toLocaleDateString();
+
+        const [stateRes, weekRes] = await Promise.all([
+            fetch('/.netlify/functions/gas-proxy', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    service: 'scheduler',
+                    method: 'POST',
+                    body: { action: 'getCurrentState' }
+                })
+            }),
+            fetch('/.netlify/functions/gas-proxy', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    service: 'scheduler',
+                    method: 'POST',
+                    body: { action: 'getWeekSchedule', weekStartDate: weekStartStr }
+                })
+            })
+        ]);
+
+        const stateJson = await stateRes.json();
+        const weekJson = await weekRes.json();
+
+        // Build today's schedule summary
+        const schedule = stateJson.schedule;
+        let todaySummary = 'No schedule saved for today.';
+        if (schedule && schedule.crews && schedule.crews.length > 0) {
+            todaySummary = schedule.crews.map(c => {
+                const members = (c.members || []).map(m => {
+                    let label = m.name;
+                    if (m.isLeader) label += ' (Leader)';
+                    if (m.isManager) label += ' (Manager)';
+                    return label;
+                }).join(', ') || 'No members';
+                const jobs = (c.jobs || []).join(', ') || 'No jobs';
+                const trucks = (c.vehicles || []).join(', ') || 'None';
+                const equip = (c.equipment || []).join(', ') || 'None';
+                const salesman = c.salesman || 'N/A';
+                return `Crew ${c.number}: ${members} | Jobs: ${jobs} | Truck: ${trucks} | Equipment: ${equip} | Salesman: ${salesman}`;
+            }).join('\n');
+
+            if (schedule.absent && schedule.absent.length > 0) {
+                todaySummary += '\nAbsent today: ' + schedule.absent.map(a => a.name).join(', ');
+            }
+            if (schedule.outOfService && schedule.outOfService.length > 0) {
+                todaySummary += '\nOut of service: ' + schedule.outOfService.map(o => o.name).join(', ');
+            }
+        }
+
+        // Build week history summary
+        let weekSummary = '';
+        const weekSchedule = weekJson.weekSchedule || {};
+        for (const [dateStr, dayData] of Object.entries(weekSchedule)) {
+            if (!dayData.rows || dayData.rows.length === 0) continue;
+            const dayCrews = dayData.rows
+                .filter(row => row[1] && row[1] !== 'SUMMARY' && parseInt(row[1]))
+                .map(row => {
+                    const crewNum = row[1];
+                    const members = [row[2], row[3], row[4]].filter(Boolean).join(', ');
+                    const truck = row[5] || '';
+                    const jobs = row[7] || 'No jobs';
+                    return `  Crew ${crewNum}: ${members} | Jobs: ${jobs} | Truck: ${truck}`;
+                }).join('\n');
+            if (dayCrews) {
+                weekSummary += `${dateStr}:\n${dayCrews}\n`;
+            }
+        }
+        if (!weekSummary) weekSummary = 'No schedule history available for this week.';
+
+        // Available resources
+        const tags = stateJson.tags || {};
+        const peopleSummary = (tags.people || []).map(p => `${p.name} (${p.type || 'crew'})`).join(', ') || 'None loaded';
+        const trucksSummary = (tags.trucks || []).map(t => t.name).join(', ') || 'None loaded';
+        const equipSummary = (tags.equipment || []).map(e => e.name).join(', ') || 'None loaded';
+
+        const systemPrompt = `You are the Scheduler agent for Deep Roots Landscape. Answer questions about crew scheduling, assignments, and work history using ONLY the data below. Be concise, use bold and bullets for readability.
+
+TODAY'S SCHEDULE (${today.toLocaleDateString()}):
+${todaySummary}
+
+THIS WEEK'S SCHEDULE HISTORY:
+${weekSummary}
+
+AVAILABLE RESOURCES:
+People: ${peopleSummary}
+Trucks: ${trucksSummary}
+Equipment: ${equipSummary}
+
+Rules:
+- Answer ONLY from the data above — do not invent crews, people, or jobs
+- When asked "which crews worked on [job]", search ALL days in the week history for that job name (partial match is OK)
+- Include crew numbers, member names, and dates in your answers
+- If asked about something not in the data, say so clearly
+- For availability questions, check who is absent or out of service`;
 
         const result = await this.callOpenAIChat([
             { role: 'system', content: systemPrompt },
@@ -457,12 +634,12 @@ Rules:
         const responseText = typeof result === 'string' ? result : result.content || String(result);
 
         return {
-            agent: 'Foreman',
-            version: '2.0.0',
+            agent: 'Scheduler',
+            version: '1.0.0',
             prompt: query,
             response: responseText,
-            confidence: 0.95,
-            sources: jobs.map(j => `WO#${j.woNumber}`),
+            confidence: 0.9,
+            sources: ['Current Schedule', 'Week History'],
             session_id: sessionId,
             timestamp: new Date().toISOString()
         };

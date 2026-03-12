@@ -99,16 +99,21 @@ class MasterAgent {
         const messageLower = message.toLowerCase();
         const words = messageLower.split(/\s+/);
 
-        // Score each agent by keyword matches
+        // Score each agent by keyword matches (with stem-fuzzy: material ≈ materials)
         const scores = {};
         for (const [key, cfg] of Object.entries(agents)) {
             if (!cfg.keywords) continue;
             let score = 0;
             for (const keyword of cfg.keywords) {
-                if (words.includes(keyword)) {
-                    score += 2;
+                if (keyword.includes(' ')) {
+                    // Multi-word keyword: substring match only
+                    if (messageLower.includes(keyword)) score += 2;
+                } else if (words.includes(keyword)) {
+                    score += 2; // exact word match
+                } else if (words.some(w => (w.length >= 4 && keyword.startsWith(w)) || (keyword.length >= 4 && w.startsWith(keyword)))) {
+                    score += 2; // stem-fuzzy: material↔materials, plant↔plants
                 } else if (messageLower.includes(keyword)) {
-                    score += 1;
+                    score += 1; // substring match
                 }
             }
             if (score > 0) scores[key] = score;
@@ -137,7 +142,9 @@ class MasterAgent {
             const crossDomainSignals = [
                 'and', 'also', 'plus', 'both', 'check if', 'enough', 'materials for',
                 'schedule and', 'do we have', 'can crew', 'budget impact', 'is it on',
-                'are there', 'what about'
+                'are there', 'what about', 'against', 'compare', 'cross-reference',
+                'versus', 'vs', 'left in the', 'need for the', 'short on',
+                'check the', 'ready for', 'prepared for'
             ];
             const hasCrossDomain = crossDomainSignals.some(sig => messageLower.includes(sig));
             if (hasCrossDomain) {
@@ -330,13 +337,15 @@ Instructions:
 - Use markdown formatting (bold, bullets) for readability
 - If agents provided conflicting info, note the discrepancy
 - Keep it concise but complete
-- Do NOT mention "agents" or "synthesis" — just answer naturally`;
+- Do NOT mention "agents" or "synthesis" — just answer naturally
+- CRITICAL: Do NOT invent people, locations, storage areas, or action items that are not in the agent data. Only reference names, places, and facts that appear in the responses above. If you don't know a location or person, do not guess.
+- Storage locations (e.g. yard areas, sheds, bays) ONLY come from the inventory agent's Location column. Never fabricate storage locations like "Shed A" or "Shed B" — if no location is provided, just say "check inventory for location".`;
 
         try {
             const synthesized = await api.callOpenAIChat([
                 { role: 'system', content: synthesisPrompt },
                 { role: 'user', content: 'Please synthesize the above into a unified response.' }
-            ], { temperature: 0.3 });
+            ], { temperature: 0.3, maxTokens: 1500 });
 
             const content = typeof synthesized === 'string' ? synthesized : synthesized.content || String(synthesized);
 

@@ -81,7 +81,7 @@
     "inventory": {
       "name": "Clippings",
       "description": "Inventory, plants, stock, supplies, fleet, trucks",
-      "keywords": ["inventory", "stock", "plants", "supplies", "materials", "mulch", "fertilizer", "arborvitae", "truck", "fleet", "mower"]
+      "keywords": ["inventory", "stock", "plant", "plants", "supply", "supplies", "material", "materials", "mulch", "fertilizer", "arborvitae", "truck", "fleet", "mower", "sod", "stone", "pavers", "soil", "shrub", "shrubs", "tree", "trees", "how many", "do we have", "in stock", "on hand"]
     },
     "repair": {
       "name": "GradeBot",
@@ -91,12 +91,12 @@
     "jobs": {
       "name": "Foreman",
       "description": "Active work orders, job progress, line items, crew dispatch",
-      "keywords": ["job", "jobs", "work order", "wo", "task", "tasks", "progress", "active", "client", "drainage", "planting", "landscape job", "line items", "crew", "dispatch", "almost done"]
+      "keywords": ["job", "jobs", "work order", "wo", "task", "tasks", "progress", "active", "client", "drainage", "planting", "landscape job", "line items", "dispatch", "almost done", "checked off", "completed", "remaining", "how far along", "project", "scope", "left in", "what's left", "whats left"]
     },
     "scheduler": {
       "name": "Scheduler",
-      "description": "Crew scheduling, daily assignments, calendar management",
-      "keywords": ["schedule", "calendar", "assign", "availability", "tomorrow", "shift", "day off"]
+      "description": "Crew scheduling, daily assignments, who worked on what job, crew history, availability, absent",
+      "keywords": ["schedule", "scheduled", "crew", "crews", "assign", "assigned", "availability", "available", "tomorrow", "yesterday", "shift", "day off", "absent", "who worked", "which crew"]
     }
   },
   "masterAgent": {

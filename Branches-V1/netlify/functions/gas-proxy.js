@@ -8,6 +8,7 @@ const SERVICE_ENV_MAP = {
   inventory:       'GAS_INVENTORY_URL',
   grading:         'GAS_GRADING_URL',
   activeJobs:      'GAS_ACTIVE_JOBS_URL',
+  scheduler:       'GAS_SCHEDULER_URL',
   inventoryAgent:  'GAS_INVENTORY_AGENT_URL',
   repairAgent:     'GAS_REPAIR_AGENT_URL',
   jobsAgent:       'GAS_JOBS_AGENT_URL',

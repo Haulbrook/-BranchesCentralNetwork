@@ -585,12 +585,39 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
 
         try {
             let content;
+            let useVision = false; // true = send base64 PDF, false = send extracted text
+
             if (isPdf) {
-                const b64 = await this.readFileAsBase64(this.selectedPdfFile);
-                content = [
-                    { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } },
-                    { type: 'text', text: instruction }
-                ];
+                // Try client-side text extraction first (fast, small payload)
+                let extractedText = '';
+                if (window.pdfjsLib) {
+                    try {
+                        const arrayBuf = await this.selectedPdfFile.arrayBuffer();
+                        const pdf = await window.pdfjsLib.getDocument({ data: arrayBuf }).promise;
+                        const pages = [];
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const txt = await page.getTextContent();
+                            pages.push(txt.items.map(item => item.str).join(' '));
+                        }
+                        extractedText = pages.join('\n\n--- Page Break ---\n\n').trim();
+                    } catch (e) {
+                        console.warn('PDF text extraction failed, falling back to vision:', e);
+                    }
+                }
+
+                if (extractedText && extractedText.length > 50) {
+                    // Text extraction succeeded — send as plain text (tiny payload, uses Haiku)
+                    content = instruction + '\n\nWork order text extracted from PDF:\n"""\n' + extractedText + '\n"""';
+                } else {
+                    // Fallback: send base64 PDF for vision parsing (large payload, uses Sonnet)
+                    useVision = true;
+                    const b64 = await this.readFileAsBase64(this.selectedPdfFile);
+                    content = [
+                        { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } },
+                        { type: 'text', text: instruction }
+                    ];
+                }
             } else {
                 content = instruction + '\n\nWork order text:\n"""\n' + rawText + '\n"""';
             }
@@ -602,10 +629,10 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
                 body: JSON.stringify({
                     type: 'parse',
                     payload: {
-                        model:      isPdf ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001',
-                        max_tokens: 2048,
+                        model:      useVision ? 'claude-sonnet-4-6' : 'claude-haiku-4-5-20251001',
+                        max_tokens: 4096,
                         messages:   [{ role: 'user', content }],
-                        beta:       isPdf ? 'pdfs-2024-09-25' : undefined
+                        beta:       useVision ? 'pdfs-2024-09-25' : undefined
                     }
                 })
             });
@@ -728,7 +755,10 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
 
         try {
             const api = window.app?.api;
-            await fetch('/.netlify/functions/gas-proxy', {
+            // Fire-and-forget: large WOs (50+ line items) can exceed the 26s
+            // Netlify function timeout. We don't need the response — the local
+            // cache drives the UI, and loadActiveJobs() refreshes from GAS later.
+            fetch('/.netlify/functions/gas-proxy', {
                 method: 'POST',
                 headers: api?._proxyHeaders() || { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -736,7 +766,7 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
                     method: 'POST',
                     body: { action: 'addWorkOrder', data }
                 })
-            });
+            }).catch(err => console.warn('addWorkOrder background POST:', err.message));
 
             // Cache WO metadata in localStorage so it persists across refreshes
             // and hard reloads. GAS getProgress often returns empty jobName/client.
