@@ -12,6 +12,7 @@ class InventoryView {
         this.filterQuery = '';
         this.activeTab = 'search';
         this.isLoading = false;
+        this._searchRequestId = 0;
     }
 
     /** Mount into a DOM element */
@@ -152,6 +153,9 @@ class InventoryView {
             : this.container.querySelector('#invUpdateResults');
         if (!resultsEl) return;
 
+        // Track request ID to discard stale results from overlapping searches
+        const requestId = ++this._searchRequestId;
+
         resultsEl.innerHTML = '<div class="inv-loading"><div class="inv-spinner"></div> Searching...</div>';
 
         try {
@@ -159,6 +163,7 @@ class InventoryView {
             if (!api) throw new Error('API not available');
 
             const result = await api.searchInventory(query);
+            if (requestId !== this._searchRequestId) return; // Stale — newer search in flight
             const data = result?.response || result;
 
             if (target === 'update') {
@@ -167,15 +172,19 @@ class InventoryView {
                 this.renderSearchResults(resultsEl, data, query);
             }
         } catch (err) {
-            console.error('Inventory search failed:', err);
+            if (requestId !== this._searchRequestId) return;
+            Logger.error('Inventory', 'Inventory search failed:', err);
             resultsEl.innerHTML = `<div class="inv-error">Search failed: ${this.esc(err.message)}</div>`;
         }
     }
 
     async loadBrowse() {
+        if (this.isLoading) return;
+        this.isLoading = true;
+
         const tableEl = this.container.querySelector('#invBrowseTable');
         const countEl = this.container.querySelector('#invBrowseCount');
-        if (!tableEl) return;
+        if (!tableEl) { this.isLoading = false; return; }
 
         tableEl.innerHTML = '<div class="inv-loading"><div class="inv-spinner"></div> Loading inventory...</div>';
 
@@ -190,8 +199,10 @@ class InventoryView {
             countEl.textContent = `${this.items.length} items`;
             this.renderBrowseTable(tableEl);
         } catch (err) {
-            console.error('Browse inventory failed:', err);
+            Logger.error('Inventory', 'Browse inventory failed:', err);
             tableEl.innerHTML = `<div class="inv-error">Failed to load inventory: ${this.esc(err.message)}</div>`;
+        } finally {
+            this.isLoading = false;
         }
     }
 
@@ -206,7 +217,7 @@ class InventoryView {
             // Refresh browse if loaded
             if (this.items.length > 0) this.loadBrowse();
         } catch (err) {
-            console.error('Update failed:', err);
+            Logger.error('Inventory', 'Update failed:', err);
             window.app?.ui?.showNotification('Update failed: ' + err.message, 'error');
         }
     }
@@ -471,8 +482,9 @@ class InventoryView {
     }
 
     formatAnswer(text) {
-        // Convert markdown-ish formatting to HTML
-        return String(text)
+        // Escape HTML first, then apply markdown formatting
+        const escaped = this.esc(String(text));
+        return escaped
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
             .replace(/`(.*?)`/g, '<code>$1</code>')

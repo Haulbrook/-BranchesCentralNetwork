@@ -32,7 +32,7 @@ class ConfigManager {
                 throw new Error('External config not found');
             }
         } catch (error) {
-            console.warn('Using default configuration:', error.message);
+            Logger.warn('Config', 'Using default configuration:', error.message);
             this.config = { ...this.defaultConfig };
         }
 
@@ -42,7 +42,7 @@ class ConfigManager {
         // Apply environment-specific overrides
         this.applyEnvironmentOverrides();
         
-        console.log('✅ Configuration loaded:', this.config);
+        Logger.info('Config', 'Configuration loaded:', this.config);
     }
 
     mergeLocalSettings() {
@@ -50,12 +50,16 @@ class ConfigManager {
             const localSettings = localStorage.getItem('dashboardSettings');
             if (localSettings) {
                 const settings = JSON.parse(localSettings);
-                this.config = this.mergeConfigs(this.config, settings);
+                // Only merge safe UI keys — never allow overriding services, agents, ai, deployment
+                const ALLOWED_KEYS = ['ui', 'features'];
+                const safeSettings = {};
+                for (const key of ALLOWED_KEYS) {
+                    if (settings[key]) safeSettings[key] = settings[key];
+                }
+                this.config = this.mergeConfigs(this.config, safeSettings);
             }
-
-            // Tool URLs are hardcoded in getDefaultConfig() — no localStorage override
         } catch (error) {
-            console.warn('Error loading local settings:', error);
+            Logger.warn('Config', 'Error loading local settings:', error);
         }
     }
 
@@ -105,7 +109,7 @@ class ConfigManager {
         }
         
         if (errors.length > 0) {
-            console.warn('Configuration validation errors:', errors);
+            Logger.warn('Config', 'Configuration validation errors:', errors);
         }
         
         return errors.length === 0;
@@ -121,7 +125,7 @@ class ConfigManager {
     }
 
     async reloadConfig() {
-        console.log('🔄 Reloading configuration...');
+        Logger.info('Config', 'Reloading configuration...');
         await this.loadConfig();
         this.notifyConfigChange();
     }
@@ -198,7 +202,7 @@ class ConfigManager {
             };
             localStorage.setItem('dashboardSettings', JSON.stringify(configToSave));
         } catch (error) {
-            console.error('Error saving configuration:', error);
+            Logger.error('Config', 'Error saving configuration:', error);
         }
     }
 
@@ -213,7 +217,7 @@ class ConfigManager {
     importConfig(configData) {
         try {
             if (configData.version !== this.config.app?.version) {
-                console.warn('Configuration version mismatch');
+                Logger.warn('Config', 'Configuration version mismatch');
             }
             
             this.config = this.mergeConfigs(this.defaultConfig, configData);
@@ -223,7 +227,7 @@ class ConfigManager {
             
             return true;
         } catch (error) {
-            console.error('Error importing configuration:', error);
+            Logger.error('Config', 'Error importing configuration:', error);
             return false;
         }
     }
@@ -237,15 +241,17 @@ class ConfigManager {
     // Utility methods
     mergeConfigs(base, override) {
         const result = { ...base };
-        
+        const BANNED_KEYS = ['__proto__', 'constructor', 'prototype'];
+
         Object.keys(override).forEach(key => {
+            if (BANNED_KEYS.includes(key)) return;
             if (override[key] && typeof override[key] === 'object' && !Array.isArray(override[key])) {
                 result[key] = this.mergeConfigs(result[key] || {}, override[key]);
             } else {
                 result[key] = override[key];
             }
         });
-        
+
         return result;
     }
 

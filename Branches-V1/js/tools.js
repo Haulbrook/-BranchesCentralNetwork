@@ -37,7 +37,7 @@ class ToolManager {
         // Security check - only accept messages from known tool domains
         const allowedOrigins = this.getAllowedOrigins();
         if (!allowedOrigins.includes(event.origin)) {
-            console.warn('Rejected message from unknown origin:', event.origin);
+            Logger.warn('Tools', 'Rejected message from unknown origin:', event.origin);
             return;
         }
 
@@ -60,7 +60,7 @@ class ToolManager {
                 this.handleToolResize(toolId, data);
                 break;
             default:
-                console.log('Unknown iframe message type:', type);
+                Logger.info('Tools', 'Unknown iframe message type:', type);
         }
     }
 
@@ -81,7 +81,7 @@ class ToolManager {
                             origins.push(url.origin);
                         }
                     } catch (e) {
-                        console.warn('Invalid service URL:', service.url);
+                        Logger.warn('Tools', 'Invalid service URL:', service.url);
                     }
                 }
             });
@@ -91,7 +91,7 @@ class ToolManager {
     }
 
     handleToolReady(toolId, data) {
-        console.log(`✅ Tool ${toolId} ready:`, data);
+        Logger.info('Tools', `✅ Tool ${toolId} ready:`, data);
         this.loadedTools.set(toolId, { status: 'ready', data, loadTime: Date.now() });
         
         // Hide loading indicator
@@ -114,7 +114,7 @@ class ToolManager {
     }
 
     handleToolError(toolId, data) {
-        console.error(`❌ Tool ${toolId} error:`, data);
+        Logger.error('Tools', `❌ Tool ${toolId} error:`, data);
         this.loadedTools.set(toolId, { status: 'error', error: data, loadTime: Date.now() });
 
         const safeMessage = this._escapeHtml(data.message || 'Unknown error');
@@ -139,7 +139,7 @@ class ToolManager {
     }
 
     handleToolData(toolId, data) {
-        console.log(`📊 Data from ${toolId}:`, data);
+        Logger.info('Tools', `📊 Data from ${toolId}:`, data);
         
         // Store tool session data
         this.toolSessions.set(toolId, { ...this.toolSessions.get(toolId), ...data });
@@ -162,7 +162,7 @@ class ToolManager {
     }
 
     handleToolNavigation(toolId, data) {
-        console.log(`🧭 Navigation from ${toolId}:`, data);
+        Logger.info('Tools', `🧭 Navigation from ${toolId}:`, data);
         
         // Handle deep linking or cross-tool navigation
         if (data.targetTool && data.targetTool !== toolId) {
@@ -230,7 +230,10 @@ class ToolManager {
     addToRecentActivity(activity) {
         // Store recent activity for dashboard display
         const recentKey = 'recentActivity';
-        let recent = JSON.parse(localStorage.getItem(recentKey) || '[]');
+        let recent;
+        try {
+            recent = JSON.parse(localStorage.getItem(recentKey) || '[]');
+        } catch { recent = []; }
         
         recent.unshift(activity);
         recent = recent.slice(0, 50); // Keep last 50 activities
@@ -369,7 +372,7 @@ class ToolManager {
             try {
                 return new URL(iframe.src).origin;
             } catch (e) {
-                console.warn('Could not determine iframe origin:', e.message);
+                Logger.warn('Tools', 'Could not determine iframe origin:', e.message);
             }
         }
         // Fallback to allowed origins list rather than wildcard

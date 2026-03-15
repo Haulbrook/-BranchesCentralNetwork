@@ -118,7 +118,7 @@ class APIManager {
             });
             return this.handleGoogleScriptResponse(response);
         } catch (error) {
-            console.error('Google Apps Script call failed:', error);
+            Logger.error('API', 'Google Apps Script call failed:', error);
             throw error;
         }
     }
@@ -191,7 +191,7 @@ class APIManager {
             };
 
         } catch (error) {
-            console.error('Claude API error:', error);
+            Logger.error('API', 'Claude API error:', error);
             throw error;
         }
     }
@@ -731,7 +731,7 @@ Rules:
         
         // Retry logic
         if (request.attempts < request.maxAttempts && this.shouldRetry(error)) {
-            console.warn(`Request failed, retrying (${request.attempts}/${request.maxAttempts}):`, error.message);
+            Logger.warn('API', `Request failed, retrying (${request.attempts}/${request.maxAttempts}):`, error.message);
             
             // Exponential backoff
             const delay = Math.pow(2, request.attempts - 1) * 1000;
@@ -741,7 +741,7 @@ Rules:
         }
         
         // All retries exhausted
-        console.error('Request failed after all retries:', error);
+        Logger.error('API', 'Request failed after all retries:', error);
         throw error;
     }
 
@@ -757,7 +757,7 @@ Rules:
     async processRequestQueue() {
         if (this.requestQueue.length === 0) return;
         
-        console.log(`Processing ${this.requestQueue.length} queued requests...`);
+        Logger.info('API', `Processing ${this.requestQueue.length} queued requests...`);
         
         const requests = [...this.requestQueue];
         this.requestQueue = [];
@@ -765,9 +765,9 @@ Rules:
         for (const request of requests) {
             try {
                 await this.executeRequest(request);
-                console.log('Queued request completed:', request.url);
+                Logger.info('API', 'Queued request completed:', request.url);
             } catch (error) {
-                console.error('Queued request failed:', error);
+                Logger.error('API', 'Queued request failed:', error);
                 // Could re-queue or notify user
             }
         }
@@ -778,7 +778,7 @@ Rules:
         try {
             return await this.callGoogleScript('inventory', 'askInventory', [query]);
         } catch (error) {
-            console.error('Inventory search failed:', error);
+            Logger.error('API', 'Inventory search failed:', error);
             return {
                 answer: 'Search temporarily unavailable. Please try again later.',
                 source: 'error',
@@ -791,7 +791,7 @@ Rules:
         try {
             return await this.callGoogleScript('inventory', 'browseInventory', []);
         } catch (error) {
-            console.error('Browse inventory failed:', error);
+            Logger.error('API', 'Browse inventory failed:', error);
             return { items: [], total: 0 };
         }
     }
@@ -800,7 +800,7 @@ Rules:
         try {
             return await this.callGoogleScript('inventory', 'updateInventory', [updateData]);
         } catch (error) {
-            console.error('Inventory update failed:', error);
+            Logger.error('API', 'Inventory update failed:', error);
             throw error;
         }
     }
@@ -809,7 +809,7 @@ Rules:
         try {
             return await this.callGoogleScript('grading', 'gradeProduct', [productData]);
         } catch (error) {
-            console.error('Product grading failed:', error);
+            Logger.error('API', 'Product grading failed:', error);
             throw error;
         }
     }
@@ -818,7 +818,7 @@ Rules:
         try {
             return await this.callGoogleScript('scheduler', 'getSchedule', [date]);
         } catch (error) {
-            console.error('Schedule fetch failed:', error);
+            Logger.error('API', 'Schedule fetch failed:', error);
             throw error;
         }
     }
@@ -827,7 +827,7 @@ Rules:
         try {
             return await this.callGoogleScript('scheduler', 'updateSchedule', [scheduleData]);
         } catch (error) {
-            console.error('Schedule update failed:', error);
+            Logger.error('API', 'Schedule update failed:', error);
             throw error;
         }
     }
@@ -836,7 +836,7 @@ Rules:
         try {
             return await this.callGoogleScript('tools', 'checkoutTool', [toolData]);
         } catch (error) {
-            console.error('Tool checkout failed:', error);
+            Logger.error('API', 'Tool checkout failed:', error);
             throw error;
         }
     }
@@ -845,7 +845,7 @@ Rules:
         try {
             return await this.callGoogleScript('tools', 'returnTool', [toolData]);
         } catch (error) {
-            console.error('Tool return failed:', error);
+            Logger.error('API', 'Tool return failed:', error);
             throw error;
         }
     }
@@ -855,7 +855,7 @@ Rules:
         try {
             return await this.callGoogleScript('auth', 'getUserInfo', []);
         } catch (error) {
-            console.warn('Could not get user info:', error);
+            Logger.warn('API', 'Could not get user info:', error);
             return {
                 name: 'Guest User',
                 email: 'guest@deeproots.com',
@@ -868,7 +868,7 @@ Rules:
         try {
             return await this.callGoogleScript('auth', 'checkUserAccess', []);
         } catch (error) {
-            console.warn('Access check failed:', error);
+            Logger.warn('API', 'Access check failed:', error);
             return { hasAccess: true, role: 'guest' };
         }
     }
@@ -879,7 +879,7 @@ Rules:
             const functionName = `export${type.charAt(0).toUpperCase() + type.slice(1)}CSV`;
             return await this.callGoogleScript('inventory', functionName, []);
         } catch (error) {
-            console.error('Data export failed:', error);
+            Logger.error('API', 'Data export failed:', error);
             throw error;
         }
     }
@@ -888,7 +888,7 @@ Rules:
         try {
             return await this.callGoogleScript('inventory', 'createDataBackup', []);
         } catch (error) {
-            console.error('Backup creation failed:', error);
+            Logger.error('API', 'Backup creation failed:', error);
             throw error;
         }
     }
@@ -897,7 +897,7 @@ Rules:
         try {
             return await this.callGoogleScript('inventory', 'generateComprehensiveReport', []);
         } catch (error) {
-            console.error('Report generation failed:', error);
+            Logger.error('API', 'Report generation failed:', error);
             throw error;
         }
     }
@@ -906,7 +906,7 @@ Rules:
     async establishRealTimeConnection() {
         // Placeholder for WebRTC or WebSocket connections
         // Could be used for real-time inventory updates, notifications, etc.
-        console.log('Real-time connection placeholder');
+        Logger.info('API', 'Real-time connection placeholder');
     }
 
     // Utility methods
@@ -916,7 +916,7 @@ Rules:
 
     clearCache() {
         this.cache.clear();
-        console.log('API cache cleared');
+        Logger.info('API', 'API cache cleared');
     }
 
     getCacheInfo() {
@@ -964,9 +964,10 @@ Rules:
      */
     _proxyHeaders() {
         const headers = { 'Content-Type': 'application/json' };
-        // Phase 2: attach Supabase JWT if user is authenticated
-        if (window._authToken) {
-            headers['Authorization'] = 'Bearer ' + window._authToken;
+        // Attach Supabase JWT via AuthManager (not a global variable)
+        const token = window.app?.auth?.getToken();
+        if (token) {
+            headers['Authorization'] = 'Bearer ' + token;
         }
         return headers;
     }

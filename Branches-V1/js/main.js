@@ -34,11 +34,31 @@ class DashboardApp {
 
     async init() {
         try {
-            console.log('🚀 Initializing Dashboard App...');
+            Logger.info('App', '🚀 Initializing Dashboard App...');
 
             // Initialize auth (Supabase)
             this.auth = new AuthManager();
             const authEnabled = this.auth.init();
+
+            // If auth config exists but CDN failed, block the app
+            if (!authEnabled && this.auth.authConfigured && this.auth.cdnFailed) {
+                Logger.error('App', 'Auth required but Supabase CDN failed to load');
+                document.getElementById('loadingScreen').style.display = 'none';
+                const app = document.getElementById('app');
+                if (app) {
+                    app.classList.remove('hidden');
+                    app.innerHTML = `
+                        <div style="display:flex;align-items:center;justify-content:center;height:100vh;text-align:center;padding:2rem;">
+                            <div>
+                                <div style="font-size:3rem;margin-bottom:1rem;">🔒</div>
+                                <h2>Authentication Unavailable</h2>
+                                <p style="color:var(--text-secondary);margin-top:0.5rem;">The authentication service failed to load. Please check your network connection and refresh the page.</p>
+                                <button onclick="window.location.reload()" style="margin-top:1rem;padding:8px 24px;border-radius:8px;border:none;background:var(--secondary-color);color:white;cursor:pointer;">Refresh Page</button>
+                            </div>
+                        </div>`;
+                }
+                return;
+            }
 
             if (authEnabled) {
                 this.auth.renderLoginScreen();
@@ -59,7 +79,7 @@ class DashboardApp {
 
             await this._continueInit();
         } catch (error) {
-            console.error('❌ Initialization error:', error);
+            Logger.error('App', '❌ Initialization error:', error);
             this.handleInitializationError(error);
         }
     }
@@ -76,7 +96,7 @@ class DashboardApp {
 
             // Initialize API manager with loaded config
             this.api.init();
-            console.log('✅ API Manager initialized with endpoints:', this.api.endpoints);
+            Logger.info('App', '✅ API Manager initialized with endpoints:', this.api.endpoints);
 
             // Run setup wizard if needed (timeout after 5s to prevent blocking)
             if (this.setupWizard) {
@@ -87,10 +107,10 @@ class DashboardApp {
                     ]);
                     if (wizardConfig) {
                         this.config = { ...this.config, ...wizardConfig };
-                        console.log('✅ Setup wizard completed', wizardConfig);
+                        Logger.info('App', '✅ Setup wizard completed', wizardConfig);
                     }
                 } catch (e) {
-                    console.warn('⚠️ Setup wizard failed, continuing:', e);
+                    Logger.warn('App', '⚠️ Setup wizard failed, continuing:', e);
                 }
             }
 
@@ -111,7 +131,7 @@ class DashboardApp {
             // Initialize skills in chat manager
             if (this.chat && this.chat.initializeSkills) {
                 this.chat.initializeSkills(this.config);
-                console.log('✅ Chat skills initialized');
+                Logger.info('App', '✅ Chat skills initialized');
             }
 
             // Initialize dashboard manager if DashboardManager exists (non-blocking)
@@ -119,9 +139,9 @@ class DashboardApp {
                 this.dashboard = new DashboardManager();
                 // Initialize dashboard in background - don't block app startup
                 this.dashboard.init().then(() => {
-                    console.log('✅ Dashboard Manager initialized');
+                    Logger.info('App', '✅ Dashboard Manager initialized');
                 }).catch(error => {
-                    console.warn('⚠️ Dashboard Manager failed to initialize:', error);
+                    Logger.warn('App', '⚠️ Dashboard Manager failed to initialize:', error);
                     // App still works without dashboard metrics
                 });
             }
@@ -134,7 +154,7 @@ class DashboardApp {
             this.tryRevealApp();
 
         } catch (error) {
-            console.error('❌ Failed to initialize Dashboard App:', error);
+            Logger.error('App', '❌ Failed to initialize Dashboard App:', error);
             this.handleInitializationError(error);
         }
     }
@@ -151,17 +171,17 @@ class DashboardApp {
 
             if (enableDeconstruction && window.DeconstructionRebuildSkill) {
                 this.deconstructionSkill = new DeconstructionRebuildSkill(this.config);
-                console.log('✅ Deconstruction & Rebuild Skill initialized');
+                Logger.info('App', '✅ Deconstruction & Rebuild Skill initialized');
             }
 
             if (enableForwardThinker && window.ForwardThinkerSkill) {
                 this.forwardThinkerSkill = new ForwardThinkerSkill(this.config);
-                console.log('✅ Forward Thinker Skill initialized');
+                Logger.info('App', '✅ Forward Thinker Skill initialized');
             }
 
             if (enableOverseer && window.AppleOverseer) {
                 this.appleOverseer = new AppleOverseer(this.config);
-                console.log('✅ Apple Overseer initialized');
+                Logger.info('App', '✅ Apple Overseer initialized');
 
                 // Connect overseer to AI skills for quality control and coordination
                 if (this.deconstructionSkill && this.deconstructionSkill.connectOverseer) {
@@ -176,7 +196,7 @@ class DashboardApp {
                 this.setupOverseerUI();
             }
         } catch (error) {
-            console.warn('⚠️ Skills initialization failed:', error);
+            Logger.warn('App', '⚠️ Skills initialization failed:', error);
         }
     }
 
@@ -230,7 +250,7 @@ class DashboardApp {
         if (overseerReportBtn) {
             overseerReportBtn.addEventListener('click', () => {
                 const report = this.appleOverseer.generateReport();
-                console.log('🍎 Overseer Report:', report);
+                Logger.info('App', '🍎 Overseer Report:', report);
                 this.showOverseerReport(report);
             });
         }
@@ -246,7 +266,7 @@ class DashboardApp {
             });
         }
 
-        console.log('✅ Apple Overseer UI initialized');
+        Logger.info('App', '✅ Apple Overseer UI initialized');
     }
 
     /**
@@ -438,7 +458,7 @@ Recommendations: ${report.recommendations.length}
         `;
 
         alert(message);
-        console.log('Full Report:', report);
+        Logger.info('App', 'Full Report:', report);
     }
 
     /**
@@ -509,7 +529,7 @@ Recommendations: ${report.recommendations.length}
      * Handle suggestion click
      */
     handleSuggestionClick(type) {
-        console.log('Suggestion clicked:', type);
+        Logger.info('App', 'Suggestion clicked:', type);
         // Route to appropriate tool or action based on suggestion type
     }
 
@@ -540,18 +560,21 @@ Recommendations: ${report.recommendations.length}
             const response = await fetch('app.config.json');
             this.config = await response.json();
             
-            // Merge with localStorage settings
+            // Merge with localStorage settings (only safe UI keys, not services/agents/ai)
             const savedSettings = localStorage.getItem('dashboardSettings');
             if (savedSettings) {
                 const settings = JSON.parse(savedSettings);
-                this.config = { ...this.config, ...settings };
+                const ALLOWED_KEYS = ['ui', 'features'];
+                for (const key of ALLOWED_KEYS) {
+                    if (settings[key]) this.config[key] = { ...this.config[key], ...settings[key] };
+                }
             }
             
             // Update tool URLs from settings
             this.updateToolURLs();
             
         } catch (error) {
-            console.warn('⚠️ Using default configuration:', error);
+            Logger.warn('App', '⚠️ Using default configuration:', error);
             this.config = this.getDefaultConfig();
         }
     }
@@ -570,7 +593,7 @@ Recommendations: ${report.recommendations.length}
             } else if (savedUrl) {
                 // No config.json URL, fall back to localStorage
                 this.config.services[key].url = savedUrl;
-                console.log(`⚠️ ${key}Url from localStorage (no config.json value)`);
+                Logger.info('App', `⚠️ ${key}Url from localStorage (no config.json value)`);
             }
         });
     }
@@ -589,7 +612,7 @@ Recommendations: ${report.recommendations.length}
             }
             this.ui.updateUserInfo(this.user);
         } catch (error) {
-            console.warn('⚠️ Using guest user:', error);
+            Logger.warn('App', '⚠️ Using guest user:', error);
             this.user = {
                 name: 'Guest User',
                 email: 'guest@deeproots.com',
@@ -614,42 +637,42 @@ Recommendations: ${report.recommendations.length}
     }
 
     setupEventListeners() {
-        console.log('🔧 Setting up event listeners...');
+        Logger.info('App', '🔧 Setting up event listeners...');
 
         // Sidebar navigation - Dashboard view button (if exists) or new chat
         const dashboardBtn = document.getElementById('dashboardBtn');
         if (dashboardBtn) {
             dashboardBtn.addEventListener('click', () => {
-                console.log('Dashboard button clicked');
+                Logger.info('App', 'Dashboard button clicked');
                 this.showDashboardView();
             });
-            console.log('✅ Dashboard button listener attached');
+            Logger.info('App', '✅ Dashboard button listener attached');
         }
 
         const newChatBtn = document.getElementById('newChatBtn');
         if (newChatBtn) {
             newChatBtn.addEventListener('click', () => {
-                console.log('Chat button clicked');
+                Logger.info('App', 'Chat button clicked');
                 this.showChatInterface();
             });
-            console.log('✅ Chat button listener attached');
+            Logger.info('App', '✅ Chat button listener attached');
         }
 
         // Tool navigation
         const toolButtons = document.querySelectorAll('.tool-item');
-        console.log(`Found ${toolButtons.length} tool buttons`);
+        Logger.info('App', `Found ${toolButtons.length} tool buttons`);
 
         toolButtons.forEach((btn, index) => {
             const toolId = btn.dataset.tool;
-            console.log(`  Tool button ${index}: ${toolId}`);
+            Logger.info('App', `  Tool button ${index}: ${toolId}`);
 
             btn.addEventListener('click', (e) => {
-                console.log(`Tool button clicked: ${toolId}`);
+                Logger.info('App', `Tool button clicked: ${toolId}`);
                 this.openTool(toolId);
             });
         });
 
-        console.log('✅ All tool listeners attached');
+        Logger.info('App', '✅ All tool listeners attached');
 
         // Disable unconfigured tools (but event listeners are already attached)
         this.updateToolButtonStates();
@@ -700,7 +723,7 @@ Recommendations: ${report.recommendations.length}
 
         // Setup Wizard button
         document.getElementById('runSetupWizard')?.addEventListener('click', async () => {
-            console.log('🧙‍♂️ Running setup wizard...');
+            Logger.info('App', '🧙‍♂️ Running setup wizard...');
             if (this.setupWizard) {
                 // Hide settings modal first
                 this.ui.hideSettingsModal();
@@ -721,7 +744,7 @@ Recommendations: ${report.recommendations.length}
 
                     // Update UI
                     this.ui.showNotification('Configuration updated successfully!', 'success');
-                    console.log('✅ Setup wizard completed and skills reinitialized');
+                    Logger.info('App', '✅ Setup wizard completed and skills reinitialized');
                 }
             } else {
                 this.ui.showNotification('Setup wizard not available', 'error');
@@ -765,11 +788,11 @@ Recommendations: ${report.recommendations.length}
     updateToolButtonStates() {
         // Check which tools are configured and style them accordingly
         if (!this.config?.services) {
-            console.warn('Config not loaded yet, skipping tool state update');
+            Logger.warn('App', 'Config not loaded yet, skipping tool state update');
             return;
         }
 
-        console.log('🔍 Updating tool button states...');
+        Logger.info('App', '🔍 Updating tool button states...');
 
         document.querySelectorAll('.tool-item').forEach(btn => {
             const toolId = btn.dataset.tool;
@@ -784,13 +807,13 @@ Recommendations: ${report.recommendations.length}
                 btn.style.opacity = '0.5';
                 btn.style.cursor = 'not-allowed';
                 btn.title = 'Tool not configured yet';
-                console.log(`  ❌ ${toolId}: Not configured`);
+                Logger.info('App', `  ❌ ${toolId}: Not configured`);
             } else {
                 btn.classList.remove('tool-disabled');
                 btn.style.opacity = '1';
                 btn.style.cursor = 'pointer';
                 btn.title = tool.description || tool.name;
-                console.log(`  ✅ ${toolId}: configured`);
+                Logger.info('App', `  ✅ ${toolId}: configured`);
             }
         });
     }
@@ -819,7 +842,7 @@ Recommendations: ${report.recommendations.length}
     }
 
     showChatInterface() {
-        console.log('💬 Showing chat interface');
+        Logger.info('App', '💬 Showing chat interface');
         this.currentTool = null;
         if (this.dashboard) this.dashboard.pauseAutoRefresh();
         document.getElementById('gasAuthHint')?.remove();
@@ -840,16 +863,16 @@ Recommendations: ${report.recommendations.length}
         if (chatInput) {
             setTimeout(() => chatInput.focus(), 100);
         }
-        console.log('✅ Chat interface shown');
+        Logger.info('App', '✅ Chat interface shown');
     }
 
     async openTool(toolId) {
-        console.log(`🔧 Opening tool: ${toolId}`);
+        Logger.info('App', `🔧 Opening tool: ${toolId}`);
         if (this.dashboard) this.dashboard.pauseAutoRefresh();
 
         const tool = this.config.services[toolId];
         if (!tool) {
-            console.error('❌ Tool not found:', toolId);
+            Logger.error('App', '❌ Tool not found:', toolId);
             return;
         }
 
@@ -858,12 +881,41 @@ Recommendations: ${report.recommendations.length}
         const isNative = nativeTools[toolId] && window[nativeTools[toolId]];
 
         if (!isNative && (!tool.url || tool.url === '' || tool.url.includes('YOUR_') || tool.url.includes('_HERE'))) {
-            console.error(`❌ Tool ${toolId} not configured`);
-            alert('Tool not configured. Please set the URL in settings.');
+            Logger.warn('App', `Tool ${toolId} not configured`);
+            // Show the tool container with a helpful unconfigured message
+            this.currentTool = toolId;
+            document.getElementById('dashboardView')?.classList.add('hidden');
+            document.getElementById('chatInterface')?.classList.add('hidden');
+            document.getElementById('toolContainer')?.classList.remove('hidden');
+            document.getElementById('toolIcon').textContent = tool.icon || '🔧';
+            document.getElementById('toolTitle').textContent = tool.name || toolId;
+            document.getElementById('toolDescription').textContent = tool.description || '';
+            document.getElementById('nativeToolView')?.classList.add('hidden');
+            const iframeContainer = document.querySelector('.tool-iframe-container');
+            if (iframeContainer) {
+                iframeContainer.classList.remove('hidden');
+                const loading = document.querySelector('.tool-loading');
+                if (loading) {
+                    loading.style.display = 'flex';
+                    loading.innerHTML = `
+                        <div class="tool-unconfigured">
+                            <h2>Tool Not Configured</h2>
+                            <p>This tool requires configuration. Go to Settings to set it up.</p>
+                            <div class="setup-steps">
+                                <strong>Quick Setup:</strong>
+                                <ol>
+                                    <li>Click the Settings icon in the sidebar</li>
+                                    <li>Run the Setup Wizard</li>
+                                    <li>Refresh and try again</li>
+                                </ol>
+                            </div>
+                        </div>`;
+                }
+            }
             return;
         }
 
-        console.log(`✅ Tool ${toolId} ready`);
+        Logger.info('App', `✅ Tool ${toolId} ready`);
 
         this.currentTool = toolId;
 
@@ -916,6 +968,10 @@ Recommendations: ${report.recommendations.length}
         // Remove any previous auth-hint bar
         document.getElementById('gasAuthHint')?.remove();
 
+        // Remove previous iframe listeners to prevent duplicates
+        if (this._iframeOnLoad) iframe.removeEventListener('load', this._iframeOnLoad);
+        if (this._iframeOnError) iframe.removeEventListener('error', this._iframeOnError);
+
         // Show loading
         loading.style.display = 'flex';
         // Reset loading content in case a previous error replaced it
@@ -952,7 +1008,7 @@ Recommendations: ${report.recommendations.length}
                     <p style="margin-bottom: 1.5rem; max-width: 440px; margin-left: auto; margin-right: auto;">
                         ${gasMessage}
                     </p>
-                    <button onclick="window.open('${url}', '_blank')" class="btn btn-primary" style="margin-right: 0.5rem;">
+                    <button data-open-url="${url.replace(/['"<>&]/g, '')}" class="btn btn-primary btn-open-tab" style="margin-right: 0.5rem;">
                         Open in New Tab
                     </button>
                     <button onclick="window.app.showDashboardView()" class="btn btn-secondary">
@@ -961,6 +1017,21 @@ Recommendations: ${report.recommendations.length}
                 </div>
             `;
         };
+
+        // Delegated click handler for safe URL opening
+        loading.addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-open-tab');
+            if (btn && btn.dataset.openUrl) {
+                const safeUrl = btn.dataset.openUrl;
+                if (/^https?:\/\//i.test(safeUrl)) {
+                    window.open(safeUrl, '_blank');
+                }
+            }
+        });
+
+        // Store references for cleanup on next tool load
+        this._iframeOnLoad = onLoad;
+        this._iframeOnError = onError;
 
         iframe.addEventListener('error', onError);
 
@@ -1015,13 +1086,24 @@ Recommendations: ${report.recommendations.length}
         const hint = document.createElement('div');
         hint.id = 'gasAuthHint';
         hint.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:rgba(255,193,7,0.12);border-bottom:1px solid rgba(255,193,7,0.3);font-size:0.85rem;color:var(--text-secondary);gap:12px;';
+        const safeUrl = url.replace(/['"<>&]/g, '');
         hint.innerHTML = `
             <span>Not loading correctly? This tool requires a Google sign-in.</span>
             <div style="display:flex;gap:8px;flex-shrink:0;">
-                <button onclick="window.open('${url}','_blank')" class="btn btn-primary" style="padding:4px 14px;font-size:0.82rem;">Open in New Tab</button>
-                <button onclick="this.closest('#gasAuthHint').remove()" class="btn btn-secondary" style="padding:4px 10px;font-size:0.82rem;">Dismiss</button>
+                <button data-open-url="${safeUrl}" class="btn btn-primary btn-open-tab" style="padding:4px 14px;font-size:0.82rem;">Open in New Tab</button>
+                <button class="btn btn-secondary btn-dismiss-hint" style="padding:4px 10px;font-size:0.82rem;">Dismiss</button>
             </div>
         `;
+
+        // Safe click handlers
+        hint.querySelector('.btn-open-tab').addEventListener('click', () => {
+            if (/^https?:\/\//i.test(safeUrl)) {
+                window.open(safeUrl, '_blank');
+            }
+        });
+        hint.querySelector('.btn-dismiss-hint').addEventListener('click', () => {
+            hint.remove();
+        });
 
         container.insertBefore(hint, container.firstChild);
     }
@@ -1060,6 +1142,9 @@ Recommendations: ${report.recommendations.length}
     }
 
     async saveSettings() {
+        if (this._savingSettings) return;
+        this._savingSettings = true;
+
         const settings = {
             darkMode: document.getElementById('darkMode')?.checked ?? false,
             enableAppleOverseer: document.getElementById('enableAppleOverseer')?.checked ?? true,
@@ -1100,6 +1185,7 @@ Recommendations: ${report.recommendations.length}
 
         this.ui.hideSettingsModal();
         this.ui.showMessage('Settings saved successfully!', 'success');
+        this._savingSettings = false;
     }
 
     handleKeyboardShortcuts(e) {
@@ -1108,9 +1194,20 @@ Recommendations: ${report.recommendations.length}
             e.preventDefault();
             document.getElementById('chatInput')?.focus();
         }
-        
-        // Escape: Close modals or go back
+
+        // Ctrl/Cmd + K: Command palette
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            this.toggleCommandPalette();
+        }
+
+        // Escape: Close command palette, modals, or go back
         if (e.key === 'Escape') {
+            const palette = document.querySelector('.cmd-palette-backdrop');
+            if (palette) {
+                palette.remove();
+                return;
+            }
             const openModal = document.querySelector('.modal:not(.hidden)');
             const openWoModal = document.querySelector('.wo-modal-overlay:not(.hidden)');
             if (openModal || openWoModal) {
@@ -1119,6 +1216,74 @@ Recommendations: ${report.recommendations.length}
                 this.showChatInterface();
             }
         }
+    }
+
+    toggleCommandPalette() {
+        const existing = document.querySelector('.cmd-palette-backdrop');
+        if (existing) {
+            existing.remove();
+            return;
+        }
+
+        const backdrop = document.createElement('div');
+        backdrop.className = 'cmd-palette-backdrop';
+
+        const palette = document.createElement('div');
+        palette.className = 'cmd-palette';
+
+        // Build tool items from config
+        const tools = this.config?.services || {};
+        const toolEntries = Object.entries(tools)
+            .filter(([, v]) => v && v.name)
+            .map(([id, v]) => ({ id, name: v.name, icon: v.icon || '' }));
+
+        const navItems = [
+            { id: '_dashboard', name: 'Dashboard', icon: '' },
+            { id: '_chat', name: 'Chat', icon: '' },
+            ...toolEntries
+        ];
+
+        palette.innerHTML =
+            '<input class="cmd-palette-input" type="text" placeholder="Search tools or type a command...">' +
+            '<div class="cmd-palette-results">' +
+            navItems.map(t =>
+                `<div class="cmd-palette-item" data-cmd-id="${t.id}">` +
+                `<span class="cmd-palette-item-icon">${t.icon}</span>` +
+                `<span class="cmd-palette-item-label">${t.name}</span>` +
+                '</div>'
+            ).join('') +
+            '</div>';
+
+        backdrop.appendChild(palette);
+        document.body.appendChild(backdrop);
+
+        const input = palette.querySelector('.cmd-palette-input');
+        input.focus();
+
+        // Filter as user types
+        input.addEventListener('input', () => {
+            const q = input.value.toLowerCase();
+            palette.querySelectorAll('.cmd-palette-item').forEach(item => {
+                const label = item.querySelector('.cmd-palette-item-label').textContent.toLowerCase();
+                item.style.display = label.includes(q) ? '' : 'none';
+            });
+        });
+
+        // Handle item click
+        palette.addEventListener('click', (e) => {
+            const item = e.target.closest('.cmd-palette-item');
+            if (!item) return;
+            const cmdId = item.dataset.cmdId;
+            backdrop.remove();
+            if (cmdId === '_dashboard') this.showDashboardView();
+            else if (cmdId === '_chat') this.showChatInterface();
+            else this.openTool(cmdId);
+        });
+
+        // Close on backdrop click
+        backdrop.addEventListener('click', (e) => {
+            if (e.target === backdrop) backdrop.remove();
+        });
     }
 
     showLoadingScreen(show) {
@@ -1158,7 +1323,7 @@ Recommendations: ${report.recommendations.length}
         if (this.appReady && this.videoEnded) {
             this.showLoadingScreen(false);
             this.isInitialized = true;
-            console.log('✅ Dashboard App initialized successfully');
+            Logger.info('App', '✅ Dashboard App initialized successfully');
             this.showWelcomeMessage();
         }
     }

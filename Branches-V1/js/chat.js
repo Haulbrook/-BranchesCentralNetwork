@@ -31,18 +31,18 @@ class ChatManager {
     initializeSkills(config = {}) {
         if (window.DeconstructionRebuildSkill) {
             this.deconstructionSkill = new DeconstructionRebuildSkill(config);
-            console.log('Deconstruction & Rebuild Skill initialized');
+            Logger.info('Chat', 'Deconstruction & Rebuild Skill initialized');
         }
 
         if (window.ForwardThinkerSkill) {
             this.forwardThinkerSkill = new ForwardThinkerSkill(config);
-            console.log('Forward Thinker Skill initialized');
+            Logger.info('Chat', 'Forward Thinker Skill initialized');
         }
 
         // Get Apple Overseer instance from main app
         if (window.app && window.app.appleOverseer) {
             this.appleOverseer = window.app.appleOverseer;
-            console.log('Apple Overseer connected to ChatManager');
+            Logger.info('Chat', 'Apple Overseer connected to ChatManager');
 
             // Connect overseer to skills for quality control
             if (this.deconstructionSkill && this.deconstructionSkill.connectOverseer) {
@@ -57,7 +57,7 @@ class ChatManager {
         // Initialize Master Agent if available and enabled
         const masterEnabled = config?.masterAgent?.enabled !== false
             && config?.enableMasterAgent !== false;
-        console.log(`🧠 Master Agent check: masterEnabled=${masterEnabled}, classExists=${!!window.MasterAgent}, configMasterAgent=${JSON.stringify(config?.masterAgent)}, enableMasterAgent=${config?.enableMasterAgent}`);
+        Logger.info('Chat', `🧠 Master Agent check: masterEnabled=${masterEnabled}, classExists=${!!window.MasterAgent}, configMasterAgent=${JSON.stringify(config?.masterAgent)}, enableMasterAgent=${config?.enableMasterAgent}`);
         if (masterEnabled && window.MasterAgent) {
             this.masterAgent = new MasterAgent({
                 agents: window.app?.config?.agents,
@@ -67,7 +67,7 @@ class ChatManager {
                 deconstructionSkill: this.deconstructionSkill,
                 appleOverseer: this.appleOverseer
             });
-            console.log('🧠 Master Agent connected to ChatManager');
+            Logger.info('Chat', '🧠 Master Agent connected to ChatManager');
         } else {
             this.masterAgent = null;
         }
@@ -134,11 +134,12 @@ class ChatManager {
 
     async sendMessage(message) {
         if (this.isTyping) return;
-        
+        this.isTyping = true; // Set immediately to prevent double-submit race
+
         // Add user message to chat
         this.addMessage(message, 'user');
-        
-        // Show typing indicator
+
+        // Show typing indicator (also sets isTyping, but we set it early above)
         this.showTypingIndicator(true);
         
         try {
@@ -161,7 +162,7 @@ class ChatManager {
         } catch (error) {
             this.showTypingIndicator(false);
             this.addMessage('Sorry, I encountered an error processing your request. Please try again.', 'assistant', 'error');
-            console.error('Chat processing error:', error);
+            Logger.error('Chat', 'Chat processing error:', error);
         }
         
         // Save conversation
@@ -206,7 +207,7 @@ class ChatManager {
                     return masterResponse;
                 }
             } catch (error) {
-                console.warn('🧠 Master Agent failed, falling back to pipeline:', error);
+                Logger.warn('Chat', '🧠 Master Agent failed, falling back to pipeline:', error);
             }
         }
 
@@ -218,11 +219,11 @@ class ChatManager {
                 const routeResult = await api.routeQuery(message);
                 if (routeResult && routeResult.agent) {
                     agentRoute = { agentKey: routeResult.agent };
-                    console.log(`Haiku router → ${routeResult.agent} (${routeResult.reason})`);
+                    Logger.info('Chat', `Haiku router → ${routeResult.agent} (${routeResult.reason})`);
                 }
             }
         } catch (error) {
-            console.warn('Haiku router failed, falling back to keywords:', error);
+            Logger.warn('Chat', 'Haiku router failed, falling back to keywords:', error);
         }
 
         // Step 2: Fallback to keyword matching if Haiku didn't route
@@ -235,7 +236,7 @@ class ChatManager {
             try {
                 return await this.processWithAgent(agentRoute.agentKey, message);
             } catch (error) {
-                console.error(`Agent '${agentRoute.agentKey}' failed, falling back:`, error);
+                Logger.error('Chat', `Agent '${agentRoute.agentKey}' failed, falling back:`, error);
                 // Fall through to OpenAI / keyword matching
             }
         }
@@ -245,7 +246,7 @@ class ChatManager {
             const result = await this.processWithOpenAI(message);
             return result;
         } catch (error) {
-            console.error('Claude processing failed, falling back to keyword matching:', error);
+            Logger.error('Chat', 'Claude processing failed, falling back to keyword matching:', error);
             // Fall through to keyword matching below
         }
 
@@ -478,8 +479,9 @@ class ChatManager {
         const sources = data.sources;
 
         // Build badge line
+        const safeName = this._escapeHtml(agentName);
         let badge = `<div class="agent-badge" style="display:inline-flex;align-items:center;gap:6px;margin-bottom:8px;padding:3px 10px;border-radius:12px;background:rgba(76,175,80,0.12);font-size:0.82em;color:#4CAF50;">`;
-        badge += `<strong>${agentName}</strong>`;
+        badge += `<strong>${safeName}</strong>`;
         if (confidence != null) {
             const pct = Math.round(confidence * 100);
             badge += ` · ${pct}% confidence`;
@@ -785,9 +787,12 @@ class ChatManager {
     }
 
     formatMessageContent(content, type) {
-        // Return HTML table directly without markdown formatting
+        // Return HTML table directly — only if it matches our generated markup
         if (type === 'inventory_table') {
-            return content;
+            if (typeof content === 'string' && content.startsWith('<div class="inventory-browse-container"')) {
+                return content;
+            }
+            return this._applyMarkdown(this._escapeHtml(content));
         }
 
         // Agent/master responses: badge is trusted HTML, rest needs escaping
@@ -836,7 +841,7 @@ class ChatManager {
         } catch (error) {
             this.showTypingIndicator(false);
             this.addMessage('Failed to load inventory. Please try again later.', 'assistant', 'error');
-            console.error('Browse inventory error:', error);
+            Logger.error('Chat', 'Browse inventory error:', error);
         }
     }
 
@@ -1007,15 +1012,18 @@ class ChatManager {
             const saved = localStorage.getItem('chatHistory');
             if (saved) {
                 const history = JSON.parse(saved);
-                // Only load recent messages (last 10)
-                const recentMessages = history.slice(-10);
+                // Only load recent messages (last 10), filtering out types that render raw HTML
+                const SAFE_TYPES = [undefined, null, '', 'user', 'assistant', 'system', 'general', 'ai_response', 'tool-routing', 'function_result', 'error', 'deconstruction', 'normal'];
+                const recentMessages = history.slice(-10).filter(msg =>
+                    SAFE_TYPES.includes(msg.type) || msg.sender === 'user'
+                );
                 
                 recentMessages.forEach(msg => {
                     this.addMessage(msg.content, msg.sender, msg.type);
                 });
             }
         } catch (error) {
-            console.warn('Could not load chat history:', error);
+            Logger.warn('Chat', 'Could not load chat history:', error);
         }
     }
 
@@ -1025,7 +1033,7 @@ class ChatManager {
             const recentMessages = this.messageHistory.slice(-50);
             localStorage.setItem('chatHistory', JSON.stringify(recentMessages));
         } catch (error) {
-            console.warn('Could not save chat history:', error);
+            Logger.warn('Chat', 'Could not save chat history:', error);
         }
     }
 

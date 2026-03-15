@@ -3,6 +3,22 @@
 
 const { validateAuth, corsHeaders } = require('./_shared/auth');
 
+// In-memory rate limiting (per function instance)
+const rateLimits = new Map();
+const RATE_LIMIT = 30;      // max requests
+const RATE_WINDOW = 60000;  // per 60 seconds
+
+function checkRateLimit(identifier) {
+  const now = Date.now();
+  const entry = rateLimits.get(identifier);
+  if (!entry || now - entry.windowStart > RATE_WINDOW) {
+    rateLimits.set(identifier, { windowStart: now, count: 1 });
+    return true;
+  }
+  entry.count++;
+  return entry.count <= RATE_LIMIT;
+}
+
 exports.handler = async (event) => {
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
@@ -19,9 +35,20 @@ exports.handler = async (event) => {
     return { statusCode: 401, headers: corsHeaders(), body: JSON.stringify({ error: auth.error }) };
   }
 
+  // Rate limiting
+  const rateLimitId = auth.user?.sub || event.headers?.['x-forwarded-for'] || 'anonymous';
+  if (!checkRateLimit(rateLimitId)) {
+    return { statusCode: 429, headers: corsHeaders(), body: JSON.stringify({ error: 'Rate limit exceeded' }) };
+  }
+
   const apiKey = process.env.CLAUDE_API_KEY;
   if (!apiKey) {
-    return { statusCode: 500, headers: corsHeaders(), body: JSON.stringify({ error: 'CLAUDE_API_KEY not configured on server' }) };
+    return { statusCode: 500, headers: corsHeaders(), body: JSON.stringify({ error: 'API not configured' }) };
+  }
+
+  // Request body size validation (100KB limit)
+  if (event.body && event.body.length > 102400) {
+    return { statusCode: 413, headers: corsHeaders(), body: JSON.stringify({ error: 'Request body too large (100KB limit)' }) };
   }
 
   let body;
@@ -36,6 +63,10 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers: corsHeaders(), body: JSON.stringify({ error: 'Missing type or payload' }) };
   }
 
+  // Allowed models whitelist — reject or clamp unknown models
+  const ALLOWED_MODELS = ['claude-haiku-4-5-20251001', 'claude-sonnet-4-5-20241022'];
+  const clampModel = (m) => ALLOWED_MODELS.includes(m) ? m : 'claude-haiku-4-5-20251001';
+
   try {
     let anthropicBody;
     const headers = {
@@ -48,7 +79,7 @@ exports.handler = async (event) => {
       case 'chat':
         // callOpenAI — tool-use chat (api.js)
         anthropicBody = {
-          model: payload.model || 'claude-haiku-4-5-20251001',
+          model: clampModel(payload.model),
           max_tokens: payload.max_tokens || 500,
           messages: payload.messages,
           temperature: payload.temperature,
@@ -61,7 +92,7 @@ exports.handler = async (event) => {
       case 'analysis':
         // callOpenAIChat — master agent analysis/synthesis (api.js)
         anthropicBody = {
-          model: payload.model || 'claude-haiku-4-5-20251001',
+          model: clampModel(payload.model),
           max_tokens: payload.max_tokens || 800,
           messages: payload.messages,
           temperature: payload.temperature ?? 0.2,
@@ -72,7 +103,7 @@ exports.handler = async (event) => {
       case 'parse':
         // parseWithClaude — PDF/text WO parsing (dashboard.js)
         anthropicBody = {
-          model: payload.model || 'claude-haiku-4-5-20251001',
+          model: clampModel(payload.model),
           max_tokens: payload.max_tokens || 2048,
           messages: payload.messages,
         };
@@ -86,11 +117,17 @@ exports.handler = async (event) => {
         return { statusCode: 400, headers: corsHeaders(), body: JSON.stringify({ error: `Unknown type: ${type}` }) };
     }
 
+    // 60-second timeout for Anthropic API
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000);
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers,
       body: JSON.stringify(anthropicBody),
+      signal: controller.signal,
     });
+    clearTimeout(timeout);
 
     const data = await response.json();
 
@@ -113,7 +150,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 500,
       headers: corsHeaders(),
-      body: JSON.stringify({ error: 'Proxy error: ' + error.message }),
+      body: JSON.stringify({ error: 'Internal server error' }),
     };
   }
 };

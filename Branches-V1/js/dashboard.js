@@ -29,17 +29,20 @@ class DashboardManager {
         this.setupAddWoModal();
         this.setupAutoRefresh();
 
-        // Load data in background (non-blocking)
-        this.loadMetrics().then(() => {
+        // Load data in background (non-blocking, 10s timeout each)
+        const withTimeout = (promise, ms, label) =>
+            Promise.race([promise, new Promise((_, rej) => setTimeout(() => rej(new Error(`${label} timeout (${ms}ms)`)), ms))]);
+
+        withTimeout(this.loadMetrics(), 10000, 'Metrics').then(() => {
             this.renderMetricsCards();
         }).catch(error => {
-            console.warn('Failed to load metrics:', error);
+            Logger.warn('Dashboard', 'Failed to load metrics:', error);
         });
 
-        this.loadActiveJobs().then(() => {
+        withTimeout(this.loadActiveJobs(), 10000, 'Active Jobs').then(() => {
             this.renderJobCards();
         }).catch(error => {
-            console.warn('Failed to load active jobs:', error);
+            Logger.warn('Dashboard', 'Failed to load active jobs:', error);
         });
 
         this.checkWeather();
@@ -53,13 +56,13 @@ class DashboardManager {
         try {
             const api = window.app?.api;
             if (!api) {
-                console.warn('API not available');
+                Logger.warn('Dashboard', 'API not available');
                 return;
             }
 
             // Check if any endpoints are configured
             if (!this.hasConfiguredEndpoints()) {
-                console.log('No endpoints configured - skipping metrics load');
+                Logger.info('Dashboard', 'No endpoints configured - skipping metrics load');
                 this.showSetupRequired();
                 return;
             }
@@ -76,10 +79,10 @@ class DashboardManager {
         } catch (error) {
             // Only show error if it's not about missing endpoints
             if (!error.message.includes('No Google Apps Script endpoint')) {
-                console.error('Failed to load metrics:', error);
+                Logger.error('Dashboard', 'Failed to load metrics:', error);
                 this.showError('Unable to load dashboard metrics');
             } else {
-                console.log('Endpoints not configured yet');
+                Logger.info('Dashboard', 'Endpoints not configured yet');
                 this.showSetupRequired();
             }
         }
@@ -214,7 +217,7 @@ class DashboardManager {
 
             this.metrics.set('activeJobs', serverJobs);
         } catch (error) {
-            console.error('Failed to load active jobs:', error);
+            Logger.error('Dashboard', 'Failed to load active jobs:', error);
             // Keep existing data on failure — don't wipe the cards
             if (!this.metrics.has('activeJobs')) {
                 this.metrics.set('activeJobs', []);
@@ -228,7 +231,7 @@ class DashboardManager {
     renderJobCards() {
         const container = document.getElementById('jobCardsGrid');
         if (!container) {
-            console.warn('Job cards container not found');
+            Logger.warn('Dashboard', 'Job cards container not found');
             return;
         }
 
@@ -402,6 +405,10 @@ class DashboardManager {
      * Toggle a line item checkbox and POST the update to GAS
      */
     async toggleCheckbox(row) {
+        // Prevent re-click while POST is in-flight
+        if (row._toggling) return;
+        row._toggling = true;
+
         const woNumber = row.dataset.wo;
         const rowIndex = parseInt(row.dataset.row);
         const newValue = row.dataset.done !== 'true';
@@ -446,6 +453,7 @@ class DashboardManager {
             this.showToast('Save failed — ' + ex.message, 'error');
         } finally {
             if (savingEl) savingEl.classList.add('hidden');
+            row._toggling = false;
         }
     }
 
@@ -468,6 +476,83 @@ class DashboardManager {
 
         // Section-header button
         document.getElementById('addWoBtn')?.addEventListener('click', () => this.openWoModal());
+
+        // Attach all modal event listeners (replaces inline onclick/onchange/etc.)
+        this.attachModalEventListeners();
+    }
+
+    /**
+     * Attach event listeners for WO modals — replaces all inline event handlers.
+     */
+    attachModalEventListeners() {
+        const $ = (id) => document.getElementById(id);
+
+        // --- WO Detail Modal ---
+        const detailModal = $('woDetailModal');
+        if (detailModal) {
+            // Overlay click to close
+            detailModal.addEventListener('click', (e) => {
+                if (e.target === detailModal) detailModal.classList.add('hidden');
+            });
+            // Close button(s)
+            detailModal.querySelectorAll('.wo-modal-close, .wo-modal-footer .btn-secondary').forEach(btn => {
+                btn.addEventListener('click', () => detailModal.classList.add('hidden'));
+            });
+        }
+
+        // --- Add Work Order Modal ---
+        const addModal = $('addWoModal');
+        if (addModal) {
+            // Overlay click to close
+            addModal.addEventListener('click', (e) => {
+                if (e.target === addModal) addModal.classList.add('hidden');
+            });
+            // Close button
+            addModal.querySelector('.wo-modal-close')?.addEventListener('click', () => {
+                addModal.classList.add('hidden');
+            });
+        }
+
+        // Tabs
+        $('woTabPdf')?.addEventListener('click', () => this.setInputMode('pdf'));
+        $('woTabText')?.addEventListener('click', () => this.setInputMode('text'));
+
+        // File input
+        $('woFileInput')?.addEventListener('change', (e) => {
+            this.handleFileSelect(e.target.files[0]);
+        });
+
+        // PDF Dropzone
+        const dropzone = $('woPdfDropzone');
+        if (dropzone) {
+            dropzone.addEventListener('click', () => $('woFileInput')?.click());
+            dropzone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropzone.classList.add('drag-over');
+            });
+            dropzone.addEventListener('dragleave', () => {
+                dropzone.classList.remove('drag-over');
+            });
+            dropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropzone.classList.remove('drag-over');
+                this.handleFileSelect(e.dataTransfer.files[0]);
+            });
+        }
+
+        // Parse button
+        $('woBtnParse')?.addEventListener('click', () => this.parseWithClaude());
+
+        // Add line item button
+        addModal?.querySelector('.wo-btn-add-li')?.addEventListener('click', () => this.addLineItemRow());
+
+        // Cancel button in footer
+        addModal?.querySelector('.wo-modal-footer .btn-secondary')?.addEventListener('click', () => {
+            addModal.classList.add('hidden');
+        });
+
+        // Confirm Add button
+        $('woBtnConfirmAdd')?.addEventListener('click', () => this.confirmAddWO());
     }
 
     /** Open the Add WO modal in a clean state */
@@ -602,7 +687,7 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
                         }
                         extractedText = pages.join('\n\n--- Page Break ---\n\n').trim();
                     } catch (e) {
-                        console.warn('PDF text extraction failed, falling back to vision:', e);
+                        Logger.warn('Dashboard', 'PDF text extraction failed, falling back to vision:', e);
                     }
                 }
 
@@ -652,7 +737,7 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
 
         } catch (ex) {
             this.showParseError(ex.message);
-            console.error('Claude parse error:', ex);
+            Logger.error('Dashboard', 'Claude parse error:', ex);
         } finally {
             document.getElementById('woParseSpinner')?.classList.add('hidden');
             if (parseBtn) parseBtn.disabled = false;
@@ -713,10 +798,14 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
      * Confirm and POST the new work order to GAS
      */
     async confirmAddWO() {
+        // Prevent double-submit
+        if (this._addingWO) return;
+        this._addingWO = true;
+
         const woNumber = document.getElementById('pfWonumber')?.value.trim() || '';
         const jobName  = document.getElementById('pfJobname')?.value.trim()  || '';
-        if (!woNumber) { this.showToast('WO Number is required.', 'error'); return; }
-        if (!jobName)  { this.showToast('Job Name is required.',  'error'); return; }
+        if (!woNumber) { this._addingWO = false; this.showToast('WO Number is required.', 'error'); return; }
+        if (!jobName)  { this._addingWO = false; this.showToast('Job Name is required.',  'error'); return; }
 
         const currentJobs = this.metrics.get('activeJobs') || [];
         if (currentJobs.some(w => String(w.woNumber).trim() === woNumber)) {
@@ -766,7 +855,7 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
                     method: 'POST',
                     body: { action: 'addWorkOrder', data }
                 })
-            }).catch(err => console.warn('addWorkOrder background POST:', err.message));
+            }).catch(err => Logger.warn('Dashboard', 'addWorkOrder background POST:', err.message));
 
             // Cache WO metadata in localStorage so it persists across refreshes
             // and hard reloads. GAS getProgress often returns empty jobName/client.
@@ -830,6 +919,7 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
         } finally {
             if (spinner) spinner.classList.add('hidden');
             if (btn)     btn.disabled = false;
+            this._addingWO = false;
         }
     }
 
@@ -899,7 +989,7 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
     renderMetricsCards() {
         const container = document.getElementById('metricsGrid');
         if (!container) {
-            console.warn('Metrics container not found');
+            Logger.warn('Dashboard', 'Metrics container not found');
             return;
         }
 
@@ -976,13 +1066,13 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
                 await this.loadMetrics();
                 this.renderMetricsCards();
             } catch (e) {
-                console.warn('Auto-refresh metrics failed:', e);
+                Logger.warn('Dashboard', 'Auto-refresh metrics failed:', e);
             }
             try {
                 await this.loadActiveJobs();
                 this.renderJobCards();
             } catch (e) {
-                console.warn('Auto-refresh active jobs failed:', e);
+                Logger.warn('Dashboard', 'Auto-refresh active jobs failed:', e);
             }
         }, this.updateInterval);
 
@@ -1019,7 +1109,7 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
      * Handle metric card click
      */
     handleMetricClick(metric) {
-        console.log('Metric clicked:', metric);
+        Logger.info('Dashboard', 'Metric clicked:', metric);
     }
 
     /**
@@ -1123,7 +1213,7 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
                 banner.innerHTML = '';
             }
         } catch (err) {
-            console.warn('Weather check failed:', err);
+            Logger.warn('Dashboard', 'Weather check failed:', err);
         }
     }
 
@@ -1148,7 +1238,7 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
             const ts = document.getElementById('activityFeedTimestamp');
             if (ts) ts.textContent = 'Updated ' + new Date().toLocaleTimeString();
         } catch (e) {
-            console.warn('Activity feed load failed:', e);
+            Logger.warn('Dashboard', 'Activity feed load failed:', e);
         }
     }
 

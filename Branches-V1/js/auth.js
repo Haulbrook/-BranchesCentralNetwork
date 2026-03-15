@@ -17,12 +17,16 @@ class AuthManager {
         const anonKey = document.body.dataset.supabaseAnonKey;
 
         if (!url || !anonKey) {
-            console.warn('Supabase config not found — auth disabled');
+            Logger.warn('Auth', 'Supabase config not found — auth disabled');
+            this.authConfigured = false;
             return false;
         }
 
+        this.authConfigured = true; // Config exists, auth is expected
+
         if (!window.supabase?.createClient) {
-            console.warn('Supabase JS not loaded — auth disabled');
+            Logger.error('Auth', 'Supabase JS not loaded — auth CDN may be blocked');
+            this.cdnFailed = true;
             return false;
         }
 
@@ -34,7 +38,7 @@ class AuthManager {
             this.user = session?.user || null;
 
             // Keep global token in sync for proxy headers
-            window._authToken = session?.access_token || null;
+            // Token accessed via auth.getToken(), not a global variable
 
             if (event === 'SIGNED_IN') {
                 // Only hide login screen if app is already initialized;
@@ -61,7 +65,6 @@ class AuthManager {
         const { data } = await this.supabase.auth.getSession();
         this.session = data.session;
         this.user = data.session?.user || null;
-        window._authToken = data.session?.access_token || null;
         return !!data.session;
     }
 
@@ -92,7 +95,7 @@ class AuthManager {
         if (!this.supabase) return;
         this.stopTokenRefresh();
         await this.supabase.auth.signOut();
-        window._authToken = null;
+        // Token cleared via session = null
         this.user = null;
         this.session = null;
     }
@@ -110,19 +113,34 @@ class AuthManager {
      */
     startTokenRefresh() {
         if (this._refreshInterval) return;
+        this._refreshFailures = 0;
         this._refreshInterval = setInterval(async () => {
             if (!this.supabase) return;
             try {
                 const { data, error } = await this.supabase.auth.refreshSession();
                 if (error) {
-                    console.warn('Token refresh failed:', error.message);
+                    this._refreshFailures++;
+                    Logger.warn('Auth', `Token refresh failed (attempt ${this._refreshFailures}):`, error.message);
+                    if (this._refreshFailures >= 3) {
+                        Logger.error('Auth', 'Token refresh failed 3 times — forcing logout');
+                        window.app?.ui?.showNotification('Session expired. Please sign in again.', 'warning');
+                        await this.signOut();
+                        this._showLoginScreen();
+                    }
                 } else if (data?.session) {
+                    this._refreshFailures = 0;
                     this.session = data.session;
                     this.user = data.session.user || null;
-                    window._authToken = data.session.access_token || null;
                 }
             } catch (e) {
-                console.warn('Token refresh error:', e);
+                this._refreshFailures++;
+                Logger.warn('Auth', `Token refresh error (attempt ${this._refreshFailures}):`, e);
+                if (this._refreshFailures >= 3) {
+                    Logger.error('Auth', 'Token refresh failed 3 times — forcing logout');
+                    window.app?.ui?.showNotification('Session expired. Please sign in again.', 'warning');
+                    await this.signOut();
+                    this._showLoginScreen();
+                }
             }
         }, 50 * 60 * 1000); // 50 minutes
     }
@@ -225,6 +243,7 @@ class AuthManager {
             const email = document.getElementById('loginEmail').value.trim();
             const msgEl = document.getElementById('magicLinkMsg');
             const errorEl = document.getElementById('loginError');
+            const mlBtn = document.getElementById('magicLinkBtn');
 
             if (!email) {
                 errorEl.textContent = 'Enter your email first';
@@ -233,6 +252,8 @@ class AuthManager {
             }
 
             errorEl.classList.add('hidden');
+            mlBtn.disabled = true;
+            mlBtn.textContent = 'Sending...';
 
             try {
                 await this.signInWithMagicLink(email);
@@ -241,6 +262,9 @@ class AuthManager {
             } catch (err) {
                 errorEl.textContent = err.message || 'Failed to send magic link';
                 errorEl.classList.remove('hidden');
+            } finally {
+                mlBtn.disabled = false;
+                mlBtn.textContent = 'Send Magic Link';
             }
         });
     }

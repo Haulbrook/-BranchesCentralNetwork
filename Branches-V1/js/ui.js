@@ -9,6 +9,12 @@ class UIManager {
         this.notifications = [];
     }
 
+    _escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = String(text);
+        return div.innerHTML;
+    }
+
     init() {
         this.setupResponsiveHandlers();
         this.loadTheme();
@@ -185,19 +191,24 @@ class UIManager {
             <div style="display: flex; align-items: flex-start; gap: var(--spacing-md);">
                 <span style="font-size: 1.25rem;">${icon}</span>
                 <div style="flex: 1;">
-                    <p style="margin: 0; font-weight: 500;">${message}</p>
+                    <p style="margin: 0; font-weight: 500;">${this._escapeHtml(message)}</p>
                 </div>
-                <button onclick="this.parentElement.parentElement.remove()" style="
+                <button class="notification-close-btn" style="
                     background: none;
                     border: none;
                     cursor: pointer;
                     font-size: 1.125rem;
                     opacity: 0.7;
                     transition: opacity 0.2s ease;
-                " onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.7'">×</button>
+                ">×</button>
             </div>
         `;
-        
+
+        const closeBtn = notification.querySelector('.notification-close-btn');
+        closeBtn.addEventListener('click', () => this.removeNotification(notification));
+        closeBtn.addEventListener('mouseover', () => { closeBtn.style.opacity = '1'; });
+        closeBtn.addEventListener('mouseout', () => { closeBtn.style.opacity = '0.7'; });
+
         return notification;
     }
 
@@ -339,7 +350,7 @@ class UIManager {
                 }
             }
         } catch (error) {
-            console.warn('Could not load UI settings:', error);
+            Logger.warn('UI', 'Could not load UI settings:', error);
         }
     }
 
@@ -368,7 +379,7 @@ class UIManager {
                         animation: spin 1s linear infinite;
                         margin-bottom: var(--spacing-md);
                     "></div>
-                    <p>${message}</p>
+                    <p>${this._escapeHtml(message)}</p>
                 </div>
             `;
         }
