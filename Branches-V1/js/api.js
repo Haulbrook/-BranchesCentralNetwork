@@ -81,12 +81,14 @@ class APIManager {
                 
                 // Global response handling — skip for opaque (no-cors) responses which always have status 0
                 if (!response.ok && response.type !== 'opaque') {
-                    // For auth failures, try to read the error body for diagnostics
+                    // For auth failures, read the error body for diagnostics
                     if (response.status === 401) {
                         try {
                             const errBody = await response.clone().json();
-                            Logger.warn('API', `401 Unauthorized: ${errBody.error || 'unknown reason'}`);
-                        } catch {}
+                            console.error('[DEBUG] 401 server reason:', errBody.error || 'unknown');
+                        } catch (e) {
+                            console.error('[DEBUG] 401 could not read body:', e.message);
+                        }
                     }
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
