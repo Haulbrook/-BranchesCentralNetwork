@@ -36,13 +36,27 @@ function validateAuth(event) {
     const [headerB64, payloadB64, signatureB64] = parts;
 
     // Verify signature (HS256)
+    // Use raw byte comparison to avoid base64 vs base64url encoding mismatches
     const data = `${headerB64}.${payloadB64}`;
-    const expectedSig = crypto
-      .createHmac('sha256', secret)
+    const expectedBytes = crypto
+      .createHmac('sha256', secret.trim())
       .update(data)
-      .digest('base64url');
+      .digest();
 
-    if (expectedSig !== signatureB64) {
+    // Decode the JWT signature — try base64url first, fall back to standard base64
+    let signatureBytes;
+    try {
+      signatureBytes = Buffer.from(signatureB64, 'base64url');
+      // If base64url decode produced empty or wrong-length result, try standard base64
+      if (signatureBytes.length !== 32) {
+        signatureBytes = Buffer.from(signatureB64, 'base64');
+      }
+    } catch {
+      signatureBytes = Buffer.from(signatureB64, 'base64');
+    }
+
+    if (expectedBytes.length !== signatureBytes.length ||
+        !crypto.timingSafeEqual(expectedBytes, signatureBytes)) {
       return { valid: false, error: 'Invalid signature' };
     }
 
