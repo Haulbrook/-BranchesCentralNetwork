@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Deep Roots Landscape Operations Dashboard - Unified access to all operational tools">
     <meta name="theme-color" content="#2E7D32">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Deep Roots">
 
@@ -27,53 +27,23 @@
     <meta name="twitter:image" content="https://branchesv1.netlify.app/images/og-image.svg">
     <meta name="twitter:image:alt" content="Deep Roots Operations Dashboard - Landscaping management platform">
 
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.open-meteo.com https://*.supabase.co https://cdn.jsdelivr.net; img-src 'self' data: https:; worker-src 'self' blob: https://cdn.jsdelivr.net; frame-src 'self' https://script.google.com https://script.googleusercontent.com https://dailychessmap.netlify.app;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.open-meteo.com https://*.supabase.co https://cdn.jsdelivr.net; img-src 'self' data: https:; worker-src 'self' blob: https://cdn.jsdelivr.net; frame-src 'self' https://script.google.com https://script.googleusercontent.com https://dailychessmap.netlify.app;">
     <title>Deep Roots Operations Dashboard</title>
     <!-- Force light mode as default -->
-    <script>
-        if (!localStorage.getItem('theme')) {
-            localStorage.setItem('theme', 'light');
-        }
-    </script>
+    <script src="js/theme-init.js?v=20260315"></script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌱</text></svg>">
-    <link rel="stylesheet" href="styles/main.css?v=20260310a">
-    <link rel="stylesheet" href="styles/components.css?v=20260310a">
+    <link rel="stylesheet" href="styles/main.css?v=20260315">
+    <link rel="stylesheet" href="styles/components.css?v=20260315">
     <!-- Enhanced v2.0 Professional Components -->
-    <link rel="stylesheet" href="styles/enhanced-theme.css?v=20260310a">
-    <link rel="stylesheet" href="styles/enhanced-components.css?v=20260310a">
+    <link rel="stylesheet" href="styles/enhanced-theme.css?v=20260315">
+    <link rel="stylesheet" href="styles/enhanced-components.css?v=20260315">
     <!-- AI Skills Styles -->
-    <link rel="stylesheet" href="styles/wizard.css?v=20260310a">
-    <link rel="stylesheet" href="styles/skills.css?v=20260310a">
+    <link rel="stylesheet" href="styles/wizard.css?v=20260315">
+    <link rel="stylesheet" href="styles/skills.css?v=20260315">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Bebas+Neue&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="branches-v1-fixes.css?v=20260310a">
-    <style>
-        /* Login Screen Styles */
-        .login-screen { display:flex; align-items:center; justify-content:center; min-height:100vh; background:linear-gradient(135deg, #1a4a1a 0%, #2E7D32 50%, #1b5e20 100%); padding:20px; }
-        .login-screen.hidden { display:none; }
-        .login-container { background:var(--surface-color, #fff); border-radius:16px; padding:40px; max-width:400px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
-        .login-logo { text-align:center; margin-bottom:32px; }
-        .login-logo-icon { font-size:3rem; display:block; margin-bottom:8px; }
-        .login-logo h1 { font-size:1.5rem; font-weight:700; margin:0 0 4px; color:var(--text-primary, #1a1a1a); }
-        .login-logo p { font-size:0.9rem; color:var(--text-secondary, #666); margin:0; }
-        .login-field { margin-bottom:16px; }
-        .login-field label { display:block; font-size:0.85rem; font-weight:500; margin-bottom:4px; color:var(--text-primary, #333); }
-        .login-field input { width:100%; padding:10px 12px; border:1px solid var(--border-color, #ddd); border-radius:8px; font-size:0.95rem; box-sizing:border-box; }
-        .login-field input:focus { outline:none; border-color:#2E7D32; box-shadow:0 0 0 3px rgba(46,125,50,0.15); }
-        .login-error { background:#fef2f2; color:#dc2626; padding:8px 12px; border-radius:6px; font-size:0.85rem; margin-bottom:12px; }
-        .login-error.hidden { display:none; }
-        .login-btn { width:100%; padding:12px; border:none; border-radius:8px; font-size:0.95rem; font-weight:600; cursor:pointer; margin-bottom:8px; transition:background 0.2s; }
-        .login-btn:first-of-type { background:#2E7D32; color:#fff; }
-        .login-btn:first-of-type:hover { background:#1b5e20; }
-        .login-btn:disabled { opacity:0.6; cursor:not-allowed; }
-        .login-btn-secondary { background:transparent; color:#2E7D32; border:1px solid #2E7D32 !important; }
-        .login-btn-secondary:hover { background:rgba(46,125,50,0.06); }
-        .login-magic-msg { background:#f0fdf4; color:#166534; padding:8px 12px; border-radius:6px; font-size:0.85rem; margin-top:8px; text-align:center; }
-        .login-magic-msg.hidden { display:none; }
-        #logoutBtn { background:none; border:none; cursor:pointer; font-size:0.8rem; color:var(--text-secondary, #999); padding:4px 8px; border-radius:4px; }
-        #logoutBtn:hover { background:rgba(0,0,0,0.05); }
-    </style>
+    <link rel="stylesheet" href="styles/login.css?v=20260315">
 </head>
 <body data-supabase-url="https://fclnvrxxycaaxhndocfg.supabase.co" data-supabase-anon-key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjbG52cnh4eWNhYXhobmRvY2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MzY1NjEsImV4cCI6MjA4ODMxMjU2MX0.5ZtVInF0mM1QpZcNgD4UcoBn3heHYchIq9PxamH-u4k">
     <!-- Skip to main content link for accessibility -->
@@ -477,43 +447,39 @@
     </div>
 
     <!-- WO Detail Modal -->
-    <div class="wo-modal-overlay hidden" id="woDetailModal" onclick="if(event.target===this)this.classList.add('hidden')">
+    <div class="wo-modal-overlay hidden" id="woDetailModal">
         <div class="wo-modal-box" role="dialog" aria-modal="true" aria-labelledby="woDetailTitle">
             <div class="wo-modal-header">
                 <span class="wo-modal-title" id="woDetailTitle">WO Details</span>
-                <button class="wo-modal-close" onclick="document.getElementById('woDetailModal').classList.add('hidden')" aria-label="Close">×</button>
+                <button class="wo-modal-close" aria-label="Close">×</button>
             </div>
             <div class="wo-modal-body" id="woDetailBody">
                 <div style="text-align:center;padding:40px"><div class="spinner" style="margin:auto;width:32px;height:32px;border-width:3px"></div></div>
             </div>
             <div class="wo-modal-footer">
-                <button class="btn btn-secondary" onclick="document.getElementById('woDetailModal').classList.add('hidden')">Close</button>
+                <button class="btn btn-secondary">Close</button>
             </div>
         </div>
     </div>
 
     <!-- Add Work Order Modal -->
-    <div class="wo-modal-overlay hidden" id="addWoModal" onclick="if(event.target===this)this.classList.add('hidden')">
+    <div class="wo-modal-overlay hidden" id="addWoModal">
         <div class="wo-modal-box wo-modal-wide" role="dialog" aria-modal="true" aria-label="Add Work Order">
             <div class="wo-modal-header">
                 <span class="wo-modal-title">Add Work Order</span>
-                <button class="wo-modal-close" onclick="document.getElementById('addWoModal').classList.add('hidden')" aria-label="Close">×</button>
+                <button class="wo-modal-close" aria-label="Close">×</button>
             </div>
             <div class="wo-modal-body">
 
                 <div class="wo-input-tabs">
-                    <button class="wo-input-tab active" id="woTabPdf" onclick="window.app?.dashboard?.setInputMode('pdf')">📄 Upload PDF</button>
-                    <button class="wo-input-tab" id="woTabText" onclick="window.app?.dashboard?.setInputMode('text')">✏️ Type / Paste</button>
+                    <button class="wo-input-tab active" id="woTabPdf">📄 Upload PDF</button>
+                    <button class="wo-input-tab" id="woTabText">✏️ Type / Paste</button>
                 </div>
 
                 <!-- PDF mode -->
                 <div id="woPdfMode">
-                    <input type="file" id="woFileInput" accept=".pdf,application/pdf" style="display:none" onchange="window.app?.dashboard?.handleFileSelect(this.files[0])">
-                    <div class="wo-pdf-dropzone" id="woPdfDropzone"
-                         onclick="document.getElementById('woFileInput').click()"
-                         ondragover="event.preventDefault();this.classList.add('drag-over')"
-                         ondragleave="this.classList.remove('drag-over')"
-                         ondrop="event.preventDefault();this.classList.remove('drag-over');window.app?.dashboard?.handleFileSelect(event.dataTransfer.files[0])">
+                    <input type="file" id="woFileInput" accept=".pdf,application/pdf" style="display:none">
+                    <div class="wo-pdf-dropzone" id="woPdfDropzone">
                         <div class="wo-dz-icon" id="woDzIcon">📄</div>
                         <div class="wo-dz-label" id="woDzLabel">Drop PDF here or click to browse</div>
                         <div class="wo-dz-hint" id="woDzHint">Deep Roots work order PDFs — all fields extracted automatically</div>
@@ -528,7 +494,7 @@
 
                 <div style="display:flex;justify-content:flex-end;gap:8px;align-items:center;margin-top:4px;">
                     <span id="woParseSpinner" class="spinner hidden" style="width:18px;height:18px;border-width:2px"></span>
-                    <button class="btn btn-primary" id="woBtnParse" onclick="window.app?.dashboard?.parseWithClaude()">Parse with AI →</button>
+                    <button class="btn btn-primary" id="woBtnParse">Parse with AI →</button>
                 </div>
 
                 <div class="wo-parse-error hidden" id="woParseError"></div>
@@ -562,7 +528,7 @@
                     <div>
                         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
                             <span class="wo-section-label">Line Items (<span id="woLiCount">0</span>)</span>
-                            <button class="wo-btn-add-li" onclick="window.app?.dashboard?.addLineItemRow()">+ Add item</button>
+                            <button class="wo-btn-add-li">+ Add item</button>
                         </div>
                         <datalist id="woUnitOptions">
                             <option value="Man Hours"><option value="Ea."><option value="Yards"><option value="Pallet">
@@ -588,9 +554,9 @@
 
             </div>
             <div class="wo-modal-footer">
-                <button class="btn btn-secondary" onclick="document.getElementById('addWoModal').classList.add('hidden')">Cancel</button>
+                <button class="btn btn-secondary">Cancel</button>
                 <span id="woAddSpinner" class="spinner hidden" style="width:18px;height:18px;border-width:2px"></span>
-                <button class="btn btn-primary hidden" id="woBtnConfirmAdd" onclick="window.app?.dashboard?.confirmAddWO()">Add to Sheet →</button>
+                <button class="btn btn-primary hidden" id="woBtnConfirmAdd">Add to Sheet →</button>
             </div>
         </div>
     </div>
@@ -598,53 +564,38 @@
     <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container" role="alert" aria-live="assertive" aria-atomic="true"></div>
 
-    <!-- PDF.js for client-side PDF text extraction (avoids sending large base64 to proxy) -->
-    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.9.155/build/pdf.min.mjs" type="module" id="pdfjsScript"></script>
-    <script>
-      // Make pdf.js available globally once the module loads
-      import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.9.155/build/pdf.min.mjs').then(mod => {
-        window.pdfjsLib = mod;
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.9.155/build/pdf.worker.min.mjs';
-      }).catch(() => console.warn('pdf.js failed to load — PDF parsing will use fallback'));
-    </script>
+    <!-- Infrastructure (load first, before everything) -->
+    <script src="js/error-boundary.js?v=20260315"></script>
+    <script src="js/logger.js?v=20260315"></script>
+
+    <!-- PDF.js for client-side PDF text extraction -->
+    <script src="js/pdfjs-loader.js?v=20260315" type="module"></script>
     <!-- Supabase Auth CDN (safe to expose — anon key is designed to be public) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <!-- Auth Manager -->
-    <script src="js/auth.js?v=20260310a"></script>
+    <script src="js/auth.js?v=20260315"></script>
     <!-- Scripts -->
-    <script src="js/config.js?v=20260310a"></script>
-    <script src="js/utils.js?v=20260310a"></script>
-    <script src="js/api.js?v=20260310a"></script>
-    <script src="js/ui.js?v=20260310a"></script>
+    <script src="js/config.js?v=20260315"></script>
+    <script src="js/utils.js?v=20260315"></script>
+    <script src="js/api.js?v=20260315"></script>
+    <script src="js/ui.js?v=20260315"></script>
     <!-- AI Skills -->
-    <script src="js/setupWizard.js?v=20260310a"></script>
-    <script src="js/deconstructionRebuildSkill.js?v=20260310a"></script>
-    <script src="js/forwardThinkerSkill.js?v=20260310a"></script>
+    <script src="js/setupWizard.js?v=20260315"></script>
+    <script src="js/deconstructionRebuildSkill.js?v=20260315"></script>
+    <script src="js/forwardThinkerSkill.js?v=20260315"></script>
     <!-- Apple Overseer -->
-    <script src="js/appleOverseer.js?v=20260310a"></script>
+    <script src="js/appleOverseer.js?v=20260315"></script>
     <!-- Master Agent Orchestration -->
-    <script src="js/masterAgent.js?v=20260310a"></script>
+    <script src="js/masterAgent.js?v=20260315"></script>
     <!-- Native Tool Views -->
-    <script src="js/inventoryView.js?v=20260310a"></script>
+    <script src="js/inventoryView.js?v=20260315"></script>
     <!-- Core Components -->
-    <script src="js/chat.js?v=20260310a"></script>
-    <script src="js/tools.js?v=20260310a"></script>
-    <script src="js/dashboard.js?v=20260310a"></script>
-    <script src="js/main.js?v=20260310a"></script>
+    <script src="js/chat.js?v=20260315"></script>
+    <script src="js/tools.js?v=20260315"></script>
+    <script src="js/dashboard.js?v=20260315"></script>
+    <script src="js/main.js?v=20260315"></script>
 
     <!-- Dashboard and Toast initialization handled by main.js and dashboard.js -->
 
-    <!-- Service Worker DISABLED — was caching JS files and preventing updates -->
-    <!-- To re-enable, uncomment the block below -->
-    <!--
-    <script>
-        if ('serviceWorker' in navigator && window.self === window.top) {
-            navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('Service Worker registered:', reg))
-                .catch(err => console.log('Service Worker registration failed:', err));
-        }
-    </script>
-    -->
-    <script src="branches-v1-fixes.js?v=20260310a"></script>
 </body>
 </html>

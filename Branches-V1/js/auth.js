@@ -63,9 +63,23 @@ class AuthManager {
     async isAuthenticated() {
         if (!this.supabase) return true; // Auth disabled — allow all
         const { data } = await this.supabase.auth.getSession();
-        this.session = data.session;
-        this.user = data.session?.user || null;
-        return !!data.session;
+        if (!data.session) {
+            this.session = null;
+            this.user = null;
+            return false;
+        }
+        // Force token refresh to ensure access_token is fresh before API calls
+        const { data: refreshData, error } = await this.supabase.auth.refreshSession();
+        if (error || !refreshData.session) {
+            Logger.warn('Auth', 'Session refresh failed, using existing session:', error?.message);
+            // Fall back to existing session (may still work if not yet expired)
+            this.session = data.session;
+            this.user = data.session.user || null;
+        } else {
+            this.session = refreshData.session;
+            this.user = refreshData.session.user || null;
+        }
+        return true;
     }
 
     /**
