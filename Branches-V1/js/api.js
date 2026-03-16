@@ -975,9 +975,9 @@ Rules:
         const token = window.app?.auth?.getToken();
         if (token) {
             headers['Authorization'] = 'Bearer ' + token;
-            Logger.info('API', 'Auth token attached (length=' + token.length + ')');
+            console.error('[DEBUG] Auth token IS attached, length=' + token.length);
         } else {
-            Logger.warn('API', 'No auth token available — session:', !!window.app?.auth?.session);
+            console.error('[DEBUG] NO auth token! auth exists:', !!window.app?.auth, 'session exists:', !!window.app?.auth?.session, 'supabase exists:', !!window.app?.auth?.supabase);
         }
         return headers;
     }
