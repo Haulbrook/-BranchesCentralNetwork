@@ -118,7 +118,7 @@ class ConfigManager {
     setupConfigWatcher() {
         // Watch for changes in localStorage
         window.addEventListener('storage', (e) => {
-            if (e.key === 'dashboardSettings' || e.key?.endsWith('Url')) {
+            if (e.key === 'dashboardSettings') {
                 this.reloadConfig();
             }
         });
@@ -181,7 +181,7 @@ class ConfigManager {
 
     setServiceUrl(serviceId, url) {
         this.setService(serviceId, { url });
-        localStorage.setItem(`${serviceId}Url`, url);
+        // No longer persisted to localStorage — config.json is the sole source of truth
     }
 
     setFeature(featureName, enabled) {
@@ -196,7 +196,6 @@ class ConfigManager {
     saveConfig() {
         try {
             const configToSave = {
-                services: this.config.services,
                 ui: this.config.ui,
                 features: this.config.features
             };

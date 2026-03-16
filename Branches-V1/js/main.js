@@ -580,21 +580,10 @@ Recommendations: ${report.recommendations.length}
     }
 
     updateToolURLs() {
-        // For each service, config.json is the source of truth.
-        // localStorage is only used as fallback if config.json has no URL.
+        // config.json is the sole source of truth for tool URLs.
+        // Clean up any stale per-tool URL keys from localStorage (legacy).
         Object.keys(this.config.services).forEach(key => {
-            const localStorageKey = `${key}Url`;
-            const configUrl = this.config.services[key]?.url;
-            const savedUrl = localStorage.getItem(localStorageKey);
-
-            if (configUrl) {
-                // config.json has a URL — use it (authoritative)
-                this.config.services[key].url = configUrl;
-            } else if (savedUrl) {
-                // No config.json URL, fall back to localStorage
-                this.config.services[key].url = savedUrl;
-                Logger.info('App', `⚠️ ${key}Url from localStorage (no config.json value)`);
-            }
+            localStorage.removeItem(`${key}Url`);
         });
     }
 
