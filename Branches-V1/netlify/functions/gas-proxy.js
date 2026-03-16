@@ -43,6 +43,7 @@ exports.handler = async (event) => {
   // Auth check
   const auth = validateAuth(event);
   if (!auth.valid) {
+    console.log('gas-proxy auth failure:', auth.error, '| auth header present:', !!event.headers?.authorization);
     return { statusCode: 401, headers: corsHeaders(), body: JSON.stringify({ error: auth.error }) };
   }
 

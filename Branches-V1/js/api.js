@@ -975,6 +975,9 @@ Rules:
         const token = window.app?.auth?.getToken();
         if (token) {
             headers['Authorization'] = 'Bearer ' + token;
+            Logger.info('API', 'Auth token attached (length=' + token.length + ')');
+        } else {
+            Logger.warn('API', 'No auth token available — session:', !!window.app?.auth?.session);
         }
         return headers;
     }
