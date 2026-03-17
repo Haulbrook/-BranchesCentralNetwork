@@ -81,15 +81,6 @@ class APIManager {
                 
                 // Global response handling — skip for opaque (no-cors) responses which always have status 0
                 if (!response.ok && response.type !== 'opaque') {
-                    // For auth failures, read the error body for diagnostics
-                    if (response.status === 401) {
-                        try {
-                            const errBody = await response.clone().json();
-                            console.error('[DEBUG] 401 server reason:', errBody.error || 'unknown');
-                        } catch (e) {
-                            console.error('[DEBUG] 401 could not read body:', e.message);
-                        }
-                    }
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
@@ -973,13 +964,9 @@ Rules:
      */
     _proxyHeaders() {
         const headers = { 'Content-Type': 'application/json' };
-        // Attach Supabase JWT via AuthManager (not a global variable)
         const token = window.app?.auth?.getToken();
         if (token) {
             headers['Authorization'] = 'Bearer ' + token;
-            console.error('[DEBUG] Auth token IS attached, length=' + token.length);
-        } else {
-            console.error('[DEBUG] NO auth token! auth exists:', !!window.app?.auth, 'session exists:', !!window.app?.auth?.session, 'supabase exists:', !!window.app?.auth?.supabase);
         }
         return headers;
     }
