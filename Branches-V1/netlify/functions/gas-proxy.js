@@ -41,14 +41,14 @@ exports.handler = async (event) => {
   }
 
   // Auth check
-  const auth = validateAuth(event);
+  const auth = await validateAuth(event);
   if (!auth.valid) {
     console.log('gas-proxy auth failure:', auth.error, '| auth header present:', !!event.headers?.authorization);
     return { statusCode: 401, headers: corsHeaders(), body: JSON.stringify({ error: auth.error }) };
   }
 
   // Rate limiting
-  const rateLimitId = auth.user?.sub || event.headers?.['x-forwarded-for'] || 'anonymous';
+  const rateLimitId = auth.user?.id || auth.user?.sub || event.headers?.['x-forwarded-for'] || 'anonymous';
   if (!checkRateLimit(rateLimitId)) {
     return { statusCode: 429, headers: corsHeaders(), body: JSON.stringify({ error: 'Rate limit exceeded' }) };
   }

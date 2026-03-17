@@ -1,24 +1,65 @@
 // Shared auth helper for Netlify Functions
-// Validates Supabase JWTs and provides CORS headers
+// Validates Supabase JWTs via Supabase's /auth/v1/user endpoint (algorithm-agnostic)
 
 const crypto = require('crypto');
 
+// ---------------------------------------------------------------------------
+// In-memory token validation cache
+// Keyed by SHA-256 hash of the token. Each entry stores { user, expiresAt }.
+// TTL keeps us from hitting Supabase on every single request while still
+// catching revoked tokens within a reasonable window.
+// ---------------------------------------------------------------------------
+const tokenCache = new Map();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const CACHE_MAX_SIZE = 500;          // prevent unbounded growth
+
+function cacheKey(token) {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+function getCached(token) {
+  const key = cacheKey(token);
+  const entry = tokenCache.get(key);
+  if (!entry) return null;
+  if (Date.now() > entry.expiresAt) {
+    tokenCache.delete(key);
+    return null;
+  }
+  return entry.user;
+}
+
+function setCache(token, user) {
+  // Evict oldest entries if cache is full
+  if (tokenCache.size >= CACHE_MAX_SIZE) {
+    const oldest = tokenCache.keys().next().value;
+    tokenCache.delete(oldest);
+  }
+  tokenCache.set(cacheKey(token), {
+    user,
+    expiresAt: Date.now() + CACHE_TTL_MS,
+  });
+}
+
 /**
- * Validate Supabase JWT from Authorization header.
+ * Validate Supabase JWT by calling Supabase's /auth/v1/user endpoint.
  * Returns { valid: true, user } or { valid: false, error }.
  *
- * When SUPABASE_JWT_SECRET is NOT set → permissive mode (local dev).
- * When SUPABASE_JWT_SECRET IS set → strict validation.
+ * Env vars required for strict mode:
+ *   SUPABASE_URL      – e.g. https://xxxxx.supabase.co
+ *   SUPABASE_ANON_KEY – the project's anon/public key
+ *
+ * When neither is set → permissive mode (local dev).
  */
-function validateAuth(event) {
-  const secret = process.env.SUPABASE_JWT_SECRET;
+async function validateAuth(event) {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const anonKey = process.env.SUPABASE_ANON_KEY;
 
-  // If no secret configured, allow all requests (local dev / proxy-only mode)
-  if (!secret) {
+  // Permissive mode: no Supabase config → allow all (local dev only)
+  if (!supabaseUrl || !anonKey) {
     return { valid: true, user: null };
   }
 
-  // --- Strict mode: secret IS configured ---
+  // --- Strict mode ---
 
   const authHeader = event.headers?.authorization || '';
   if (!authHeader.startsWith('Bearer ')) {
@@ -26,54 +67,57 @@ function validateAuth(event) {
   }
 
   const token = authHeader.slice(7);
+  if (!token || token.split('.').length !== 3) {
+    return { valid: false, error: 'Malformed token' };
+  }
 
+  // Check cache first
+  const cached = getCached(token);
+  if (cached) {
+    return { valid: true, user: cached };
+  }
+
+  // Validate with Supabase
   try {
-    const parts = token.split('.');
-    if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2]) {
-      return { valid: false, error: 'Malformed token' };
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'apikey': anonKey,
+      },
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      console.log('auth-debug: Supabase rejected token',
+        '| status', response.status,
+        '| body', body.substring(0, 200));
+      return { valid: false, error: `Authentication failed (${response.status})` };
     }
 
-    const [headerB64, payloadB64, signatureB64] = parts;
+    const user = await response.json();
 
-    // Verify signature (HS256)
-    // Use raw byte comparison to avoid base64 vs base64url encoding mismatches
-    const data = `${headerB64}.${payloadB64}`;
-    const expectedBytes = crypto
-      .createHmac('sha256', secret.trim())
-      .update(data)
-      .digest();
-
-    // Decode the JWT signature — try base64url first, fall back to standard base64
-    let signatureBytes;
-    try {
-      signatureBytes = Buffer.from(signatureB64, 'base64url');
-      // If base64url decode produced empty or wrong-length result, try standard base64
-      if (signatureBytes.length !== 32) {
-        signatureBytes = Buffer.from(signatureB64, 'base64');
-      }
-    } catch {
-      signatureBytes = Buffer.from(signatureB64, 'base64');
+    // Supabase returns the user object; verify it has an id
+    if (!user || !user.id) {
+      return { valid: false, error: 'Invalid user data' };
     }
 
-    if (expectedBytes.length !== signatureBytes.length ||
-        !crypto.timingSafeEqual(expectedBytes, signatureBytes)) {
-      return { valid: false, error: 'Invalid signature' };
-    }
+    // Cache the validated user
+    setCache(token, user);
 
-    // Decode payload
-    const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString());
-
-    // Require expiration claim
-    if (!payload.exp) {
-      return { valid: false, error: 'Token missing expiration' };
-    }
-    if (Date.now() / 1000 > payload.exp) {
-      return { valid: false, error: 'Token expired' };
-    }
-
-    return { valid: true, user: payload };
+    return { valid: true, user };
   } catch (e) {
-    return { valid: false, error: 'Token parse error' };
+    if (e.name === 'AbortError') {
+      console.log('auth-debug: Supabase validation timed out');
+      return { valid: false, error: 'Auth service timeout' };
+    }
+    console.log('auth-debug: validation error', e.message);
+    return { valid: false, error: 'Auth validation error' };
   }
 }
 

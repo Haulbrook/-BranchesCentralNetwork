@@ -29,14 +29,14 @@ exports.handler = async (event) => {
     return { statusCode: 405, headers: corsHeaders(), body: JSON.stringify({ error: 'Method not allowed' }) };
   }
 
-  // Auth check (permissive in Phase 1 if no SUPABASE_JWT_SECRET set)
-  const auth = validateAuth(event);
+  // Auth check
+  const auth = await validateAuth(event);
   if (!auth.valid) {
     return { statusCode: 401, headers: corsHeaders(), body: JSON.stringify({ error: auth.error }) };
   }
 
   // Rate limiting
-  const rateLimitId = auth.user?.sub || event.headers?.['x-forwarded-for'] || 'anonymous';
+  const rateLimitId = auth.user?.id || auth.user?.sub || event.headers?.['x-forwarded-for'] || 'anonymous';
   if (!checkRateLimit(rateLimitId)) {
     return { statusCode: 429, headers: corsHeaders(), body: JSON.stringify({ error: 'Rate limit exceeded' }) };
   }
