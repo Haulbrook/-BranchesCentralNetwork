@@ -1,0 +1,24 @@
+/* Login Screen Styles — extracted from index.html inline <style> */
+.login-screen { display:flex; align-items:center; justify-content:center; min-height:100vh; background:linear-gradient(135deg, #1a4a1a 0%, #2E7D32 50%, #1b5e20 100%); padding:20px; }
+.login-screen.hidden { display:none; }
+.login-container { background:var(--surface-color, #fff); border-radius:16px; padding:40px; max-width:400px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+.login-logo { text-align:center; margin-bottom:32px; }
+.login-logo-icon { font-size:3rem; display:block; margin-bottom:8px; }
+.login-logo h1 { font-size:1.5rem; font-weight:700; margin:0 0 4px; color:var(--text-primary, #1a1a1a); }
+.login-logo p { font-size:0.9rem; color:var(--text-secondary, #666); margin:0; }
+.login-field { margin-bottom:16px; }
+.login-field label { display:block; font-size:0.85rem; font-weight:500; margin-bottom:4px; color:var(--text-primary, #333); }
+.login-field input { width:100%; padding:10px 12px; border:1px solid var(--border-color, #ddd); border-radius:8px; font-size:0.95rem; box-sizing:border-box; }
+.login-field input:focus { outline:none; border-color:#2E7D32; box-shadow:0 0 0 3px rgba(46,125,50,0.15); }
+.login-error { background:#fef2f2; color:#dc2626; padding:8px 12px; border-radius:6px; font-size:0.85rem; margin-bottom:12px; }
+.login-error.hidden { display:none; }
+.login-btn { width:100%; padding:12px; border:none; border-radius:8px; font-size:0.95rem; font-weight:600; cursor:pointer; margin-bottom:8px; transition:background 0.2s; }
+.login-btn:first-of-type { background:#2E7D32; color:#fff; }
+.login-btn:first-of-type:hover { background:#1b5e20; }
+.login-btn:disabled { opacity:0.6; cursor:not-allowed; }
+.login-btn-secondary { background:transparent; color:#2E7D32; border:1px solid #2E7D32 !important; }
+.login-btn-secondary:hover { background:rgba(46,125,50,0.06); }
+.login-magic-msg { background:#f0fdf4; color:#166534; padding:8px 12px; border-radius:6px; font-size:0.85rem; margin-top:8px; text-align:center; }
+.login-magic-msg.hidden { display:none; }
+#logoutBtn { background:none; border:none; cursor:pointer; font-size:0.8rem; color:var(--text-secondary, #999); padding:4px 8px; border-radius:4px; }
+#logoutBtn:hover { background:rgba(0,0,0,0.05); }
