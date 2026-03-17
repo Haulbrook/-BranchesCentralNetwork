@@ -1296,6 +1296,9 @@ Recommendations: ${report.recommendations.length}
                 // Fallback: if video stalls, fails to autoplay, or buffers too long,
                 // reveal the app after 8 seconds no matter what.
                 setTimeout(markVideoDone, 8000);
+                // If the video already finished (e.g. it autoplayed during login),
+                // fire immediately so we don't wait for an event that will never come.
+                if (video.ended) markVideoDone();
             } else {
                 this.videoEnded = true;
             }
