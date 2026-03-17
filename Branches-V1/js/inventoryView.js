@@ -346,14 +346,141 @@ class InventoryView {
     renderUpdateResults(el, data, query) {
         const answer = data?.answer || data;
 
-        // Try to parse structured data from the answer
-        el.innerHTML = `
-            <div class="inv-result-card">
-                <div class="inv-result-query">Found for: <strong>${this.esc(query)}</strong></div>
-                <div class="inv-result-body">${this.formatAnswer(typeof answer === 'string' ? answer : JSON.stringify(answer, null, 2))}</div>
-                <p class="inv-hint" style="margin-top:12px;">To update quantities, use the chat interface or update directly in the Google Sheet.</p>
+        // Try to parse items from the response
+        const parsed = typeof answer === 'string' ? this.parseAnswerToItems(answer) : { items: [], header: '' };
+
+        if (parsed.items.length === 0) {
+            el.innerHTML = `
+                <div class="inv-result-card">
+                    <div class="inv-result-query">Found for: <strong>${this.esc(query)}</strong></div>
+                    <div class="inv-result-body">${this.formatAnswer(typeof answer === 'string' ? answer : JSON.stringify(answer, null, 2))}</div>
+                </div>`;
+            return;
+        }
+
+        let html = '';
+        if (parsed.header) {
+            html += `<div class="inv-result-query">${this.esc(parsed.header)}</div>`;
+        }
+        html += '<div class="inv-update-list">';
+        parsed.items.forEach((item, i) => {
+            const statusIcon = item.lowStock ? (parseInt(item.qty) === 0 ? '🔴' : '🟡') : '🟢';
+            html += `
+                <div class="inv-update-item" data-index="${i}">
+                    <div class="inv-update-item-info">
+                        <span class="inv-update-item-name">${statusIcon} ${this.esc(item.name)}</span>
+                        <span class="inv-update-item-detail">${this.esc(item.qty)} ${this.esc(item.unit)} &middot; ${this.esc(item.location)}</span>
+                    </div>
+                    <button class="inv-btn inv-btn-sm inv-btn-primary" data-action="update-item" data-item='${this.esc(JSON.stringify(item))}'>Update</button>
+                </div>`;
+        });
+        html += '</div>';
+        el.innerHTML = html;
+
+        // Bind update buttons
+        el.querySelectorAll('[data-action="update-item"]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const item = JSON.parse(btn.dataset.item);
+                this.showUpdateModal(item);
+            });
+        });
+    }
+
+    showUpdateModal(item) {
+        // Remove existing modal
+        this.container.querySelector('.inv-modal-overlay')?.remove();
+
+        const overlay = document.createElement('div');
+        overlay.className = 'inv-modal-overlay';
+        overlay.innerHTML = `
+            <div class="inv-modal">
+                <div class="inv-modal-header">
+                    <h3>Update: ${this.esc(item.name)}</h3>
+                    <button class="inv-modal-close">&times;</button>
+                </div>
+                <div class="inv-modal-body">
+                    <div class="inv-modal-current">
+                        Current: <strong>${this.esc(item.qty)} ${this.esc(item.unit)}</strong> &middot; ${this.esc(item.location)}
+                    </div>
+
+                    <label class="inv-modal-label">Action</label>
+                    <div class="inv-modal-actions">
+                        <button class="inv-btn inv-btn-action active" data-action-type="add">+ Add Stock</button>
+                        <button class="inv-btn inv-btn-action" data-action-type="subtract">- Remove Stock</button>
+                    </div>
+
+                    <label class="inv-modal-label" for="invModalQty">Quantity</label>
+                    <input type="number" id="invModalQty" class="inv-input" min="1" value="1" placeholder="Enter quantity">
+
+                    <label class="inv-modal-label" for="invModalNotes">Notes <span class="inv-required">*required</span></label>
+                    <textarea id="invModalNotes" class="inv-input inv-textarea" rows="3"
+                        placeholder="e.g. Over ordered from Smith, sold to Smith, product died, broken..."></textarea>
+                    <div class="inv-modal-note-error hidden" id="invModalNoteError">A note is required before updating.</div>
+                </div>
+                <div class="inv-modal-footer">
+                    <button class="inv-btn" id="invModalCancel">Cancel</button>
+                    <button class="inv-btn inv-btn-primary" id="invModalConfirm">Confirm Update</button>
+                </div>
             </div>
         `;
+
+        this.container.appendChild(overlay);
+
+        // State
+        let actionType = 'add';
+
+        // Close
+        const close = () => overlay.remove();
+        overlay.querySelector('.inv-modal-close').addEventListener('click', close);
+        overlay.querySelector('#invModalCancel').addEventListener('click', close);
+        overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+
+        // Action toggle
+        overlay.querySelectorAll('[data-action-type]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                overlay.querySelectorAll('[data-action-type]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                actionType = btn.dataset.actionType;
+            });
+        });
+
+        // Confirm
+        overlay.querySelector('#invModalConfirm').addEventListener('click', async () => {
+            const qty = parseInt(overlay.querySelector('#invModalQty').value) || 0;
+            const notes = overlay.querySelector('#invModalNotes').value.trim();
+            const errorEl = overlay.querySelector('#invModalNoteError');
+
+            if (!notes) {
+                errorEl.classList.remove('hidden');
+                overlay.querySelector('#invModalNotes').focus();
+                return;
+            }
+            errorEl.classList.add('hidden');
+
+            if (qty <= 0) {
+                window.app?.ui?.showNotification('Please enter a quantity greater than 0', 'error');
+                return;
+            }
+
+            const confirmBtn = overlay.querySelector('#invModalConfirm');
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Updating...';
+
+            await this.doUpdate({
+                action: actionType,
+                itemName: item.name,
+                quantity: qty,
+                unit: item.unit || '',
+                location: item.location || '',
+                notes: notes,
+                reason: notes
+            });
+
+            close();
+        });
+
+        // Focus notes field
+        overlay.querySelector('#invModalNotes').focus();
     }
 
     renderItemsList(el, items) {
