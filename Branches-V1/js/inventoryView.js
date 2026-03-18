@@ -216,6 +216,18 @@ class InventoryView {
 
             // Refresh browse if loaded
             if (this.items.length > 0) this.loadBrowse();
+
+            // Re-run the update tab search so results reflect the new quantity
+            const updateInput = this.container.querySelector('#invUpdateSearch');
+            if (updateInput?.value.trim()) {
+                this.doSearch(updateInput.value, 'update');
+            }
+
+            // Re-run the search tab search if it had a query
+            const searchInput = this.container.querySelector('#invSearchInput');
+            if (searchInput?.value.trim()) {
+                this.doSearch(searchInput.value, 'search');
+            }
         } catch (err) {
             Logger.error('Inventory', 'Update failed:', err);
             window.app?.ui?.showNotification('Update failed: ' + err.message, 'error');
