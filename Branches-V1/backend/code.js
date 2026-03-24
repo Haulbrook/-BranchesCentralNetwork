@@ -567,6 +567,10 @@ function doPost(e) {
         result = getActiveJobs();
         break;
 
+      case 'getTVDashboardData':
+        result = getTVDashboardData();
+        break;
+
       case 'routeQuery':
         result = routeQuery(params[0]);
         break;
@@ -2895,6 +2899,123 @@ function findCol(headers, possibleNames) {
     if (idx >= 0) return idx;
   }
   return -1;
+}
+
+// =============================
+// 📺 TV Dashboard — combined endpoint
+// =============================
+function getTVDashboardData() {
+  try {
+    // --- VEHICLES (Fleet) ---
+    var vehicles = { active: [], inactive: [], machinery: [] };
+
+    if (CONFIG.TRUCK_SHEET_ID && CONFIG.TRUCK_SHEET_ID !== "YOUR_TRUCK_SHEET_ID_HERE") {
+      try {
+        var fleetSS = SpreadsheetApp.openById(CONFIG.TRUCK_SHEET_ID);
+        var fleetSheet = fleetSS.getSheetByName(CONFIG.TRUCK_SHEET_NAME);
+        if (fleetSheet) {
+          var fleetData = fleetSheet.getDataRange().getValues();
+          if (fleetData.length > 1) {
+            var fleetHeaders = fleetData[0].map(function(h) { return String(h).trim().toLowerCase(); });
+
+            // Find columns flexibly
+            var nameCol = findCol(fleetHeaders, ['truck name/id', 'truck name', 'name', 'vehicle', 'truck']);
+            var modelCol = findCol(fleetHeaders, ['model', 'make/model', 'make']);
+            var yearCol = findCol(fleetHeaders, ['year']);
+            var statusCol = findCol(fleetHeaders, ['status']);
+            var notesCol = findCol(fleetHeaders, ['notes', 'note']);
+            var plateCol = findCol(fleetHeaders, ['license plate', 'plate', 'license', 'tag']);
+            var assetCol = findCol(fleetHeaders, ['asset number', 'asset #', 'asset', 'asset no']);
+            var vehicleCol = findCol(fleetHeaders, ['vehicle', 'h']);
+            var trailerCol = findCol(fleetHeaders, ['trailer', 'i']);
+
+            for (var i = 1; i < fleetData.length; i++) {
+              var row = fleetData[i];
+              var name = nameCol >= 0 ? String(row[nameCol] || '').trim() : '';
+              if (!name) continue;
+
+              var status = statusCol >= 0 ? String(row[statusCol] || '').trim() : 'Active';
+              var statusLower = status.toLowerCase();
+              var model = modelCol >= 0 ? String(row[modelCol] || '').trim() : '';
+              var year = yearCol >= 0 ? String(row[yearCol] || '').trim() : '';
+              var notes = notesCol >= 0 ? String(row[notesCol] || '').trim() : '';
+              var plate = plateCol >= 0 ? String(row[plateCol] || '').trim() : '';
+              var assetNumber = assetCol >= 0 ? String(row[assetCol] || '').trim() : '';
+              var assignedVehicle = vehicleCol >= 0 ? String(row[vehicleCol] || '').trim() : '';
+              var assignedTrailer = trailerCol >= 0 ? String(row[trailerCol] || '').trim() : '';
+
+              var vehicle = {
+                name: name,
+                model: model,
+                year: year,
+                status: status,
+                notes: notes,
+                licensePlate: plate,
+                assetNumber: assetNumber,
+                type: 'Vehicle',
+                assignedJob: null
+              };
+
+              if (statusLower.includes('machinery') || statusLower.includes('equipment') || statusLower.includes('heavy')) {
+                vehicle.type = 'Heavy Equipment';
+                vehicles.machinery.push(vehicle);
+              } else if (statusLower.includes('inactive') || statusLower.includes('out of service') || statusLower.includes('down')) {
+                vehicles.inactive.push(vehicle);
+              } else {
+                vehicles.active.push(vehicle);
+              }
+            }
+          }
+        }
+      } catch (fleetErr) {
+        Logger.log('getTVDashboardData fleet error: ' + fleetErr.toString());
+      }
+    }
+
+    // --- WORK ORDERS (Active Jobs) ---
+    var workOrders = [];
+    try {
+      var jobsResult = getActiveJobs();
+      if (jobsResult && jobsResult.success && jobsResult.jobs) {
+        workOrders = jobsResult.jobs.map(function(job) {
+          return {
+            woNumber: job.woNumber || 'N/A',
+            jobDescription: job.jobName || 'Untitled',
+            jobAddress: job.address || '',
+            salesman: job.salesRep || '',
+            crew: '',
+            notes: '',
+            progress: job.progress || 0,
+            priority: '',
+            customerName: job.clientName || '',
+            jobStatus: job.status || 'Active'
+          };
+        });
+      }
+    } catch (jobsErr) {
+      Logger.log('getTVDashboardData jobs error: ' + jobsErr.toString());
+    }
+
+    // --- ATTACHMENTS (trailers, equipment attachments) ---
+    var attachments = [];
+
+    return {
+      success: true,
+      data: {
+        vehicles: vehicles,
+        workOrders: workOrders,
+        attachments: attachments
+      }
+    };
+
+  } catch (error) {
+    Logger.log('getTVDashboardData error: ' + error.toString());
+    return {
+      success: false,
+      error: error.toString(),
+      data: { vehicles: { active: [], inactive: [], machinery: [] }, workOrders: [], attachments: [] }
+    };
+  }
 }
 
 // =============================
