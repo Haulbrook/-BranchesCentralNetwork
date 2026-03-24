@@ -54,9 +54,9 @@ const CONFIG = {
   TRUCK_SHEET_NAME: "Master",
   CREW_SCHEDULE_SHEET_NAME: "Sheet1",
   ACTIVE_JOBS_SHEET_ID: "13bnntgZiXdCA2KQvJXpIBA1rCBzx3ZmeKakzYFFg7QA",
-  ACTIVE_JOBS_SHEET_NAME: "Active Work Orders",
-  WORK_ORDERS_SHEET_NAME: "Work Orders",
-  LINE_ITEMS_SHEET_NAME: "Line Items",
+  ACTIVE_JOBS_SHEET_NAME: "WorkOrders",
+  WORK_ORDERS_SHEET_NAME: "WorkOrders",
+  LINE_ITEMS_SHEET_NAME: "LineItems",
   CLAUDE_API_KEY: PropertiesService.getScriptProperties().getProperty('CLAUDE_API_KEY') || "",
   CLAUDE_MODEL: "claude-sonnet-4-20250514",
   OPENAI_API_KEY: "", // Replace with your actual API key
