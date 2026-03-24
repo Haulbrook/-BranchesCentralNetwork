@@ -21,13 +21,13 @@
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
     # Allow connections to Google Apps Script backend
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.open-meteo.com https://*.supabase.co https://cdn.jsdelivr.net; img-src 'self' data: https:; worker-src 'self' blob: https://cdn.jsdelivr.net; frame-src 'self' https://script.google.com https://script.googleusercontent.com https://dailychessmap.netlify.app;"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.open-meteo.com https://*.supabase.co https://cdn.jsdelivr.net; img-src 'self' data: https:; worker-src 'self' blob: https://cdn.jsdelivr.net; frame-src 'self' https://script.google.com https://script.googleusercontent.com https://dailychessmap.netlify.app https://drshoptickets.netlify.app;"
 
 # Cache static assets
 [[headers]]
   for = "/styles/*"
   [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/js/*"
@@ -67,6 +67,24 @@
 
 [build.processing.images]
   compress = true
+
+# Landing page — public root (no auth required)
+[[redirects]]
+  from = "/"
+  to = "/landing.html"
+  status = 200
+  force = true
+
+# Dashboard — auth-gated app
+[[redirects]]
+  from = "/dashboard"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/dashboard/*"
+  to = "/index.html"
+  status = 200
 
 # Redirect rules for multiple apps
 [[redirects]]

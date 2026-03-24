@@ -27,7 +27,7 @@
     <meta name="twitter:image" content="https://branchesv1.netlify.app/images/og-image.svg">
     <meta name="twitter:image:alt" content="Deep Roots Operations Dashboard - Landscaping management platform">
 
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.open-meteo.com https://*.supabase.co https://cdn.jsdelivr.net; img-src 'self' data: https:; worker-src 'self' blob: https://cdn.jsdelivr.net; frame-src 'self' https://script.google.com https://script.googleusercontent.com https://dailychessmap.netlify.app;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.open-meteo.com https://*.supabase.co https://cdn.jsdelivr.net; img-src 'self' data: https:; worker-src 'self' blob: https://cdn.jsdelivr.net; frame-src 'self' https://script.google.com https://script.googleusercontent.com https://dailychessmap.netlify.app https://drshoptickets.netlify.app;">
     <title>Deep Roots Operations Dashboard</title>
     <!-- Force light mode as default -->
     <script src="js/theme-init.js?v=20260317a"></script>
@@ -63,8 +63,8 @@
         <aside id="sidebar" class="sidebar" role="complementary" aria-label="Sidebar navigation">
             <div class="sidebar-header">
                 <div class="logo">
-                    <span class="logo-icon" aria-hidden="true">🌱</span>
-                    <span class="logo-text">Deep Roots</span>
+                    <img src="images/root-apex-logo.jpeg" alt="Root Apex" class="logo-icon" style="width: 36px; height: 36px; object-fit: cover; -webkit-mask-image: radial-gradient(circle, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 72%); mask-image: radial-gradient(circle, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 72%);">
+                    <span class="logo-text">Root Apex</span>
                 </div>
                 <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle sidebar" aria-expanded="true" aria-controls="sidebar">
                     <span></span>
@@ -113,6 +113,21 @@
                         <span class="nav-text">Chess Map & Logistics</span>
                         <span class="nav-badge">Tracking</span>
                     </button>
+                    <button class="nav-item tool-item" data-tool="truckcheck" aria-label="Open Weekly Truck Checks">
+                        <span class="nav-icon" aria-hidden="true">🚛</span>
+                        <span class="nav-text">Weekly Truck Checks</span>
+                        <span class="nav-badge">Weekly</span>
+                    </button>
+                    <button class="nav-item tool-item" data-tool="tvdashboard" aria-label="Open TV Dashboard">
+                        <span class="nav-icon" aria-hidden="true">📺</span>
+                        <span class="nav-text">TV Dashboard</span>
+                        <span class="nav-badge">Display</span>
+                    </button>
+                    <button class="nav-item tool-item" data-tool="shoptickets" aria-label="Open Shop Tickets">
+                        <span class="nav-icon" aria-hidden="true">🎫</span>
+                        <span class="nav-text">Shop Tickets</span>
+                        <span class="nav-badge">Repairs</span>
+                    </button>
                 </div>
 
                 <div class="nav-section" role="group" aria-labelledby="recent-heading">
@@ -124,6 +139,11 @@
 
                 <div class="nav-section" role="group" aria-labelledby="settings-heading">
                     <h3 id="settings-heading" class="sr-only">Settings</h3>
+                    <button id="usageBtn" class="nav-item" aria-label="View usage and plan">
+                        <span class="nav-icon" aria-hidden="true">📊</span>
+                        <span class="nav-text">Usage</span>
+                        <span class="nav-badge" id="usageBadge" style="display:none">Plan</span>
+                    </button>
                     <button id="settingsBtn" class="nav-item" aria-label="Open settings">
                         <span class="nav-icon" aria-hidden="true">⚙️</span>
                         <span class="nav-text">Settings</span>
@@ -206,6 +226,55 @@
                     <div id="activityFeedList" class="activity-feed-list">
                         <div class="activity-placeholder">Loading activity…</div>
                     </div>
+                </div>
+            </section>
+
+            <!-- Usage View -->
+            <section id="usageView" class="usage-view hidden" aria-labelledby="usage-heading">
+                <div class="usage-view-container">
+                    <div class="usage-view-header">
+                        <h2 id="usage-heading">Plan & Usage</h2>
+                        <div class="usage-plan-badge" id="usagePlanBadge">Loading...</div>
+                    </div>
+                    <div class="usage-status-line" id="usageStatusLine"></div>
+
+                    <div class="usage-cards">
+                        <div class="usage-card">
+                            <div class="usage-ring-wrap">
+                                <svg class="usage-ring" viewBox="0 0 120 120">
+                                    <circle class="usage-ring-bg" cx="60" cy="60" r="52" />
+                                    <circle class="usage-ring-fill" id="ringAI" cx="60" cy="60" r="52" />
+                                </svg>
+                                <div class="usage-ring-label" id="ringLabelAI">0%</div>
+                            </div>
+                            <div class="usage-card-title">AI Queries</div>
+                            <div class="usage-card-detail" id="usageDetailAI">—</div>
+                        </div>
+                        <div class="usage-card">
+                            <div class="usage-ring-wrap">
+                                <svg class="usage-ring" viewBox="0 0 120 120">
+                                    <circle class="usage-ring-bg" cx="60" cy="60" r="52" />
+                                    <circle class="usage-ring-fill" id="ringInventory" cx="60" cy="60" r="52" />
+                                </svg>
+                                <div class="usage-ring-label" id="ringLabelInventory">0%</div>
+                            </div>
+                            <div class="usage-card-title">Inventory Items</div>
+                            <div class="usage-card-detail" id="usageDetailInventory">—</div>
+                        </div>
+                        <div class="usage-card">
+                            <div class="usage-ring-wrap">
+                                <svg class="usage-ring" viewBox="0 0 120 120">
+                                    <circle class="usage-ring-bg" cx="60" cy="60" r="52" />
+                                    <circle class="usage-ring-fill" id="ringJobs" cx="60" cy="60" r="52" />
+                                </svg>
+                                <div class="usage-ring-label" id="ringLabelJobs">0%</div>
+                            </div>
+                            <div class="usage-card-title">Active Jobs</div>
+                            <div class="usage-card-detail" id="usageDetailJobs">—</div>
+                        </div>
+                    </div>
+
+                    <div class="usage-billing-info" id="usageBillingInfo"></div>
                 </div>
             </section>
 

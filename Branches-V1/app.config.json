@@ -56,6 +56,33 @@
       "description": "Work order management with PDF parsing and progress tracking",
       "icon": "📋",
       "color": "#FF5722"
+    },
+    "truckcheck": {
+      "_comment": "Weekly Truck Checks — GAS web app loaded as iframe. Sheet: https://docs.google.com/spreadsheets/d/1CxcceErS6SDUmELLwv5BL9m2OPhD3k8lf3_JzOMP6NQ/edit?gid=1444929380#gid=1444929380",
+      "name": "Weekly Truck Checks",
+      "description": "Weekly vehicle inspection checklist",
+      "icon": "🚛",
+      "url": "https://script.google.com/macros/s/AKfycbwuriM_BMSPYw2fm0NlgHHpumwXR4qbVdk5wwfYiCI8tY1VoWkWZxH-sVabZttsclxkPQ/exec",
+      "color": "#795548",
+      "keywords": ["truck", "vehicle", "inspection", "weekly", "check"]
+    },
+    "tvdashboard": {
+      "_comment": "TV Dashboard — local page loaded as iframe",
+      "name": "TV Dashboard",
+      "description": "Large-screen operational display",
+      "icon": "📺",
+      "url": "tv.html",
+      "color": "#607D8B",
+      "keywords": ["tv", "display", "dashboard", "monitor", "screen"]
+    },
+    "shoptickets": {
+      "_comment": "Shop Tickets — GAS web app loaded as iframe. Sheet: https://docs.google.com/spreadsheets/d/1MrCkKyyivmMuNL-KkHlcnyChhox9D_2v1kHCIH2cBDM/edit?gid=0#gid=0",
+      "name": "Shop Tickets",
+      "description": "Shop repair ticket tracking",
+      "icon": "🎫",
+      "url": "https://drshoptickets.netlify.app",
+      "color": "#E91E63",
+      "keywords": ["ticket", "shop", "repair", "maintenance"]
     }
   },
   "ai": {

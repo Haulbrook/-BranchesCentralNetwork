@@ -322,6 +322,33 @@ class ConfigManager {
                     color: "#673AB7",
                     keywords: ["crew", "location", "map", "chess", "tracking", "logistics"],
                     enabled: true
+                },
+                truckcheck: {
+                    name: "Weekly Truck Checks",
+                    description: "Weekly vehicle inspection checklist",
+                    icon: "🚛",
+                    url: "https://script.google.com/macros/s/AKfycbwuriM_BMSPYw2fm0NlgHHpumwXR4qbVdk5wwfYiCI8tY1VoWkWZxH-sVabZttsclxkPQ/exec",
+                    color: "#795548",
+                    keywords: ["truck", "vehicle", "inspection", "weekly", "check"],
+                    enabled: true
+                },
+                tvdashboard: {
+                    name: "TV Dashboard",
+                    description: "Large-screen operational display",
+                    icon: "📺",
+                    url: "tv.html",
+                    color: "#607D8B",
+                    keywords: ["tv", "display", "dashboard", "monitor", "screen"],
+                    enabled: true
+                },
+                shoptickets: {
+                    name: "Shop Tickets",
+                    description: "Shop repair ticket tracking",
+                    icon: "🎫",
+                    url: "https://drshoptickets.netlify.app",
+                    color: "#E91E63",
+                    keywords: ["ticket", "shop", "repair", "maintenance"],
+                    enabled: true
                 }
             },
             ui: {
