@@ -44,7 +44,7 @@ class DeconstructionRebuildSkill {
      */
     connectOverseer(overseer) {
         this.appleOverseer = overseer;
-        console.log('✅ DeconstructionRebuildSkill connected to Apple Overseer');
+        Logger.info('Deconstruct', 'DeconstructionRebuildSkill connected to Apple Overseer');
     }
 
     /**
@@ -214,7 +214,7 @@ class DeconstructionRebuildSkill {
 
             // Check if operation was blocked
             if (!registration.success && registration.blocked) {
-                console.warn('🍎 Deconstruction operation blocked by overseer:', registration.reason);
+                Logger.warn('Deconstruct', 'Deconstruction operation blocked by overseer:', registration.reason);
                 return {
                     success: false,
                     reason: registration.reason,

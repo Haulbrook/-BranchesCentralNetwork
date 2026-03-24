@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Branches Central Network — The all-in-one operations dashboard for landscaping companies. Inventory, scheduling, grading, AI assistant, and more.">
+    <meta name="theme-color" content="#2E7D32">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://branchesv1.netlify.app/">
+    <meta property="og:title" content="Branches Central Network — Operations Dashboard for Landscaping">
+    <meta property="og:description" content="Manage inventory, crews, jobs, grading, and more from one AI-powered dashboard. Built for landscaping companies.">
+    <meta property="og:image" content="https://branchesv1.netlify.app/images/og-image.svg">
+
+    <title>Branches Central Network — Landscaping Operations Dashboard</title>
+
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles/landing.css">
+</head>
+<body class="landing-page"
+      data-supabase-url="https://fclnvrxxycaaxhndocfg.supabase.co"
+      data-supabase-anon-key="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjbG52cnh4eWNhYXhobmRvY2ZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MzY1NjEsImV4cCI6MjA4ODMxMjU2MX0.5ZtVInF0mM1QpZcNgD4UcoBn3heHYchIq9PxamH-u4k">
+
+    <!-- ========== NAVIGATION ========== -->
+    <nav class="land-nav" id="landNav">
+        <div class="land-nav-inner">
+            <a href="#" class="land-nav-logo">
+                <div class="land-nav-logo-icon">🌿</div>
+                <span class="land-nav-logo-text">Branches</span>
+            </a>
+
+            <ul class="land-nav-links" id="navLinks">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#demo">Demo</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="#faq">FAQ</a></li>
+            </ul>
+
+            <div class="land-nav-actions">
+                <button class="land-btn land-btn-ghost" id="navLoginBtn">Login</button>
+                <a href="#pricing" class="land-btn land-btn-primary" id="navCtaBtn">Get Started</a>
+                <button class="land-nav-toggle" id="navToggle" aria-label="Toggle menu">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <line x1="3" y1="12" x2="21" y2="12"/>
+                        <line x1="3" y1="18" x2="21" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ========== HERO ========== -->
+    <section class="land-hero">
+        <div class="land-hero-bg">
+            <div class="land-hero-bg-circle"></div>
+            <div class="land-hero-bg-circle"></div>
+        </div>
+        <div class="land-container land-hero-content">
+            <div class="land-hero-badge">
+                <span class="land-hero-badge-icon">&#9889;</span>
+                <span>AI-Powered Operations Platform</span>
+            </div>
+            <h1 class="land-h1">
+                Run Your Landscape<br>
+                <span class="land-text-accent">Business Smarter</span>
+            </h1>
+            <p class="land-hero-subtitle">
+                One dashboard for inventory, crews, active jobs, grading, scheduling, and AI-powered insights.
+                Built by landscapers, for landscapers.
+            </p>
+            <div class="land-hero-ctas">
+                <button class="land-btn land-btn-primary land-btn-lg" id="heroStartBtn">
+                    &#10024; Start Free Trial
+                </button>
+                <a href="#demo" class="land-btn land-btn-secondary land-btn-lg">
+                    &#9654; Watch Demo
+                </a>
+            </div>
+            <div class="land-hero-stats">
+                <div>
+                    <div class="land-hero-stat-value">6</div>
+                    <div class="land-hero-stat-label">Integrated Tools</div>
+                </div>
+                <div>
+                    <div class="land-hero-stat-value">AI</div>
+                    <div class="land-hero-stat-label">Powered Assistant</div>
+                </div>
+                <div>
+                    <div class="land-hero-stat-value">24/7</div>
+                    <div class="land-hero-stat-label">Real-time Data</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== FEATURES ========== -->
+    <section class="land-section land-features" id="features">
+        <div class="land-container">
+            <div class="land-features-header land-fade-up">
+                <h2 class="land-h2">Everything You Need</h2>
+                <p>Six powerful tools unified in one dashboard. No more juggling spreadsheets and apps.</p>
+            </div>
+            <div class="land-features-grid land-stagger">
+                <div class="land-feature-card">
+                    <div class="land-feature-icon">&#128230;</div>
+                    <h3 class="land-h3">Inventory Management</h3>
+                    <p>Track materials, plants, and supplies in real time. Search, update quantities, and get low-stock alerts instantly.</p>
+                </div>
+                <div class="land-feature-card">
+                    <div class="land-feature-icon">&#128202;</div>
+                    <h3 class="land-h3">Plant Grading</h3>
+                    <p>Grade plant quality on intake and delivery. Maintain quality standards across all crews and job sites.</p>
+                </div>
+                <div class="land-feature-card">
+                    <div class="land-feature-icon">&#128197;</div>
+                    <h3 class="land-h3">Crew Scheduling</h3>
+                    <p>Assign crews to jobs, manage daily schedules, and track hours. Drag-and-drop simplicity.</p>
+                </div>
+                <div class="land-feature-card">
+                    <div class="land-feature-icon">&#9989;</div>
+                    <h3 class="land-h3">Active Jobs Tracker</h3>
+                    <p>Monitor every work order in real time. Line-item checklists, progress bars, and completion tracking.</p>
+                </div>
+                <div class="land-feature-card">
+                    <div class="land-feature-icon">&#129302;</div>
+                    <h3 class="land-h3">AI Assistant</h3>
+                    <p>Ask questions about your data in natural language. Get instant answers, suggestions, and operational insights.</p>
+                </div>
+                <div class="land-feature-card">
+                    <div class="land-feature-icon">&#128295;</div>
+                    <h3 class="land-h3">Tool Checkout</h3>
+                    <p>Track which crew has what equipment. Check out and return tools with accountability and audit trails.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== INTERACTIVE DEMO ========== -->
+    <section class="land-section land-demo" id="demo">
+        <div class="land-container">
+            <div class="land-demo-header land-fade-up">
+                <div class="land-hero-badge" style="margin-bottom:16px">
+                    <span>&#127916;</span>
+                    <span>Interactive Preview</span>
+                </div>
+                <h2 class="land-h2">See It in Action</h2>
+                <p>Watch how Branches streamlines your daily operations — from dashboard to reports.</p>
+            </div>
+
+            <div class="land-demo-container land-fade-up">
+                <!-- Tabs -->
+                <div class="land-demo-tabs">
+                    <button class="land-demo-tab active" data-scene="0">
+                        <span class="land-demo-tab-icon">&#128200;</span> Dashboard
+                    </button>
+                    <button class="land-demo-tab" data-scene="1">
+                        <span class="land-demo-tab-icon">&#128230;</span> Inventory
+                    </button>
+                    <button class="land-demo-tab" data-scene="2">
+                        <span class="land-demo-tab-icon">&#129302;</span> AI Chat
+                    </button>
+                    <button class="land-demo-tab" data-scene="3">
+                        <span class="land-demo-tab-icon">&#9989;</span> Jobs
+                    </button>
+                    <button class="land-demo-tab" data-scene="4">
+                        <span class="land-demo-tab-icon">&#128202;</span> Reports
+                    </button>
+                </div>
+
+                <!-- Scenes -->
+                <div class="land-demo-viewport" id="demoViewport">
+
+                    <!-- ===== Scene 0: Dashboard ===== -->
+                    <div class="land-demo-scene active" data-scene-id="0">
+                        <div class="demo-app-layout">
+                            <div class="demo-sidebar">
+                                <div class="demo-sidebar-logo">&#127793;</div>
+                                <div class="demo-sidebar-item active">&#128200;</div>
+                                <div class="demo-sidebar-item">&#128172;</div>
+                                <div class="demo-sidebar-item">&#127793;</div>
+                                <div class="demo-sidebar-item">&#128197;</div>
+                                <div class="demo-sidebar-item">&#128295;</div>
+                                <div class="demo-sidebar-spacer"></div>
+                                <div class="demo-sidebar-item">&#9881;</div>
+                            </div>
+                            <div class="demo-main">
+                                <div class="demo-topbar">
+                                    <div class="demo-topbar-title">&#128200; Dashboard</div>
+                                    <div class="demo-topbar-actions">
+                                        <div class="demo-topbar-btn secondary">&#128197; Today</div>
+                                    </div>
+                                </div>
+                                <div class="demo-content">
+                                    <div class="demo-dashboard-content">
+                                        <div class="demo-metrics-row">
+                                            <div class="demo-metric-card">
+                                                <div class="demo-metric-icon success">&#9748;</div>
+                                                <div class="demo-metric-value">72&#176;F</div>
+                                                <div class="demo-metric-label">Weather</div>
+                                                <div class="demo-metric-change positive">&#9650; Clear</div>
+                                            </div>
+                                            <div class="demo-metric-card info">
+                                                <div class="demo-metric-icon info">&#128203;</div>
+                                                <div class="demo-metric-value">12</div>
+                                                <div class="demo-metric-label">Work Orders</div>
+                                                <div class="demo-metric-change positive">&#9650; 3 new</div>
+                                            </div>
+                                            <div class="demo-metric-card">
+                                                <div class="demo-metric-icon success">&#128101;</div>
+                                                <div class="demo-metric-value">4/5</div>
+                                                <div class="demo-metric-label">Crews Active</div>
+                                            </div>
+                                            <div class="demo-metric-card warning">
+                                                <div class="demo-metric-icon warning">&#128230;</div>
+                                                <div class="demo-metric-value">2</div>
+                                                <div class="demo-metric-label">Low Stock Alerts</div>
+                                                <div class="demo-metric-change negative">&#9660; Reorder</div>
+                                            </div>
+                                        </div>
+                                        <div class="demo-wo-stats">
+                                            <div><div class="demo-wo-stat-value">3</div><div class="demo-wo-stat-label">ACTIVE JOBS</div></div>
+                                            <div><div class="demo-wo-stat-value">145</div><div class="demo-wo-stat-label">TOTAL ITEMS</div></div>
+                                            <div><div class="demo-wo-stat-value">89</div><div class="demo-wo-stat-label">COMPLETED</div></div>
+                                            <div><div class="demo-wo-stat-value overall">61.4%</div><div class="demo-wo-stat-label">OVERALL</div></div>
+                                        </div>
+                                        <div class="demo-jobs-grid">
+                                            <div class="demo-job-card success">
+                                                <div class="demo-job-header">
+                                                    <span class="demo-job-wo">WO #2847</span>
+                                                    <span class="demo-job-badge success">In Progress</span>
+                                                </div>
+                                                <div class="demo-job-name">Johnson Residence Patio</div>
+                                                <div class="demo-job-detail">&#128205; 123 Oak St, Canton GA</div>
+                                                <div class="demo-job-progress">
+                                                    <div class="demo-job-bar-wrap">
+                                                        <div class="demo-job-bar"><div class="demo-job-bar-fill success" data-width="78"></div></div>
+                                                        <span class="demo-job-pct" data-target="78">0%</span>
+                                                    </div>
+                                                    <div class="demo-job-items">53 of 68 items</div>
+                                                </div>
+                                            </div>
+                                            <div class="demo-job-card info">
+                                                <div class="demo-job-header">
+                                                    <span class="demo-job-wo">WO #2851</span>
+                                                    <span class="demo-job-badge info">Scheduled</span>
+                                                </div>
+                                                <div class="demo-job-name">Oak Park HOA Entrance</div>
+                                                <div class="demo-job-detail">&#128205; 456 Elm Dr, Roswell GA</div>
+                                                <div class="demo-job-progress">
+                                                    <div class="demo-job-bar-wrap">
+                                                        <div class="demo-job-bar"><div class="demo-job-bar-fill info" data-width="45"></div></div>
+                                                        <span class="demo-job-pct" data-target="45">0%</span>
+                                                    </div>
+                                                    <div class="demo-job-items">19 of 42 items</div>
+                                                </div>
+                                            </div>
+                                            <div class="demo-job-card warning">
+                                                <div class="demo-job-header">
+                                                    <span class="demo-job-wo">WO #2839</span>
+                                                    <span class="demo-job-badge warning">On Hold</span>
+                                                </div>
+                                                <div class="demo-job-name">Maple Creek Office Park</div>
+                                                <div class="demo-job-detail">&#128205; 789 Pine Rd, Alpharetta GA</div>
+                                                <div class="demo-job-progress">
+                                                    <div class="demo-job-bar-wrap">
+                                                        <div class="demo-job-bar"><div class="demo-job-bar-fill warning" data-width="22"></div></div>
+                                                        <span class="demo-job-pct" data-target="22">0%</span>
+                                                    </div>
+                                                    <div class="demo-job-items">8 of 36 items</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== Scene 1: Inventory ===== -->
+                    <div class="land-demo-scene" data-scene-id="1">
+                        <div class="demo-app-layout">
+                            <div class="demo-sidebar">
+                                <div class="demo-sidebar-logo">&#127793;</div>
+                                <div class="demo-sidebar-item">&#128200;</div>
+                                <div class="demo-sidebar-item">&#128172;</div>
+                                <div class="demo-sidebar-item active">&#127793;</div>
+                                <div class="demo-sidebar-item">&#128197;</div>
+                                <div class="demo-sidebar-item">&#128295;</div>
+                                <div class="demo-sidebar-spacer"></div>
+                                <div class="demo-sidebar-item">&#9881;</div>
+                            </div>
+                            <div class="demo-main">
+                                <div class="demo-topbar">
+                                    <div class="demo-topbar-title">&#127793; Inventory</div>
+                                    <div class="demo-topbar-actions">
+                                        <div class="demo-topbar-btn primary">+ Add Item</div>
+                                        <div class="demo-topbar-btn secondary">&#128196; Export</div>
+                                    </div>
+                                </div>
+                                <div class="demo-content">
+                                    <div class="demo-inventory-content">
+                                        <div class="demo-search-bar" id="demoSearchBar">
+                                            <span class="demo-search-icon">&#128269;</span>
+                                            <span id="demoSearchText"></span>
+                                            <span class="demo-search-cursor"></span>
+                                        </div>
+                                        <div class="demo-inventory-list" id="demoInvList">
+                                            <div class="demo-inv-item" data-match="true">
+                                                <div class="demo-inv-icon" style="background:rgba(102,187,106,0.1)">&#127794;</div>
+                                                <div class="demo-inv-info"><div class="demo-inv-name">Pine Bark Mulch</div><div class="demo-inv-sku">SKU-MLH-001</div></div>
+                                                <span class="demo-inv-stock high">142 bags</span>
+                                            </div>
+                                            <div class="demo-inv-item" data-match="true">
+                                                <div class="demo-inv-icon" style="background:rgba(255,167,38,0.1)">&#127795;</div>
+                                                <div class="demo-inv-info"><div class="demo-inv-name">Hardwood Mulch</div><div class="demo-inv-sku">SKU-MLH-002</div></div>
+                                                <span class="demo-inv-stock medium">28 bags</span>
+                                            </div>
+                                            <div class="demo-inv-item" data-match="false">
+                                                <div class="demo-inv-icon" style="background:rgba(239,83,80,0.1)">&#127807;</div>
+                                                <div class="demo-inv-info"><div class="demo-inv-name">3-gal Boxwood</div><div class="demo-inv-sku">SKU-PLT-015</div></div>
+                                                <span class="demo-inv-stock low">4 left</span>
+                                            </div>
+                                            <div class="demo-inv-item" data-match="false">
+                                                <div class="demo-inv-icon" style="background:rgba(102,187,106,0.1)">&#127808;</div>
+                                                <div class="demo-inv-info"><div class="demo-inv-name">1-gal Liriope</div><div class="demo-inv-sku">SKU-PLT-022</div></div>
+                                                <span class="demo-inv-stock high">230 pots</span>
+                                            </div>
+                                            <div class="demo-inv-item" data-match="true">
+                                                <div class="demo-inv-icon" style="background:rgba(102,187,106,0.1)">&#127796;</div>
+                                                <div class="demo-inv-info"><div class="demo-inv-name">Red Mulch</div><div class="demo-inv-sku">SKU-MLH-003</div></div>
+                                                <span class="demo-inv-stock high">96 bags</span>
+                                            </div>
+                                            <div class="demo-inv-item" data-match="false">
+                                                <div class="demo-inv-icon" style="background:rgba(66,165,245,0.1)">&#129704;</div>
+                                                <div class="demo-inv-info"><div class="demo-inv-name">Flagstone Pavers</div><div class="demo-inv-sku">SKU-HDM-008</div></div>
+                                                <span class="demo-inv-stock medium">54 pcs</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== Scene 2: AI Chat ===== -->
+                    <div class="land-demo-scene" data-scene-id="2">
+                        <div class="demo-app-layout">
+                            <div class="demo-sidebar">
+                                <div class="demo-sidebar-logo">&#127793;</div>
+                                <div class="demo-sidebar-item">&#128200;</div>
+                                <div class="demo-sidebar-item active">&#128172;</div>
+                                <div class="demo-sidebar-item">&#127793;</div>
+                                <div class="demo-sidebar-item">&#128197;</div>
+                                <div class="demo-sidebar-item">&#128295;</div>
+                                <div class="demo-sidebar-spacer"></div>
+                                <div class="demo-sidebar-item">&#9881;</div>
+                            </div>
+                            <div class="demo-main">
+                                <div class="demo-topbar">
+                                    <div class="demo-topbar-title">&#129302; AI Assistant</div>
+                                </div>
+                                <div class="demo-chat-content">
+                                    <div class="demo-chat-messages" id="demoChatMessages">
+                                        <div class="demo-chat-msg user" data-delay="0">
+                                            <div class="demo-chat-avatar">&#128100;</div>
+                                            <div class="demo-chat-bubble">How much mulch do we have for the Johnson project?</div>
+                                        </div>
+                                        <div class="demo-chat-msg ai" data-delay="1">
+                                            <div class="demo-chat-avatar">&#127793;</div>
+                                            <div class="demo-chat-bubble">You have <strong>142 bags of Pine Bark</strong> and <strong>28 bags of Hardwood</strong> mulch. The Johnson estimate calls for 85 bags &mdash; you're covered with 85 to spare.</div>
+                                        </div>
+                                        <div class="demo-chat-msg user" data-delay="2">
+                                            <div class="demo-chat-avatar">&#128100;</div>
+                                            <div class="demo-chat-bubble">What about crew availability Thursday?</div>
+                                        </div>
+                                        <div class="demo-chat-msg ai" data-delay="3">
+                                            <div class="demo-chat-avatar">&#127793;</div>
+                                            <div class="demo-chat-bubble"><strong>Bravo and Delta</strong> are available Thursday. I'd recommend Bravo &mdash; they finished a similar install last week in 6 hours.</div>
+                                        </div>
+                                    </div>
+                                    <div class="demo-chat-input-bar">
+                                        <div class="demo-chat-input-wrap">
+                                            <div class="demo-chat-input-text">Ask about inventory, scheduling...</div>
+                                            <div class="demo-chat-send-btn">&#9654;</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== Scene 3: Active Jobs ===== -->
+                    <div class="land-demo-scene" data-scene-id="3">
+                        <div class="demo-app-layout">
+                            <div class="demo-sidebar">
+                                <div class="demo-sidebar-logo">&#127793;</div>
+                                <div class="demo-sidebar-item active">&#128200;</div>
+                                <div class="demo-sidebar-item">&#128172;</div>
+                                <div class="demo-sidebar-item">&#127793;</div>
+                                <div class="demo-sidebar-item">&#128197;</div>
+                                <div class="demo-sidebar-item">&#128295;</div>
+                                <div class="demo-sidebar-spacer"></div>
+                                <div class="demo-sidebar-item">&#9881;</div>
+                            </div>
+                            <div class="demo-main">
+                                <div class="demo-topbar">
+                                    <div class="demo-topbar-title">&#9989; Active Jobs Dashboard</div>
+                                    <div class="demo-topbar-actions">
+                                        <div class="demo-topbar-btn primary">+ Add Work Order</div>
+                                    </div>
+                                </div>
+                                <div class="demo-content">
+                                    <div class="demo-jobs-content" id="demoJobs">
+                                        <div class="demo-jobs-section-header">
+                                            <div class="demo-jobs-title"><h3>Active Jobs</h3><p>Track work order progress in real time</p></div>
+                                        </div>
+                                        <div class="demo-jobs-full-grid">
+                                            <div class="demo-job-card success">
+                                                <div class="demo-job-header">
+                                                    <span class="demo-job-wo">WO #2847</span>
+                                                    <span class="demo-job-badge success">In Progress</span>
+                                                </div>
+                                                <div class="demo-job-name">Johnson Residence Patio</div>
+                                                <div class="demo-job-detail">&#128100; Crew Bravo &bull; &#128205; Canton GA</div>
+                                                <div class="demo-job-progress">
+                                                    <div class="demo-job-bar-wrap">
+                                                        <div class="demo-job-bar"><div class="demo-job-bar-fill success" data-width="78"></div></div>
+                                                        <span class="demo-job-pct" data-target="78">0%</span>
+                                                    </div>
+                                                    <div class="demo-job-items">53 of 68 items</div>
+                                                </div>
+                                            </div>
+                                            <div class="demo-job-card info">
+                                                <div class="demo-job-header">
+                                                    <span class="demo-job-wo">WO #2851</span>
+                                                    <span class="demo-job-badge info">Scheduled</span>
+                                                </div>
+                                                <div class="demo-job-name">Oak Park HOA Entrance</div>
+                                                <div class="demo-job-detail">&#128100; Crew Alpha &bull; &#128205; Roswell GA</div>
+                                                <div class="demo-job-progress">
+                                                    <div class="demo-job-bar-wrap">
+                                                        <div class="demo-job-bar"><div class="demo-job-bar-fill info" data-width="45"></div></div>
+                                                        <span class="demo-job-pct" data-target="45">0%</span>
+                                                    </div>
+                                                    <div class="demo-job-items">19 of 42 items</div>
+                                                </div>
+                                            </div>
+                                            <div class="demo-job-card success">
+                                                <div class="demo-job-header">
+                                                    <span class="demo-job-wo">WO #2843</span>
+                                                    <span class="demo-job-badge success">In Progress</span>
+                                                </div>
+                                                <div class="demo-job-name">Riverside Commercial Beds</div>
+                                                <div class="demo-job-detail">&#128100; Crew Delta &bull; &#128205; Marietta GA</div>
+                                                <div class="demo-job-progress">
+                                                    <div class="demo-job-bar-wrap">
+                                                        <div class="demo-job-bar"><div class="demo-job-bar-fill success" data-width="92"></div></div>
+                                                        <span class="demo-job-pct" data-target="92">0%</span>
+                                                    </div>
+                                                    <div class="demo-job-items">33 of 36 items</div>
+                                                </div>
+                                            </div>
+                                            <div class="demo-job-card warning">
+                                                <div class="demo-job-header">
+                                                    <span class="demo-job-wo">WO #2839</span>
+                                                    <span class="demo-job-badge warning">On Hold</span>
+                                                </div>
+                                                <div class="demo-job-name">Maple Creek Office Park</div>
+                                                <div class="demo-job-detail">&#128100; Unassigned &bull; &#128205; Alpharetta GA</div>
+                                                <div class="demo-job-progress">
+                                                    <div class="demo-job-bar-wrap">
+                                                        <div class="demo-job-bar"><div class="demo-job-bar-fill warning" data-width="22"></div></div>
+                                                        <span class="demo-job-pct" data-target="22">0%</span>
+                                                    </div>
+                                                    <div class="demo-job-items">8 of 36 items</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== Scene 4: Reports ===== -->
+                    <div class="land-demo-scene" data-scene-id="4">
+                        <div class="demo-app-layout">
+                            <div class="demo-sidebar">
+                                <div class="demo-sidebar-logo">&#127793;</div>
+                                <div class="demo-sidebar-item active">&#128200;</div>
+                                <div class="demo-sidebar-item">&#128172;</div>
+                                <div class="demo-sidebar-item">&#127793;</div>
+                                <div class="demo-sidebar-item">&#128197;</div>
+                                <div class="demo-sidebar-item">&#128295;</div>
+                                <div class="demo-sidebar-spacer"></div>
+                                <div class="demo-sidebar-item">&#9881;</div>
+                            </div>
+                            <div class="demo-main">
+                                <div class="demo-topbar">
+                                    <div class="demo-topbar-title">&#128202; Reports &amp; Analytics</div>
+                                    <div class="demo-topbar-actions">
+                                        <div class="demo-topbar-btn secondary">This Week</div>
+                                    </div>
+                                </div>
+                                <div class="demo-content">
+                                    <div class="demo-reports-content">
+                                        <div class="demo-chart-area">
+                                            <div class="demo-chart-title">Weekly Completion Rate</div>
+                                            <div class="demo-chart" id="demoChart">
+                                                <div class="demo-chart-col"><div class="demo-chart-bar" data-height="65"></div><div class="demo-chart-label">Mon</div></div>
+                                                <div class="demo-chart-col"><div class="demo-chart-bar" data-height="85"></div><div class="demo-chart-label">Tue</div></div>
+                                                <div class="demo-chart-col"><div class="demo-chart-bar" data-height="55"></div><div class="demo-chart-label">Wed</div></div>
+                                                <div class="demo-chart-col"><div class="demo-chart-bar" data-height="90"></div><div class="demo-chart-label">Thu</div></div>
+                                                <div class="demo-chart-col"><div class="demo-chart-bar" data-height="78"></div><div class="demo-chart-label">Fri</div></div>
+                                            </div>
+                                        </div>
+                                        <div class="demo-report-sidebar">
+                                            <div class="demo-report-stat" data-delay="0">
+                                                <div class="demo-report-stat-val">94%</div>
+                                                <div class="demo-report-stat-label">On-time Rate</div>
+                                            </div>
+                                            <div class="demo-report-stat" data-delay="1">
+                                                <div class="demo-report-stat-val">$48.2k</div>
+                                                <div class="demo-report-stat-label">Revenue MTD</div>
+                                            </div>
+                                            <div class="demo-report-stat" data-delay="2">
+                                                <div class="demo-report-stat-val">4.8</div>
+                                                <div class="demo-report-stat-label">Avg Rating</div>
+                                            </div>
+                                            <div class="demo-export-btn" data-delay="3">&#128196; Export PDF Report</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Progress -->
+                <div class="land-demo-progress">
+                    <div class="land-demo-progress-bar" id="demoProgressBar" style="width:0%"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== PRICING ========== -->
+    <section class="land-section land-pricing" id="pricing">
+        <div class="land-container">
+            <div class="land-pricing-header land-fade-up">
+                <h2 class="land-h2">Simple, Transparent Pricing</h2>
+                <p>Try any plan free for 14 days. No credit card required.</p>
+            </div>
+
+            <!-- Billing toggle -->
+            <div class="land-pricing-toggle land-fade-up">
+                <span class="land-pricing-toggle-label active" data-billing="monthly">Monthly</span>
+                <button class="land-toggle-switch" id="billingToggle" aria-label="Toggle annual billing"></button>
+                <span class="land-pricing-toggle-label" data-billing="annual">Annual</span>
+                <span class="land-pricing-save">Save 20%</span>
+            </div>
+
+            <!-- Pricing cards -->
+            <div class="land-pricing-grid land-stagger">
+                <!-- Starter -->
+                <div class="land-pricing-card">
+                    <div class="land-pricing-tier">Starter</div>
+                    <div class="land-pricing-price">
+                        <span class="land-pricing-amount" data-monthly="100" data-annual="80">$100</span>
+                        <span class="land-pricing-period">/mo</span>
+                    </div>
+                    <div class="land-pricing-per-user">($100/user)</div>
+                    <div class="land-pricing-desc">Perfect for solo operators getting organized</div>
+                    <ul class="land-pricing-features">
+                        <li>1 user</li>
+                        <li>150 inventory items</li>
+                        <li>10 active jobs</li>
+                        <li>50 AI queries/month</li>
+                        <li>Basic grading</li>
+                        <li>Email support</li>
+                    </ul>
+                    <div class="land-pricing-trial">14-day free trial</div>
+                    <button class="land-pricing-cta land-pricing-cta-default" data-stripe-price="starter">
+                        Start Free Trial
+                    </button>
+                </div>
+
+                <!-- Pro -->
+                <div class="land-pricing-card highlighted">
+                    <div class="land-pricing-popular">Most Popular</div>
+                    <div class="land-pricing-tier">Pro</div>
+                    <div class="land-pricing-price">
+                        <span class="land-pricing-amount" data-monthly="450" data-annual="360">$450</span>
+                        <span class="land-pricing-period">/mo</span>
+                    </div>
+                    <div class="land-pricing-per-user">($90/user)</div>
+                    <div class="land-pricing-desc">For growing teams that need more power</div>
+                    <ul class="land-pricing-features">
+                        <li>Up to 5 users</li>
+                        <li>500 inventory items</li>
+                        <li>25 active jobs</li>
+                        <li>500 AI queries/month (team)</li>
+                        <li>Advanced grading</li>
+                        <li>Weekly Truck Tickets</li>
+                        <li>Shop Tickets</li>
+                        <li>Priority support</li>
+                    </ul>
+                    <div class="land-pricing-trial">14-day free trial</div>
+                    <button class="land-pricing-cta land-pricing-cta-highlight" data-stripe-price="pro">
+                        Start Free Trial
+                    </button>
+                </div>
+
+                <!-- Max -->
+                <div class="land-pricing-card">
+                    <div class="land-pricing-tier">Max</div>
+                    <div class="land-pricing-price">
+                        <span class="land-pricing-amount" data-monthly="850" data-annual="680">$850</span>
+                        <span class="land-pricing-period">/mo</span>
+                    </div>
+                    <div class="land-pricing-per-user">($57/user)</div>
+                    <div class="land-pricing-desc">Full-scale operations with every feature unlocked</div>
+                    <ul class="land-pricing-features">
+                        <li>Up to 15 users</li>
+                        <li>1,200 inventory items</li>
+                        <li>Unlimited active jobs</li>
+                        <li>125 AI queries/user/month</li>
+                        <li>Advanced grading</li>
+                        <li>Weekly Truck Tickets</li>
+                        <li>Shop Tickets</li>
+                        <li>TV Dashboard</li>
+                        <li>Custom logo branding</li>
+                        <li>24/7 priority support</li>
+                        <li>Custom integrations</li>
+                    </ul>
+                    <div class="land-pricing-trial">14-day free trial</div>
+                    <button class="land-pricing-cta land-pricing-cta-default" data-stripe-price="max">
+                        Start Free Trial
+                    </button>
+                </div>
+            </div>
+
+            <!-- Trust -->
+            <div class="land-pricing-trust">
+                <span>&#9889; 14-day free trial, no credit card</span>
+                <span>&#128274; Secure payment via Stripe</span>
+                <span>&#8634; Cancel anytime</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== FAQ ========== -->
+    <section class="land-section land-faq" id="faq">
+        <div class="land-container">
+            <div class="land-faq-header land-fade-up">
+                <h2 class="land-h2">Frequently Asked Questions</h2>
+            </div>
+            <div class="land-faq-list">
+                <div class="land-faq-item">
+                    <button class="land-faq-question">
+                        What is Branches Central Network?
+                        <span class="land-faq-arrow">&#9660;</span>
+                    </button>
+                    <div class="land-faq-answer">
+                        <div class="land-faq-answer-inner">
+                            Branches is an all-in-one operations dashboard built specifically for landscaping and field-service companies. It combines inventory management, crew scheduling, active job tracking, plant grading, tool checkout, and an AI assistant into a single, easy-to-use platform.
+                        </div>
+                    </div>
+                </div>
+                <div class="land-faq-item">
+                    <button class="land-faq-question">
+                        Do I need to install anything?
+                        <span class="land-faq-arrow">&#9660;</span>
+                    </button>
+                    <div class="land-faq-answer">
+                        <div class="land-faq-answer-inner">
+                            No. Branches runs entirely in your web browser. Access it from any device — desktop, tablet, or phone. There's nothing to download or install.
+                        </div>
+                    </div>
+                </div>
+                <div class="land-faq-item">
+                    <button class="land-faq-question">
+                        Can I connect my existing spreadsheets?
+                        <span class="land-faq-arrow">&#9660;</span>
+                    </button>
+                    <div class="land-faq-answer">
+                        <div class="land-faq-answer-inner">
+                            Yes! Branches integrates with Google Sheets as a backend, so your existing data can be connected directly. During onboarding, we help you map your current spreadsheets to the dashboard.
+                        </div>
+                    </div>
+                </div>
+                <div class="land-faq-item">
+                    <button class="land-faq-question">
+                        How does the AI assistant work?
+                        <span class="land-faq-arrow">&#9660;</span>
+                    </button>
+                    <div class="land-faq-answer">
+                        <div class="land-faq-answer-inner">
+                            The AI assistant uses Claude to understand natural language questions about your operations. Ask things like "How much mulch do we have?" or "Which crew is available Thursday?" and get instant, data-driven answers.
+                        </div>
+                    </div>
+                </div>
+                <div class="land-faq-item">
+                    <button class="land-faq-question">
+                        How does the free trial work?
+                        <span class="land-faq-arrow">&#9660;</span>
+                    </button>
+                    <div class="land-faq-answer">
+                        <div class="land-faq-answer-inner">
+                            Every plan comes with a 14-day free trial — no credit card required. You get full access to all features in your chosen tier. At the end of 14 days, you can pick a plan to continue or simply walk away.
+                        </div>
+                    </div>
+                </div>
+                <div class="land-faq-item">
+                    <button class="land-faq-question">
+                        Can I cancel my subscription?
+                        <span class="land-faq-arrow">&#9660;</span>
+                    </button>
+                    <div class="land-faq-answer">
+                        <div class="land-faq-answer-inner">
+                            Absolutely. You can cancel anytime from your account settings — no contracts, no cancellation fees. Your trial is completely risk-free, and paid plans can be cancelled at any time.
+                        </div>
+                    </div>
+                </div>
+                <div class="land-faq-item">
+                    <button class="land-faq-question">
+                        Is my data secure?
+                        <span class="land-faq-arrow">&#9660;</span>
+                    </button>
+                    <div class="land-faq-answer">
+                        <div class="land-faq-answer-inner">
+                            Yes. All data is encrypted in transit and at rest. We use Supabase for authentication with row-level security, and all API calls go through server-side proxies so your credentials never touch the browser.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="land-footer">
+        <div class="land-container">
+            <div class="land-footer-grid">
+                <div class="land-footer-brand">
+                    <h3>🌿 Branches Central Network</h3>
+                    <p>The all-in-one operations dashboard for landscaping companies. Manage your business smarter with AI-powered tools and real-time insights.</p>
+                </div>
+                <div class="land-footer-links">
+                    <h4>Product</h4>
+                    <ul>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#pricing">Pricing</a></li>
+                        <li><a href="#demo">Demo</a></li>
+                        <li><a href="#faq">FAQ</a></li>
+                    </ul>
+                </div>
+                <div class="land-footer-links">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="mailto:support@branchescentral.com">Contact</a></li>
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="land-footer-bottom">
+                <span>&copy; 2026 Branches Central Network. All rights reserved.</span>
+                <span>Built with &#10084;&#65039; for the green industry</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ========== LOGIN MODAL ========== -->
+    <div class="land-modal-overlay" id="loginModal">
+        <div class="land-modal" style="position:relative">
+            <button class="land-modal-close" id="loginModalClose">&times;</button>
+            <div class="land-modal-header">
+                <span class="land-modal-icon">🌿</span>
+                <h2>Welcome to Branches</h2>
+                <p>Sign in to access your dashboard</p>
+            </div>
+            <div class="land-modal-error" id="loginError"></div>
+            <div class="land-modal-success" id="loginSuccess"></div>
+            <form id="loginForm">
+                <div class="land-modal-field">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" placeholder="you@company.com" required autocomplete="email">
+                </div>
+                <div class="land-modal-field">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" placeholder="Password" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="land-btn land-btn-primary" style="width:100%;margin-bottom:8px" id="loginSubmitBtn">
+                    Sign In
+                </button>
+            </form>
+            <div class="land-modal-divider">or</div>
+            <button class="land-btn land-btn-secondary" style="width:100%" id="magicLinkBtn">
+                Send Magic Link
+            </button>
+        </div>
+    </div>
+
+    <!-- Supabase CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+    <!-- Landing page JS -->
+    <script src="js/landing.js"></script>
+</body>
+</html>

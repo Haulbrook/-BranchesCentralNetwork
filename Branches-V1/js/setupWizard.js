@@ -123,7 +123,7 @@ class SetupWizard {
      */
     async start() {
         if (!this.needsSetup()) {
-            console.log('Setup wizard already completed');
+            Logger.info('Wizard', 'Setup wizard already completed');
             return this.loadConfig();
         }
 
@@ -138,7 +138,7 @@ class SetupWizard {
      * Force start the wizard (ignoring completion status)
      */
     async forceStart() {
-        console.log('Force starting setup wizard...');
+        Logger.info('Wizard', 'Force starting setup wizard...');
 
         return new Promise((resolve) => {
             this.resolve = resolve;
@@ -373,7 +373,7 @@ class SetupWizard {
             try {
                 this.config = JSON.parse(saved);
             } catch (e) {
-                console.error('Error loading config:', e);
+                Logger.error('Wizard', 'Error loading config:', e);
                 this.config = {};
             }
         }
@@ -412,7 +412,7 @@ class SetupWizard {
         if (window.app && window.app.ui && window.app.ui.showNotification) {
             window.app.ui.showNotification(message, type);
         } else {
-            console.log(`[${type.toUpperCase()}] ${message}`);
+            Logger.info('Wizard', `[${type.toUpperCase()}] ${message}`);
         }
     }
 }

@@ -106,7 +106,7 @@ class ForwardThinkerSkill {
      */
     connectOverseer(overseer) {
         this.appleOverseer = overseer;
-        console.log('✅ ForwardThinkerSkill connected to Apple Overseer');
+        Logger.info('ForwardThinker', 'ForwardThinkerSkill connected to Apple Overseer');
     }
 
     /**
@@ -134,7 +134,7 @@ class ForwardThinkerSkill {
 
             // Check if operation was blocked
             if (!registration.success && registration.blocked) {
-                console.warn('🍎 Forward prediction blocked by overseer:', registration.reason);
+                Logger.warn('ForwardThinker', 'Forward prediction blocked by overseer:', registration.reason);
                 return {
                     success: false,
                     reason: registration.reason,
@@ -637,7 +637,7 @@ class ForwardThinkerSkill {
 
         // Adjust weights based on accuracy (future enhancement)
         if (learning.accuracy < 0.5) {
-            console.log('Low accuracy prediction - consider adjusting patterns');
+            Logger.info('ForwardThinker', 'Low accuracy prediction - consider adjusting patterns');
         }
 
         return learning;

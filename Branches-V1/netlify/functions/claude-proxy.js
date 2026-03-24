@@ -2,6 +2,7 @@
 // Proxies all Anthropic API calls server-side so the API key never reaches the browser.
 
 const { validateAuth, corsHeaders } = require('./_shared/auth');
+const { resolveTenant, incrementAiQueries } = require('./_shared/tiers');
 
 // In-memory rate limiting (per function instance)
 const rateLimits = new Map();
@@ -39,6 +40,27 @@ exports.handler = async (event) => {
   const rateLimitId = auth.user?.id || auth.user?.sub || event.headers?.['x-forwarded-for'] || 'anonymous';
   if (!checkRateLimit(rateLimitId)) {
     return { statusCode: 429, headers: corsHeaders(), body: JSON.stringify({ error: 'Rate limit exceeded' }) };
+  }
+
+  // Tier enforcement
+  let tenantInfo = null;
+  if (auth.user?.id) {
+    tenantInfo = await resolveTenant(auth.user.id);
+    if (!tenantInfo) {
+      return { statusCode: 403, headers: corsHeaders(), body: JSON.stringify({ error: 'No subscription found. Please subscribe to use this feature.', code: 'NO_SUBSCRIPTION' }) };
+    }
+    if (!tenantInfo.isActive) {
+      const msg = tenantInfo.trialExpired ? 'Free trial expired. Please subscribe to continue.' : 'Subscription inactive.';
+      return { statusCode: 403, headers: corsHeaders(), body: JSON.stringify({ error: msg, code: 'SUBSCRIPTION_INACTIVE' }) };
+    }
+    if (tenantInfo.tenant.subscription_status !== 'grandfathered' &&
+        tenantInfo.usage.ai_queries >= tenantInfo.limits.aiQueries) {
+      return { statusCode: 429, headers: corsHeaders(), body: JSON.stringify({
+        error: 'Monthly AI query limit reached. Upgrade your plan for more.',
+        code: 'LIMIT_EXCEEDED',
+        usage: { used: tenantInfo.usage.ai_queries, limit: tenantInfo.limits.aiQueries },
+      }) };
+    }
   }
 
   const apiKey = process.env.CLAUDE_API_KEY;
@@ -139,9 +161,20 @@ exports.handler = async (event) => {
       };
     }
 
+    // Increment AI query counter (fire-and-forget)
+    if (tenantInfo && tenantInfo.tenant.subscription_status !== 'grandfathered') {
+      incrementAiQueries(tenantInfo.tenantId, tenantInfo.month);
+    }
+
+    const resHeaders = { ...corsHeaders(), 'Content-Type': 'application/json' };
+    if (tenantInfo) {
+      resHeaders['X-Usage-AI-Queries'] = String((tenantInfo.usage.ai_queries || 0) + 1);
+      resHeaders['X-Usage-AI-Limit'] = String(tenantInfo.limits.aiQueries);
+    }
+
     return {
       statusCode: 200,
-      headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
+      headers: resHeaders,
       body: JSON.stringify(data),
     };
 

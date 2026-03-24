@@ -4,10 +4,7 @@
   "description": "Integrated dashboard for Deep Roots Landscape operations tools",
   "main": "index.html",
   "scripts": {
-    "start": "python -m http.server 8080",
-    "deploy": "node deploy.js",
-    "build": "node build.js",
-    "test": "node test.js"
+    "start": "python -m http.server 8080"
   },
   "repository": {
     "type": "git",

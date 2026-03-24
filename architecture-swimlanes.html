@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Branches Architecture — Interactive Map</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface-2: #1c2333;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-dim: #8b949e;
+    --radius: 10px;
+    --inv: #3fb950;    --inv-dim: rgba(63,185,80,0.10);    --inv-border: rgba(63,185,80,0.25);
+    --grade: #f0883e;  --grade-dim: rgba(240,136,62,0.10);  --grade-border: rgba(240,136,62,0.25);
+    --jobs: #58a6ff;   --jobs-dim: rgba(88,166,255,0.10);   --jobs-border: rgba(88,166,255,0.25);
+    --sched: #bc8cff;  --sched-dim: rgba(188,140,255,0.10); --sched-border: rgba(188,140,255,0.25);
+    --logi: #39d2c0;   --logi-dim: rgba(57,210,192,0.10);   --logi-border: rgba(57,210,192,0.25);
+    --tools: #f778ba;  --tools-dim: rgba(247,120,186,0.10);  --tools-border: rgba(247,120,186,0.25);
+    --future: #484f58; --future-dim: rgba(72,79,88,0.15);   --future-border: rgba(72,79,88,0.4);
+    --shared-bg: rgba(227,179,65,0.06);
+    --shared-border: rgba(227,179,65,0.2);
+    --yellow: #e3b341;
+    /* Flow colors */
+    --flow-data: #3fb950;
+    --flow-api: #58a6ff;
+    --flow-proxy: #e3b341;
+    --flow-ai: #bc8cff;
+    --flow-auth: #f85149;
+    --flow-tools: #f778ba;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    padding: 32px;
+    overflow-x: auto;
+  }
+  h1 { text-align: center; font-size: 1.75rem; font-weight: 700; letter-spacing: 2px; margin-bottom: 6px; }
+  .subtitle { text-align: center; color: var(--text-dim); font-size: 0.82rem; margin-bottom: 12px; }
+
+  /* Legend */
+  .legend { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; margin-bottom: 28px; font-size: 0.7rem; }
+  .legend-item { display: flex; align-items: center; gap: 5px; color: var(--text-dim); }
+  .legend-dot { width: 9px; height: 9px; border-radius: 3px; }
+
+  /* Swimlane Grid */
+  .swimlane-container {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr) minmax(130px, 0.7fr);
+    gap: 10px;
+    margin-bottom: 14px;
+    min-width: 1400px;
+  }
+  .swimlane {
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .swim-header {
+    padding: 14px 12px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  .swim-body {
+    flex: 1;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: var(--surface);
+  }
+  .section-label {
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 10px 0 4px;
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+  }
+  .section-label:first-child { border-top: none; margin-top: 0; padding-top: 4px; }
+
+  /* Cards */
+  .card {
+    border-radius: 6px;
+    padding: 10px 10px 8px;
+    font-size: 0.75rem;
+    transition: transform 0.12s, box-shadow 0.12s;
+    position: relative;
+    cursor: default;
+  }
+  .card:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.35); z-index: 5; }
+  .card[data-url] { cursor: pointer; }
+  .card[data-url]:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.5); }
+  .card[data-url]::after {
+    content: '\2197'; /* arrow */
+    position: absolute;
+    bottom: 5px;
+    right: 7px;
+    font-size: 0.65rem;
+    opacity: 0;
+    transition: opacity 0.15s;
+    color: inherit;
+  }
+  .card[data-url]:hover::after { opacity: 0.6; }
+
+  .card-icon { font-size: 0.9rem; margin-bottom: 3px; }
+  .card-name { font-weight: 600; font-size: 0.76rem; line-height: 1.3; }
+  .card-desc { font-size: 0.64rem; color: var(--text-dim); margin-top: 2px; line-height: 1.3; }
+  .card-link {
+    display: block;
+    font-size: 0.56rem;
+    color: var(--text-dim);
+    opacity: 0.5;
+    margin-top: 5px;
+    word-break: break-all;
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    line-height: 1.3;
+    transition: opacity 0.15s;
+  }
+  .card:hover .card-link { opacity: 0.8; }
+
+  .card.future { border-style: dashed; opacity: 0.4; }
+  .card.future:hover { opacity: 0.65; }
+
+  .card-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    font-size: 0.5rem;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+
+  /* Domain colors */
+  .swim-inv .swim-header { background: var(--inv-dim); color: var(--inv); }
+  .swim-inv .card { background: var(--inv-dim); border: 1px solid var(--inv-border); }
+  .swim-inv .card-badge { background: rgba(63,185,80,0.2); color: var(--inv); }
+
+  .swim-grade .swim-header { background: var(--grade-dim); color: var(--grade); }
+  .swim-grade .card { background: var(--grade-dim); border: 1px solid var(--grade-border); }
+  .swim-grade .card-badge { background: rgba(240,136,62,0.2); color: var(--grade); }
+
+  .swim-jobs .swim-header { background: var(--jobs-dim); color: var(--jobs); }
+  .swim-jobs .card { background: var(--jobs-dim); border: 1px solid var(--jobs-border); }
+  .swim-jobs .card-badge { background: rgba(88,166,255,0.2); color: var(--jobs); }
+
+  .swim-sched .swim-header { background: var(--sched-dim); color: var(--sched); }
+  .swim-sched .card { background: var(--sched-dim); border: 1px solid var(--sched-border); }
+  .swim-sched .card-badge { background: rgba(188,140,255,0.2); color: var(--sched); }
+
+  .swim-logi .swim-header { background: var(--logi-dim); color: var(--logi); }
+  .swim-logi .card { background: var(--logi-dim); border: 1px solid var(--logi-border); }
+  .swim-logi .card-badge { background: rgba(57,210,192,0.2); color: var(--logi); }
+
+  .swim-tools .swim-header { background: var(--tools-dim); color: var(--tools); }
+  .swim-tools .card { background: var(--tools-dim); border: 1px solid var(--tools-border); }
+  .swim-tools .card-badge { background: rgba(247,120,186,0.2); color: var(--tools); }
+  .swim-tools .card-badge[style] { /* inline override for UNWIRED etc */ }
+  .card-badge.shared-badge { background: rgba(63,185,80,0.15); color: var(--inv); border: 1px dashed var(--inv-border); }
+
+  .swim-future .swim-header { background: var(--future-dim); color: var(--future); }
+  .swim-future .card { background: var(--future-dim); border: 1px solid var(--future-border); }
+
+  /* Shared infra */
+  .shared-section { border: 1px solid var(--shared-border); border-radius: var(--radius); overflow: hidden; min-width: 1400px; }
+  .shared-header {
+    background: var(--shared-bg); color: var(--yellow);
+    padding: 14px 20px; font-weight: 700; font-size: 0.78rem;
+    letter-spacing: 1px; text-transform: uppercase; text-align: center;
+    border-bottom: 1px solid var(--shared-border);
+  }
+  .shared-body {
+    padding: 14px;
+    background: var(--surface);
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(195px, 1fr));
+    gap: 10px;
+  }
+  .shared-card {
+    background: var(--shared-bg); border: 1px solid var(--shared-border);
+    border-radius: 6px; padding: 10px; font-size: 0.75rem;
+    transition: transform 0.12s; cursor: default; position: relative;
+  }
+  .shared-card:hover { transform: translateY(-1px); z-index: 5; }
+  .shared-card[data-url] { cursor: pointer; }
+  .shared-card[data-url]::after {
+    content: '\2197'; position: absolute; bottom: 5px; right: 7px;
+    font-size: 0.65rem; opacity: 0; transition: opacity 0.15s;
+  }
+  .shared-card[data-url]:hover::after { opacity: 0.6; }
+  .shared-card .card-icon { font-size: 0.9rem; margin-bottom: 3px; }
+  .shared-card .card-name { font-weight: 600; font-size: 0.76rem; color: var(--yellow); }
+  .shared-card .card-desc { font-size: 0.64rem; color: var(--text-dim); margin-top: 2px; }
+  .shared-card .card-link { display: block; font-size: 0.56rem; color: var(--text-dim); opacity: 0.5; margin-top: 5px; word-break: break-all; font-family: 'SF Mono', Menlo, Consolas, monospace; line-height: 1.3; }
+  .shared-card:hover .card-link { opacity: 0.8; }
+  .shared-card.future { border-style: dashed; opacity: 0.4; }
+  .shared-card.future:hover { opacity: 0.65; }
+
+  .scroll-wrapper { overflow-x: auto; padding-bottom: 12px; position: relative; }
+
+  /* Tooltip */
+  .tooltip {
+    display: none; position: fixed; background: #1c2333; border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; max-width: 320px; z-index: 999;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5); font-size: 0.74rem; line-height: 1.5; color: var(--text-dim);
+  }
+  .tooltip.show { display: block; }
+  .tooltip b { color: var(--text); }
+  .tooltip .tip-url { font-family: 'SF Mono', Menlo, monospace; font-size: 0.62rem; color: #58a6ff; margin-top: 4px; display: block; word-break: break-all; }
+  .tooltip .tip-click { font-size: 0.6rem; color: var(--yellow); margin-top: 4px; font-style: italic; }
+
+  /* SVG Flow Overlay */
+  #flowSvg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+    overflow: visible;
+  }
+  .flow-line {
+    fill: none;
+    stroke-width: 1.8;
+    opacity: 0.6;
+    stroke-dasharray: 6 4;
+    animation: flowDash 1.2s linear infinite;
+  }
+  .flow-line.thick { stroke-width: 2.5; opacity: 0.7; }
+  @keyframes flowDash {
+    to { stroke-dashoffset: -20; }
+  }
+  .flow-arrowhead { opacity: 0.8; }
+  .flow-label {
+    font-size: 9px;
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+    fill: var(--text-dim);
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  /* Highlight glow on connected cards */
+  .card.flow-highlight, .shared-card.flow-highlight {
+    box-shadow: 0 0 12px rgba(255,255,255,0.15);
+  }
+
+  /* Flow Control Panel */
+  .flow-panel {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    z-index: 100;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    min-width: 220px;
+  }
+  .flow-panel-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .flow-panel-title button {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    font-size: 0.6rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .flow-panel-title button:hover { color: var(--text); border-color: var(--text-dim); }
+  .flow-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 0;
+    cursor: pointer;
+    font-size: 0.72rem;
+    transition: opacity 0.15s;
+    user-select: none;
+  }
+  .flow-toggle:hover { opacity: 1; }
+  .flow-toggle input { display: none; }
+  .flow-toggle .toggle-track {
+    width: 28px;
+    height: 14px;
+    border-radius: 7px;
+    background: var(--border);
+    position: relative;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+  .flow-toggle .toggle-track::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--text-dim);
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: all 0.2s;
+  }
+  .flow-toggle input:checked + .toggle-track { background: var(--flow-color); }
+  .flow-toggle input:checked + .toggle-track::after { left: 16px; background: white; }
+  .flow-toggle .toggle-label { color: var(--text-dim); }
+  .flow-toggle input:checked ~ .toggle-label { color: var(--text); }
+  .flow-toggle .toggle-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Flow direction key */
+  .flow-key {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .flow-key b { color: var(--text); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<h1>BRANCHES ARCHITECTURE</h1>
+<p class="subtitle">Interactive Architecture Map &mdash; click any card with &#8599; to open &bull; toggle data flows in bottom-right panel</p>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--inv)"></div> Inventory</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--grade)"></div> Grading</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--jobs)"></div> Jobs / WO</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--sched)"></div> Scheduling</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--logi)"></div> Logistics</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--tools)"></div> Hand Tools</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div> Shared Infra</div>
+  <div class="legend-item"><div class="legend-dot" style="border:1px dashed var(--text-dim);background:transparent"></div> Growth Slot</div>
+</div>
+
+<div class="scroll-wrapper" id="scrollWrapper">
+
+<!-- SVG overlay for flow arrows -->
+<svg id="flowSvg">
+  <defs>
+    <marker id="arrow-data" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="var(--flow-data)" class="flow-arrowhead"/></marker>
+    <marker id="arrow-api" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="var(--flow-api)" class="flow-arrowhead"/></marker>
+    <marker id="arrow-proxy" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="var(--flow-proxy)" class="flow-arrowhead"/></marker>
+    <marker id="arrow-ai" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="var(--flow-ai)" class="flow-arrowhead"/></marker>
+    <marker id="arrow-auth" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6" fill="var(--flow-auth)" class="flow-arrowhead"/></marker>
+  </defs>
+</svg>
+
+<div class="swimlane-container">
+
+  <!-- INVENTORY -->
+  <div class="swimlane swim-inv">
+    <div class="swim-header">Inventory</div>
+    <div class="swim-body">
+
+      <div class="section-label">Sheets</div>
+      <div class="card" id="n-inv-sheet-master" data-url="https://docs.google.com/spreadsheets/d/1mhQfC40Zm9EcRmN44LdWtVvCqdAkqZhsokTbT9GtRuE/edit?gid=0#gid=0" data-tip="Master inventory of all plants, materials, and supplies. Source of truth for stock counts, locations, min-stock thresholds.">
+        <div class="card-icon">📊</div>
+        <div class="card-name">I&A Master Inventory</div>
+        <div class="card-desc">Stock levels, locations, min-stock</div>
+        <span class="card-link">docs.google.com/spreadsheets/d/1mhQfC40...</span>
+      </div>
+      <div class="card" id="n-inv-sheet-assetio" data-url="https://docs.google.com/spreadsheets/d/1AmyIFI74pr_N_h0QLMu_n18YosrSP9E4EA6k5MTzlq1Y/edit?gid=1471163700#gid=1471163700" data-tip="Tracks assets moving in and out of the yard. Links to inventory for reconciliation.">
+        <div class="card-icon">📊</div>
+        <div class="card-name">Asset In/Out Sheet</div>
+        <div class="card-desc">Yard movement tracking</div>
+        <span class="card-link">docs.google.com/spreadsheets/d/1AmyIFI7...</span>
+      </div>
+
+      <div class="section-label">GAS Backends</div>
+      <div class="card" id="n-inv-gas" data-url="https://script.google.com/macros/s/AKfycbw5JSET7_sV7cXrA9JaupuAzAg9VGvlndlI1u7a6NztNMYAx0fK3T7-UWQv2juxxxsMcA/exec" data-tip="Inventory CRUD (Shop Tickets GAS). getInventoryReport, checkLowStock, search, browse. Script ID: 1XgyAX9qXW7KX... Deployment @6. Returns JSON.">
+        <div class="card-icon">⚙️</div>
+        <div class="card-name">Inventory / Shop Tickets GAS</div>
+        <div class="card-desc">CRUD, reports, search (JSON)</div>
+        <span class="card-badge">PROXIED</span>
+        <span class="card-link">AKfycbw5JSET7_sV7cXrA9Jaup...</span>
+      </div>
+      <div class="card" id="n-inv-gas-truck" data-url="https://script.google.com/macros/s/AKfycby6c_e0cWXe1hIX3OAMxkRjh128p-QjUocca63aA9flX4JFlmAvmUxMyFWA3JPWP5TCA/exec" data-tip="Weekly truck inspection GAS. Vehicle inspection forms and maintenance data collection.">
+        <div class="card-icon">⚙️</div>
+        <div class="card-name">Weekly Truck Check GAS</div>
+        <div class="card-desc">Vehicle inspections</div>
+        <span class="card-link">AKfycby6c_e0cWXe1hIX3OA...</span>
+      </div>
+
+      <div class="section-label">Agent</div>
+      <div class="card" id="n-inv-agent" data-url="https://script.google.com/macros/s/AKfycbxa-Jx8OZwPlUh5Bty8tuI91K0eLYqG3wY7k2RuUp32_ybjcO7m2HsPi4O-m8OaMi/exec" data-tip="Sub-agent 'Clippings'. Keywords: inventory, stock, plants, supplies, mulch, fertilizer, truck, fleet. Routes via GAS_INVENTORY_AGENT_URL env var.">
+        <div class="card-icon">🤖</div>
+        <div class="card-name">Clippings Agent</div>
+        <div class="card-desc">Stock queries, fleet, supplies</div>
+        <span class="card-badge">GAS AGENT</span>
+        <span class="card-link">AKfycbxa-Jx8OZwPlUh5Bty8tu...</span>
+      </div>
+
+      <div class="section-label">UI</div>
+      <div class="card" id="n-inv-ui-iframe" data-url="https://script.google.com/macros/s/AKfycbzFqpAfOXNMd25lPaqTHC_rdRlaWD9UcI9IB-KjDDX0GD7SfKEgR81mH-gJSkBUf-f4/exec" data-tip="GAS-served Inventory / Clippings web app loaded in iframe. Search, browse, stock display.">
+        <div class="card-icon">📦</div>
+        <div class="card-name">Inventory | Clipping iframe</div>
+        <div class="card-desc">GAS web app (iframe)</div>
+        <span class="card-badge">IFRAME</span>
+        <span class="card-link">AKfycbzFqpAfOXNMd25lPaqT...</span>
+      </div>
+      <div class="card" id="n-inv-ui-native" data-tip="Native inventory view built into dashboard. Browse/search without iframe. inventoryView.js">
+        <div class="card-icon">📦</div>
+        <div class="card-name">Inventory Native View</div>
+        <div class="card-desc">inventoryView.js (dashboard built-in)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRADING -->
+  <div class="swimlane swim-grade">
+    <div class="swim-header">Grading</div>
+    <div class="swim-body">
+
+      <div class="section-label">Sheets</div>
+      <div class="card" id="n-grade-sheet" data-url="https://docs.google.com/spreadsheets/d/1aF_6nHHp8NA-eETkwZMUuTlPRPOiiKEvou-F9QuVTD8/edit" data-tip="Equipment condition data with repair costs, replacement costs, and lifecycle tracking. Sheet ID: 1aF_6nHHp8NA-eETkwZMUuTlPRPOiiKEvou-F9QuVTD8">
+        <div class="card-icon">📊</div>
+        <div class="card-name">Repair v Replace Sheet</div>
+        <div class="card-desc">Equipment grading, cost data</div>
+        <span class="card-link">docs.google.com/spreadsheets/d/1aF_6nHH...</span>
+      </div>
+
+      <div class="section-label">GAS Backends</div>
+      <div class="card" id="n-grade-gas" data-url="https://script.google.com/home/projects/1_B94ctCDNI55GWV_KgQGx51NbxMg41FIGPBgg-3WJg_rnxmoseATzf40/edit" data-tip="Repair v Replace GAS project editor. Script ID: 1_B94ctCDNI55GWV_KgQGx5... Deployment @51. Also serves as grading iframe.">
+        <div class="card-icon">⚙️</div>
+        <div class="card-name">Repair v Replace GAS</div>
+        <div class="card-desc">Script editor (project)</div>
+        <span class="card-badge">IFRAME + PROXIED</span>
+        <span class="card-link">script.google.com/home/projects/1_B94ct...</span>
+      </div>
+
+      <div class="section-label">Agent</div>
+      <div class="card" id="n-grade-agent" data-url="https://script.google.com/macros/s/AKfycbyfn5brMiPgDd6IZDnNvfXZhQgJqEb-1zC8aSGM0MbE8UayrGgv4E7CGA6wrs0V0XhY/exec" data-tip="Sub-agent 'GradeBot'. Keywords: repair, replace, asset, maintenance, broken, cost, lifecycle, grading. Routes via GAS_REPAIR_AGENT_URL env var.">
+        <div class="card-icon">🤖</div>
+        <div class="card-name">GradeBot Agent (Repair)</div>
+        <div class="card-desc">Repair/replace, asset grading</div>
+        <span class="card-badge">GAS AGENT</span>
+        <span class="card-link">AKfycbyfn5brMiPgDd6IZDnNvf...</span>
+      </div>
+
+      <div class="section-label">UI</div>
+      <div class="card" id="n-grade-ui-iframe" data-url="https://script.google.com/macros/s/AKfycbzM2dxFKY4i4jkzjlTIiaT05eG1LKC0UTm_foW50ahEy1aOXPXzH63kNtdmh7wks60t/exec" data-tip="Repair v Replace GAS web app loaded in iframe. Full grading interface. May require Google sign-in. Deployment @51.">
+        <div class="card-icon">📦</div>
+        <div class="card-name">Grading iframe</div>
+        <div class="card-desc">GAS web app (iframe)</div>
+        <span class="card-badge">IFRAME</span>
+        <span class="card-link">AKfycbzM2dxFKY4i4jkzjlTIia...</span>
+      </div>
+      <div class="card future" data-tip="Growth slot — native grading view to replace iframe dependency.">
+        <div class="card-icon">📦</div>
+        <div class="card-name">Native Grading View</div>
+        <div class="card-desc">Future — replace iframe</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOBS / WO -->
+  <div class="swimlane swim-jobs">
+    <div class="swim-header">Jobs / WO</div>
+    <div class="swim-body">
+
+      <div class="section-label">Sheets</div>
+      <div class="card" id="n-jobs-sheet-wo" data-url="https://docs.google.com/spreadsheets/d/13bnntgZiXdCA2KQvJXplBA1rCBzx3ZmeKak2YFFg7QA/edit?gid=149833501#gid=149833501" data-tip="Active work order tracking. Line items, completion %, crew assignments, hours used.">
+        <div class="card-icon">📊</div>
+        <div class="card-name">Deep Roots Active Work Orders</div>
+        <div class="card-desc">WO tracking, line items, progress</div>
+        <span class="card-link">docs.google.com/spreadsheets/d/13bnntg...</span>
+      </div>
+      <div class="card" id="n-jobs-sheet-tickets" data-url="https://docs.google.com/spreadsheets/d/1MBzSFyRhevXXZh0s4FbzxSwBiTMlq9JQPquHziSjfm0/edit?gid=960225026#gid=960225026" data-tip="Shop ticket records. Repair history, service tracking.">
+        <div class="card-icon">📊</div>
+        <div class="card-name">Shop Tickets Sheet</div>
+        <div class="card-desc">Repair tickets, service history</div>
+        <span class="card-link">docs.google.com/spreadsheets/d/1MBzSFy...</span>
+      </div>
+
+      <div class="section-label">GAS Backends</div>
+      <div class="card" id="n-jobs-gas" data-url="https://script.google.com/home/projects/18oruRH3nXxOkpHoDS4f4ee9Kr1Bzc7bkYtvgCllw0bSR11quoGjWYD5U/edit" data-tip="ShopTickets.HTML GAS project. WO management: getProgress, getLineItems, toggleCheckbox, addWorkOrder.">
+        <div class="card-icon">⚙️</div>
+        <div class="card-name">ShopTickets.HTML (GAS Project)</div>
+        <div class="card-desc">WO CRUD, progress, checkboxes</div>
+        <span class="card-badge">PROXIED</span>
+        <span class="card-link">script.google.com/home/projects/18oruRH...</span>
+      </div>
+      <div class="section-label">Agent</div>
+      <div class="card" id="n-jobs-agent" data-url="https://script.google.com/macros/s/AKfycbyE90S18qOnAtgcwqbd0H5WwadOW7GzdAjfKPWOdHvJYB3FtRqeyi7-20xjdAxEBp6xBQ/exec" data-tip="Sub-agent 'Foreman'. Keywords: job, work order, progress, crew, dispatch, line items. Routes via GAS_JOBS_AGENT_URL env var.">
+        <div class="card-icon">🤖</div>
+        <div class="card-name">Foreman Agent</div>
+        <div class="card-desc">Jobs, WOs, crew dispatch</div>
+        <span class="card-badge">GAS AGENT</span>
+        <span class="card-link">AKfycbyE90S18qOnAtgcwqbd0H5...</span>
+      </div>
+
+      <div class="section-label">UI</div>
+      <div class="card" id="n-jobs-ui-cards" data-url="https://branchesv1.netlify.app" data-tip="Active jobs cards on dashboard. Progress bars, stats bar, click-to-detail.">
+        <div class="card-icon">📦</div>
+        <div class="card-name">WO Cards + Stats Bar</div>
+        <div class="card-desc">Dashboard job cards</div>
+      </div>
+      <div class="card" id="n-jobs-ui-detail" data-tip="WO detail modal with line items, checkboxes, progress. WO number, client, category metadata.">
+        <div class="card-icon">📦</div>
+        <div class="card-name">WO Detail Modal</div>
+        <div class="card-desc">Line items, checkboxes</div>
+      </div>
+      <div class="card" id="n-jobs-ui-addwo" data-tip="Add work order modal. PDF upload + Claude Sonnet parse, or text input. Line item editing.">
+        <div class="card-icon">📦</div>
+        <div class="card-name">Add WO Modal</div>
+        <div class="card-desc">PDF parse (Sonnet), text input</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCHEDULING -->
+  <div class="swimlane swim-sched">
+    <div class="swim-header">Scheduling</div>
+    <div class="swim-body">
+
+      <div class="section-label">Sheets</div>
+      <div class="card" id="n-sched-sheet" data-url="https://docs.google.com/spreadsheets/d/1yB9_Bq4O_bG_MKn3E9ZnJ4jgn9puDHrNKWKWcuOLpgN4/edit?gid=0#gid=0" data-tip="Crew schedule database. Daily assignments, truck allocation, equipment distribution.">
+        <div class="card-icon">📊</div>
+        <div class="card-name">Crew Schedule Database Sheet</div>
+        <div class="card-desc">Assignments, truck allocation</div>
+        <span class="card-link">docs.google.com/spreadsheets/d/1yB9_Bq4...</span>
+      </div>
+
+      <div class="section-label">GAS Backends</div>
+      <div class="card" id="n-sched-gas" data-url="https://script.google.com/home/projects/1GgyU9Rjr7d0ct2mwaJtx5og9hykib3yukiWw3dlP2SspbjZ-zOP-Lt3A/edit" data-tip="Crew Scheduler GAS project editor. Handles daily crew/truck/equipment assignment views.">
+        <div class="card-icon">⚙️</div>
+        <div class="card-name">Scheduler GAS (Project)</div>
+        <div class="card-desc">Scheduling script editor</div>
+        <span class="card-link">script.google.com/home/projects/1GgyU9R...</span>
+      </div>
+
+      <div class="section-label">Agent</div>
+      <div class="card" id="n-sched-agent" data-tip="Defined in app.config.json with keywords (schedule, calendar, assign, availability, tomorrow, shift, day off) but NOT wired into Master Agent — missing from agentServiceMap in api.js. No GAS_SCHEDULER_AGENT_URL env var set. Queries route to scheduler UI tool instead.">
+        <div class="card-icon">🤖</div>
+        <div class="card-name">Scheduler Agent</div>
+        <div class="card-desc">Defined but DISCONNECTED</div>
+        <span class="card-badge" style="background:rgba(248,81,73,0.2);color:var(--flow-auth)">UNWIRED</span>
+      </div>
+
+      <div class="section-label">UI</div>
+      <div class="card" id="n-sched-ui-native" data-url="https://branchesv1.netlify.app/crew-scheduler.html" data-tip="Native crew scheduler. Drag-drop crew/truck/equipment. Date-keyed localStorage. 3 presets. Standalone HTML.">
+        <div class="card-icon">📅</div>
+        <div class="card-name">crew-scheduler.html</div>
+        <div class="card-desc">Native drag-drop scheduling</div>
+        <span class="card-badge">NATIVE</span>
+        <span class="card-link">branchesv1.netlify.app/crew-scheduler.html</span>
+      </div>
+      <div class="card" id="n-sched-ui-iframe" data-url="https://script.google.com/macros/s/AKfycbzoD17CuJefae15VWIAh6hSTr3Kk_dbs4vQFQeAWOvsHsNAyVoceXfm0jjcrcJFadQ/exec" data-tip="GAS-served scheduler iframe. Loaded inside dashboard tool container.">
+        <div class="card-icon">📦</div>
+        <div class="card-name">Scheduler iframe</div>
+        <div class="card-desc">GAS web app (iframe)</div>
+        <span class="card-badge">IFRAME</span>
+        <span class="card-link">AKfycbzoD17CuJefae15VWIAh6h...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- HAND TOOLS -->
+  <div class="swimlane swim-tools">
+    <div class="swim-header">Hand Tools</div>
+    <div class="swim-body">
+
+      <div class="section-label">Sheets (shared)</div>
+      <div class="card" id="n-tools-sheet" data-url="https://docs.google.com/spreadsheets/d/1mhQfC40Zm9EcRmN44LdWtVvCqdAkqZhsokTbT9GtRuE/edit?gid=0#gid=0" data-tip="Shared with Inventory. I&amp;A Master Inventory includes hand tool records — stock counts, locations, min-stock thresholds.">
+        <div class="card-icon">📊</div>
+        <div class="card-name">I&A Master Inventory</div>
+        <div class="card-desc">Shared w/ Inventory — tool stock</div>
+        <span class="card-badge">SHARED</span>
+        <span class="card-link">docs.google.com/spreadsheets/d/1mhQfC40...</span>
+      </div>
+
+      <div class="section-label">GAS Backends</div>
+      <div class="card" id="n-tools-gas" data-url="https://script.google.com/home/projects/1X5XKoJ3cGPDxc-Nq9EefNcBigWLt2UtYqGl0dtpNH2g46F2trfm1WpEc/edit" data-tip="Hand Tool Checkout GAS project editor. Manages tool checkout/checkin records.">
+        <div class="card-icon">⚙️</div>
+        <div class="card-name">Hand Tool Checkout GAS</div>
+        <div class="card-desc">Tool checkout script editor</div>
+        <span class="card-link">script.google.com/home/projects/1X5XKoJ...</span>
+      </div>
+
+      <div class="section-label">Agent (shared)</div>
+      <div class="card" id="n-tools-agent" data-url="https://script.google.com/macros/s/AKfycbxa-Jx8OZwPlUh5Bty8tuI91K0eLYqG3wY7k2RuUp32_ybjcO7m2HsPi4O-m8OaMi/exec" data-tip="Shared with Inventory. Clippings sub-agent handles tool queries via inventory/stock/supplies keywords. Routes via GAS_INVENTORY_AGENT_URL.">
+        <div class="card-icon">🤖</div>
+        <div class="card-name">Clippings Agent</div>
+        <div class="card-desc">Shared w/ Inventory — tool queries</div>
+        <span class="card-badge">SHARED</span>
+        <span class="card-link">AKfycbxa-Jx8OZwPlUh5Bty8tu...</span>
+      </div>
+
+      <div class="section-label">UI</div>
+      <div class="card" id="n-tools-ui-native" data-url="https://branchesv1.netlify.app/hand-tool-checkout.html" data-tip="Native hand tool checkout. 98 default tools across 10 categories. Drag-drop checkout per crew. localStorage.">
+        <div class="card-icon">🔧</div>
+        <div class="card-name">hand-tool-checkout.html</div>
+        <div class="card-desc">98 tools, 10 categories, drag-drop</div>
+        <span class="card-badge">NATIVE</span>
+        <span class="card-link">branchesv1.netlify.app/hand-tool-checkout.html</span>
+      </div>
+      <div class="card" id="n-tools-ui-iframe" data-url="https://script.google.com/macros/s/AKfycbxxi2QeTSQJ1g-WHX72zH_yMaMe-_FMGDx1WV3FsKkTVvw1zSC8-iybst4_UDPABo3j/exec" data-tip="Hand Tool Checkout GAS iframe. Tool management web app loaded in dashboard.">
+        <div class="card-icon">📦</div>
+        <div class="card-name">Hand Tool Checkout iframe</div>
+        <div class="card-desc">GAS web app (iframe)</div>
+        <span class="card-badge">IFRAME</span>
+        <span class="card-link">AKfycbxxi2QeTSQJ1g-WHX72zH_...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGISTICS -->
+  <div class="swimlane swim-logi">
+    <div class="swim-header">Logistics</div>
+    <div class="swim-body">
+
+      <div class="section-label">Sheets</div>
+      <div class="card future" data-tip="Growth slot — logistics-specific data store.">
+        <div class="card-icon">📊</div>
+        <div class="card-name">___________</div>
+        <div class="card-desc">Future logistics sheet</div>
+      </div>
+
+      <div class="section-label">GAS Backends</div>
+      <div class="card" id="n-logi-gas-chess" data-url="https://script.google.com/macros/s/AKfycby3ZWohM7ixZAQ8dJ4ojLIYZzSNGnVzzAFJATvoWfj3mkkSyldnDVdpq7Tmhm3ux5w0tA/exec" data-tip="Chess Map backend GAS. Crew locations, Haversine distance calc, drive-time estimates. Script ID: 1qIRjcWZPvp57RG5_... Deployment @2.">
+        <div class="card-icon">⚙️</div>
+        <div class="card-name">Chess Map GAS Backend</div>
+        <div class="card-desc">Crew locations, Haversine distance</div>
+        <span class="card-link">AKfycby3ZWohM7ixZAQ8dJ4ojL...</span>
+      </div>
+
+      <div class="section-label">Agent</div>
+      <div class="card future" data-tip="Growth slot — logistics/dispatch agent for routing, deliveries, emergency coordination.">
+        <div class="card-icon">🤖</div>
+        <div class="card-name">Logistics Agent</div>
+        <div class="card-desc">Future — routing, dispatch</div>
+      </div>
+
+      <div class="section-label">UI</div>
+      <div class="card" id="n-logi-ui-chess" data-url="https://dailychessmap.netlify.app/" data-tip="DRL Chess Map. Real-time crew locations, drive-time estimates. Separate Netlify deploy. Loaded as iframe in dashboard.">
+        <div class="card-icon">🗺️</div>
+        <div class="card-name">Chess Map</div>
+        <div class="card-desc">Crew location tracking</div>
+        <span class="card-badge">IFRAME</span>
+        <span class="card-link">dailychessmap.netlify.app</span>
+      </div>
+      <div class="card" id="n-logi-ui-tv" data-url="https://github.com/Haulbrook/-BranchesCentralNetwork/blob/main/tv.html" data-tip="Shop TV dashboard. Real-time operational metrics, crew status, equipment. Standalone dark-theme page. Direct GAS API calls (not proxied).">
+        <div class="card-icon">📺</div>
+        <div class="card-name">tv.html</div>
+        <div class="card-desc">Shop TV display (standalone)</div>
+        <span class="card-badge">STANDALONE</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- FUTURE -->
+  <div class="swimlane swim-future">
+    <div class="swim-header">Future</div>
+    <div class="swim-body">
+      <div class="section-label">Sheets</div>
+      <div class="card future"><div class="card-icon">📊</div><div class="card-name">___________</div><div class="card-desc">Future data store</div></div>
+      <div class="card future"><div class="card-icon">📊</div><div class="card-name">___________</div><div class="card-desc">Future data store</div></div>
+      <div class="section-label">GAS Backends</div>
+      <div class="card future"><div class="card-icon">⚙️</div><div class="card-name">___________</div><div class="card-desc">Future GAS backend</div></div>
+      <div class="section-label">Agent</div>
+      <div class="card future"><div class="card-icon">🤖</div><div class="card-name">___________</div><div class="card-desc">Future sub-agent</div></div>
+      <div class="section-label">UI</div>
+      <div class="card future"><div class="card-icon">🔲</div><div class="card-name">___________</div><div class="card-desc">Future UI component</div></div>
+      <div class="card future"><div class="card-icon">🔲</div><div class="card-name">___________</div><div class="card-desc">Future standalone</div></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- SHARED INFRASTRUCTURE -->
+<div class="shared-section">
+  <div class="shared-header">Shared Infrastructure &mdash; Cross-Domain Services</div>
+  <div class="shared-body">
+
+    <div class="shared-card" id="n-shared-dashboard" data-url="https://branchesv1.netlify.app" data-tip="Main dashboard app. Hosts all views, manages state, coordinates all managers. Netlify Site ID: 5257a499-fb2c-4481-91be-d80ff45e47fc">
+      <div class="card-icon">🚀</div>
+      <div class="card-name">Dashboard App</div>
+      <div class="card-desc">branchesv1.netlify.app</div>
+      <span class="card-link">branchesv1.netlify.app</span>
+    </div>
+
+    <div class="shared-card" id="n-shared-master" data-tip="Claude Haiku-powered orchestrator. Routes queries to 1+ sub-agents in parallel. Cost gate: 4. Conversation memory: 10 msgs. masterAgent.js">
+      <div class="card-icon">🧠</div>
+      <div class="card-name">Master Agent</div>
+      <div class="card-desc">Multi-agent orchestrator (Haiku)</div>
+    </div>
+
+    <div class="shared-card" id="n-shared-gasproxy" data-url="https://app.netlify.com/projects/branchesv1/logs/functions" data-tip="Netlify function. Routes to 6+ GAS endpoints: GAS_INVENTORY_URL, GAS_GRADING_URL, GAS_ACTIVE_JOBS_URL, GAS_INVENTORY_AGENT_URL, GAS_REPAIR_AGENT_URL, GAS_JOBS_AGENT_URL. POST only.">
+      <div class="card-icon">🔒</div>
+      <div class="card-name">gas-proxy.js</div>
+      <div class="card-desc">Routes all GAS calls server-side</div>
+      <span class="card-link">/.netlify/functions/gas-proxy</span>
+    </div>
+
+    <div class="shared-card" id="n-shared-claudeproxy" data-url="https://app.netlify.com/projects/branchesv1/logs/functions" data-tip="Netlify function. Proxies Anthropic API (api.anthropic.com/v1/messages). Supports type: chat (Haiku), analysis, parse (Sonnet). Uses CLAUDE_API_KEY env var.">
+      <div class="card-icon">🔒</div>
+      <div class="card-name">claude-proxy.js</div>
+      <div class="card-desc">Routes all AI calls server-side</div>
+      <span class="card-link">/.netlify/functions/claude-proxy</span>
+    </div>
+
+    <div class="shared-card" id="n-shared-supabase" data-url="https://supabase.com/dashboard/project/fclnvrxxycaaxhndocfg" data-tip="Supabase Auth. Email/password + magic link. JWT auto-refresh every 50min. Project: fclnvrxxycaaxhndocfg. Anon key public by design. Server-side: SUPABASE_JWT_SECRET env var.">
+      <div class="card-icon">🔑</div>
+      <div class="card-name">Supabase Auth</div>
+      <div class="card-desc">Login, JWT, magic link</div>
+      <span class="card-link">fclnvrxxycaaxhndocfg.supabase.co</span>
+    </div>
+
+    <div class="shared-card" id="n-shared-weather" data-url="https://open-meteo.com" data-tip="Open-Meteo weather API. Free, public, no auth. Freeze/heat/storm alerts. Lat 34.2979, Lon -83.8241. 3-day forecast. Called direct from client (not proxied).">
+      <div class="card-icon">🌤️</div>
+      <div class="card-name">Open-Meteo Weather</div>
+      <div class="card-desc">Alerts, 3-day forecast (direct)</div>
+      <span class="card-link">api.open-meteo.com/v1/forecast</span>
+    </div>
+
+    <div class="shared-card" id="n-shared-claude" data-url="https://console.anthropic.com" data-tip="Anthropic Claude API. Haiku (routing, chat — claude-haiku-4-5-20251001) + Sonnet (PDF parsing — claude-sonnet-4-6). All calls proxied through claude-proxy.js.">
+      <div class="card-icon">🤖</div>
+      <div class="card-name">Claude API (Anthropic)</div>
+      <div class="card-desc">Haiku + Sonnet (proxied)</div>
+      <span class="card-link">api.anthropic.com/v1/messages</span>
+    </div>
+
+    <div class="shared-card" data-url="https://github.com/Haulbrook/-BranchesCentralNetwork" data-tip="GitHub repository for the entire Branches Central Network codebase.">
+      <div class="card-icon">📂</div>
+      <div class="card-name">GitHub Repo</div>
+      <div class="card-desc">Source code repository</div>
+      <span class="card-link">github.com/Haulbrook/-BranchesCentralNetwork</span>
+    </div>
+
+    <div class="shared-card" data-tip="Breaks complex multi-step queries into components. Dependency analysis, parallel execution planning. deconstructionRebuildSkill.js">
+      <div class="card-icon">💡</div>
+      <div class="card-name">Deconstruction Skill</div>
+      <div class="card-desc">Complex query decomposition</div>
+    </div>
+
+    <div class="shared-card" data-tip="Predicts next steps, suggests follow-ups, warns of consequences, offers optimizations. forwardThinkerSkill.js">
+      <div class="card-icon">💡</div>
+      <div class="card-name">Forward Thinker</div>
+      <div class="card-desc">Next-step prediction</div>
+    </div>
+
+    <div class="shared-card" data-tip="Quality control and operation monitoring. Tracks all operations, alerts, recommendations. appleOverseer.js">
+      <div class="card-icon">💡</div>
+      <div class="card-name">Apple Overseer</div>
+      <div class="card-desc">Quality control, monitoring</div>
+    </div>
+
+    <div class="shared-card future"><div class="card-icon">🔲</div><div class="card-name">___________</div><div class="card-desc">Future shared service</div></div>
+    <div class="shared-card future"><div class="card-icon">🔲</div><div class="card-name">___________</div><div class="card-desc">Future shared service</div></div>
+  </div>
+</div>
+
+</div>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip"></div>
+
+<!-- Flow Control Panel -->
+<div class="flow-panel" id="flowPanel">
+  <div class="flow-panel-title">
+    Data Flows
+    <button id="toggleAllBtn" onclick="toggleAll()">All On</button>
+  </div>
+
+  <label class="flow-toggle" style="--flow-color: var(--flow-data)">
+    <input type="checkbox" data-flow="data" onchange="updateFlows()">
+    <span class="toggle-track"></span>
+    <span class="toggle-dot" style="background:var(--flow-data)"></span>
+    <span class="toggle-label">Sheets &rarr; GAS (raw data)</span>
+  </label>
+
+  <label class="flow-toggle" style="--flow-color: var(--flow-api)">
+    <input type="checkbox" data-flow="api" onchange="updateFlows()">
+    <span class="toggle-track"></span>
+    <span class="toggle-dot" style="background:var(--flow-api)"></span>
+    <span class="toggle-label">GAS &rarr; UI (API serve)</span>
+  </label>
+
+  <label class="flow-toggle" style="--flow-color: var(--flow-ai)">
+    <input type="checkbox" data-flow="ai" onchange="updateFlows()">
+    <span class="toggle-track"></span>
+    <span class="toggle-dot" style="background:var(--flow-ai)"></span>
+    <span class="toggle-label">Agents &rarr; Master (AI)</span>
+  </label>
+
+  <label class="flow-toggle" style="--flow-color: var(--flow-proxy)">
+    <input type="checkbox" data-flow="proxy" onchange="updateFlows()">
+    <span class="toggle-track"></span>
+    <span class="toggle-dot" style="background:var(--flow-proxy)"></span>
+    <span class="toggle-label">Proxy routing</span>
+  </label>
+
+  <label class="flow-toggle" style="--flow-color: var(--flow-auth)">
+    <input type="checkbox" data-flow="auth" onchange="updateFlows()">
+    <span class="toggle-track"></span>
+    <span class="toggle-dot" style="background:var(--flow-auth)"></span>
+    <span class="toggle-label">Auth &amp; weather (direct)</span>
+  </label>
+
+  <div class="flow-key">
+    <b>Arrows</b> show direction of data flow.<br>
+    Animated dashes = live data path.<br>
+    Toggle each layer on/off above.
+  </div>
+</div>
+
+<script>
+const tooltip = document.getElementById('tooltip');
+const svg = document.getElementById('flowSvg');
+const wrapper = document.getElementById('scrollWrapper');
+
+// --- Clickable cards ---
+document.querySelectorAll('[data-url]').forEach(el => {
+  el.addEventListener('click', () => window.open(el.dataset.url, '_blank'));
+});
+
+// --- Tooltip on hover ---
+document.querySelectorAll('[data-tip]').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    const name = el.querySelector('.card-name')?.textContent || '';
+    const url = el.dataset.url || '';
+    let html = '<b>' + name + '</b><br>' + el.dataset.tip;
+    if (url) {
+      html += '<span class="tip-url">' + url + '</span>';
+      html += '<span class="tip-click">Click to open</span>';
+    }
+    tooltip.innerHTML = html;
+    tooltip.classList.add('show');
+  });
+  el.addEventListener('mousemove', (e) => {
+    const x = e.clientX + 14;
+    const y = e.clientY + 14;
+    const maxX = window.innerWidth - tooltip.offsetWidth - 16;
+    const maxY = window.innerHeight - tooltip.offsetHeight - 16;
+    tooltip.style.left = Math.min(x, maxX) + 'px';
+    tooltip.style.top = Math.min(y, maxY) + 'px';
+  });
+  el.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+});
+
+// ═══════════════════════════════════════════
+// DATA FLOW CONNECTIONS
+// ═══════════════════════════════════════════
+
+const flows = [
+  // === SHEETS → GAS (data: raw data feeds) ===
+  { from: 'n-inv-sheet-master',  to: 'n-inv-gas',       type: 'data', label: 'stock data' },
+  { from: 'n-inv-sheet-assetio', to: 'n-inv-gas',       type: 'data', label: 'asset moves' },
+  { from: 'n-grade-sheet',       to: 'n-grade-gas',     type: 'data', label: 'grade data' },
+  { from: 'n-jobs-sheet-wo',     to: 'n-jobs-gas',      type: 'data', label: 'WO data' },
+  { from: 'n-jobs-sheet-tickets',to: 'n-jobs-gas',      type: 'data', label: 'ticket data' },
+  { from: 'n-sched-sheet',       to: 'n-sched-gas',     type: 'data', label: 'schedule data' },
+
+  // === GAS → UI (api: serves data to frontend) ===
+  { from: 'n-inv-gas',           to: 'n-inv-ui-iframe',  type: 'api', label: 'inventory JSON' },
+  { from: 'n-inv-gas',           to: 'n-inv-ui-native',  type: 'api', label: 'inventory JSON' },
+  { from: 'n-grade-gas',         to: 'n-grade-ui-iframe',type: 'api', label: 'grading data' },
+  { from: 'n-jobs-gas',          to: 'n-jobs-ui-cards',  type: 'api', label: 'getProgress' },
+  { from: 'n-jobs-gas',          to: 'n-jobs-ui-detail', type: 'api', label: 'getLineItems' },
+  { from: 'n-jobs-gas',          to: 'n-jobs-ui-addwo',  type: 'api', label: 'addWorkOrder' },
+  { from: 'n-sched-gas',         to: 'n-sched-ui-iframe',type: 'api', label: 'schedule view' },
+  { from: 'n-sched-gas',         to: 'n-sched-ui-native',type: 'api', label: 'schedule data' },
+  { from: 'n-tools-gas',          to: 'n-tools-ui-native',  type: 'api', label: 'tool data' },
+  { from: 'n-tools-gas',          to: 'n-tools-ui-iframe', type: 'api', label: 'tool data' },
+  { from: 'n-tools-sheet',        to: 'n-tools-gas',       type: 'data', label: 'tool stock' },
+  { from: 'n-logi-gas-chess',    to: 'n-logi-ui-chess',  type: 'api', label: 'crew locations' },
+  { from: 'n-inv-gas',           to: 'n-logi-ui-tv',     type: 'api', label: 'stock metrics' },
+  { from: 'n-jobs-gas',          to: 'n-logi-ui-tv',     type: 'api', label: 'WO stats' },
+
+  // === AGENTS → MASTER AGENT (ai: agent routing) ===
+  { from: 'n-inv-agent',         to: 'n-shared-master',  type: 'ai', label: 'inventory answers' },
+  { from: 'n-grade-agent',       to: 'n-shared-master',  type: 'ai', label: 'grading answers' },
+  { from: 'n-jobs-agent',        to: 'n-shared-master',  type: 'ai', label: 'jobs answers' },
+  // GAS → Agents
+  { from: 'n-inv-gas',           to: 'n-inv-agent',      type: 'ai', label: 'query sheet' },
+  { from: 'n-grade-gas',         to: 'n-grade-agent',    type: 'ai', label: 'query sheet' },
+  { from: 'n-jobs-gas',          to: 'n-jobs-agent',     type: 'ai', label: 'query sheet' },
+  { from: 'n-tools-agent',       to: 'n-shared-master',  type: 'ai', label: 'tool answers' },
+  { from: 'n-tools-gas',         to: 'n-tools-agent',    type: 'ai', label: 'query tools' },
+
+  // === PROXY ROUTING (proxy: server-side relay) ===
+  { from: 'n-shared-dashboard',  to: 'n-shared-gasproxy',   type: 'proxy', label: 'GAS requests' },
+  { from: 'n-shared-gasproxy',   to: 'n-inv-gas',           type: 'proxy', label: 'routed' },
+  { from: 'n-shared-gasproxy',   to: 'n-grade-gas',         type: 'proxy', label: 'routed' },
+  { from: 'n-shared-gasproxy',   to: 'n-jobs-gas',          type: 'proxy', label: 'routed' },
+  { from: 'n-shared-dashboard',  to: 'n-shared-claudeproxy',type: 'proxy', label: 'AI requests' },
+  { from: 'n-shared-claudeproxy',to: 'n-shared-claude',     type: 'proxy', label: 'proxied' },
+  { from: 'n-shared-claude',     to: 'n-shared-master',     type: 'proxy', label: 'Haiku responses' },
+
+  // === AUTH & DIRECT (auth: authentication + direct APIs) ===
+  { from: 'n-shared-supabase',   to: 'n-shared-dashboard',  type: 'auth', label: 'JWT token' },
+  { from: 'n-shared-weather',    to: 'n-shared-dashboard',  type: 'auth', label: 'forecast data' },
+  { from: 'n-shared-claude',     to: 'n-jobs-ui-addwo',     type: 'auth', label: 'Sonnet parse' },
+];
+
+// Color map
+const flowColors = {
+  data:  'var(--flow-data)',
+  api:   'var(--flow-api)',
+  proxy: 'var(--flow-proxy)',
+  ai:    'var(--flow-ai)',
+  auth:  'var(--flow-auth)',
+};
+
+// Get center position of element relative to scroll wrapper
+function getCenter(id) {
+  const el = document.getElementById(id);
+  if (!el) return null;
+  const wrapRect = wrapper.getBoundingClientRect();
+  const elRect = el.getBoundingClientRect();
+  return {
+    x: elRect.left - wrapRect.left + wrapper.scrollLeft + elRect.width / 2,
+    y: elRect.top - wrapRect.top + wrapper.scrollTop + elRect.height / 2,
+  };
+}
+
+// Get edge point (right or left side, or top/bottom) for better arrow placement
+function getEdgePoint(id, targetPos) {
+  const el = document.getElementById(id);
+  if (!el) return null;
+  const wrapRect = wrapper.getBoundingClientRect();
+  const elRect = el.getBoundingClientRect();
+
+  const cx = elRect.left - wrapRect.left + wrapper.scrollLeft + elRect.width / 2;
+  const cy = elRect.top - wrapRect.top + wrapper.scrollTop + elRect.height / 2;
+  const hw = elRect.width / 2;
+  const hh = elRect.height / 2;
+
+  if (!targetPos) return { x: cx, y: cy };
+
+  const dx = targetPos.x - cx;
+  const dy = targetPos.y - cy;
+
+  // Determine which edge to exit from
+  if (Math.abs(dx) * hh > Math.abs(dy) * hw) {
+    // Exit from left or right
+    return { x: cx + (dx > 0 ? hw : -hw), y: cy };
+  } else {
+    // Exit from top or bottom
+    return { x: cx, y: cy + (dy > 0 ? hh : -hh) };
+  }
+}
+
+function drawFlows() {
+  // Clear existing paths
+  svg.querySelectorAll('.flow-path-group').forEach(g => g.remove());
+
+  // Get active flow types
+  const active = new Set();
+  document.querySelectorAll('.flow-panel input[data-flow]').forEach(cb => {
+    if (cb.checked) active.add(cb.dataset.flow);
+  });
+
+  // Size SVG to content
+  const wrapRect = wrapper.getBoundingClientRect();
+  svg.style.width = wrapper.scrollWidth + 'px';
+  svg.style.height = wrapper.scrollHeight + 'px';
+
+  flows.forEach((flow, i) => {
+    if (!active.has(flow.type)) return;
+    const fromEl = document.getElementById(flow.from);
+    const toEl = document.getElementById(flow.to);
+    if (!fromEl || !toEl) return;
+
+    const toCenter = getCenter(flow.to);
+    const fromCenter = getCenter(flow.from);
+    if (!toCenter || !fromCenter) return;
+
+    const p1 = getEdgePoint(flow.from, toCenter);
+    const p2 = getEdgePoint(flow.to, fromCenter);
+
+    const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    group.classList.add('flow-path-group');
+
+    // Calculate bezier control points
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const curvature = Math.min(dist * 0.3, 80);
+
+    let cp1x, cp1y, cp2x, cp2y;
+    if (Math.abs(dx) > Math.abs(dy)) {
+      // Mostly horizontal: curve vertically
+      cp1x = p1.x + dx * 0.3;
+      cp1y = p1.y;
+      cp2x = p2.x - dx * 0.3;
+      cp2y = p2.y;
+    } else {
+      // Mostly vertical: curve horizontally
+      cp1x = p1.x;
+      cp1y = p1.y + dy * 0.3;
+      cp2x = p2.x;
+      cp2y = p2.y - dy * 0.3;
+    }
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M${p1.x},${p1.y} C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`);
+    path.setAttribute('stroke', flowColors[flow.type]);
+    path.setAttribute('marker-end', `url(#arrow-${flow.type})`);
+    path.classList.add('flow-line');
+    group.appendChild(path);
+
+    // Label at midpoint
+    const midX = (p1.x + p2.x) / 2;
+    const midY = (p1.y + p2.y) / 2 - 6;
+    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    label.setAttribute('x', midX);
+    label.setAttribute('y', midY);
+    label.setAttribute('text-anchor', 'middle');
+    label.classList.add('flow-label');
+    label.textContent = flow.label;
+    group.appendChild(label);
+
+    svg.appendChild(group);
+  });
+}
+
+function updateFlows() {
+  drawFlows();
+}
+
+function toggleAll() {
+  const checkboxes = document.querySelectorAll('.flow-panel input[data-flow]');
+  const allOn = Array.from(checkboxes).every(cb => cb.checked);
+  checkboxes.forEach(cb => cb.checked = !allOn);
+  document.getElementById('toggleAllBtn').textContent = allOn ? 'All On' : 'All Off';
+  drawFlows();
+}
+
+// Redraw on resize and scroll
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(drawFlows, 100);
+});
+wrapper.addEventListener('scroll', () => {
+  // SVG moves with content since it's inside the wrapper, no redraw needed
+});
+
+// Initial draw (wait for layout)
+requestAnimationFrame(() => {
+  requestAnimationFrame(drawFlows);
+});
+</script>
+</body>
+</html>

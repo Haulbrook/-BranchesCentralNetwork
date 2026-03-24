@@ -321,7 +321,7 @@ const StorageUtils = {
             localStorage.setItem(key, JSON.stringify(value));
             return true;
         } catch (error) {
-            console.warn('Failed to save to localStorage:', error);
+            Logger.warn('Utils', 'Failed to save to localStorage:', error);
             return false;
         }
     },
@@ -331,7 +331,7 @@ const StorageUtils = {
             const value = localStorage.getItem(key);
             return value ? JSON.parse(value) : defaultValue;
         } catch (error) {
-            console.warn('Failed to read from localStorage:', error);
+            Logger.warn('Utils', 'Failed to read from localStorage:', error);
             return defaultValue;
         }
     },
@@ -341,7 +341,7 @@ const StorageUtils = {
             localStorage.removeItem(key);
             return true;
         } catch (error) {
-            console.warn('Failed to remove from localStorage:', error);
+            Logger.warn('Utils', 'Failed to remove from localStorage:', error);
             return false;
         }
     },
@@ -351,7 +351,7 @@ const StorageUtils = {
             localStorage.clear();
             return true;
         } catch (error) {
-            console.warn('Failed to clear localStorage:', error);
+            Logger.warn('Utils', 'Failed to clear localStorage:', error);
             return false;
         }
     },
@@ -515,7 +515,7 @@ const DomUtils = {
             await navigator.clipboard.writeText(text);
             return true;
         } catch (error) {
-            console.warn('Failed to copy to clipboard:', error);
+            Logger.warn('Utils', 'Failed to copy to clipboard:', error);
             return false;
         }
     }
@@ -562,7 +562,7 @@ const PerformanceUtils = {
         const start = performance.now();
         const result = func();
         const end = performance.now();
-        console.log(`${name} took ${end - start} milliseconds`);
+        Logger.info('Utils', `${name} took ${end - start} milliseconds`);
         return result;
     },
 
@@ -596,12 +596,15 @@ const SecurityUtils = {
      * Escape HTML
      */
     escapeHtml(unsafe) {
+        if (typeof unsafe !== 'string') return String(unsafe ?? '');
         return unsafe
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+            .replace(/'/g, "&#039;")
+            .replace(/`/g, "&#96;")
+            .replace(/\//g, "&#x2F;");
     },
 
     /**

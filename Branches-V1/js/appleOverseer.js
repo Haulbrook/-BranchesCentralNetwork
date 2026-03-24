@@ -35,7 +35,7 @@ class AppleOverseer {
             alerts: []
         };
 
-        console.log('🍎 Apple Overseer initialized');
+        Logger.info('Overseer', 'Apple Overseer initialized');
     }
 
     /**
@@ -85,7 +85,7 @@ class AppleOverseer {
         // Validate operation before registration
         const validation = this.validateOperation(operation);
         if (!validation.valid) {
-            console.warn('🍎 Operation validation failed:', validation.reason);
+            Logger.warn('Overseer', 'Operation validation failed:', validation.reason);
             return {
                 success: false,
                 blocked: true,
@@ -97,7 +97,7 @@ class AppleOverseer {
         this.activeOperations.set(operationId, operation);
         this.updateStatus();
 
-        console.log(`🍎 Operation registered: ${operationId}`, operation);
+        Logger.info('Overseer', `Operation registered: ${operationId}`, operation);
 
         return {
             success: true,
@@ -213,7 +213,7 @@ class AppleOverseer {
      */
     updateOperation(operationId, updates) {
         if (!this.activeOperations.has(operationId)) {
-            console.warn(`🍎 Operation ${operationId} not found`);
+            Logger.warn('Overseer', `Operation ${operationId} not found`);
             return { success: false };
         }
 
@@ -257,7 +257,7 @@ class AppleOverseer {
 
         this.updateStatus();
 
-        console.log(`🍎 Operation completed: ${operationId}`, {
+        Logger.info('Overseer', `Operation completed: ${operationId}`, {
             duration: operation.duration,
             quality: qualityCheck
         });
@@ -456,7 +456,7 @@ class AppleOverseer {
      * Coordinate between multiple tools
      */
     coordinateTools(toolIds, action) {
-        console.log(`🍎 Coordinating tools: ${toolIds.join(', ')} for action: ${action}`);
+        Logger.info('Overseer', `Coordinating tools: ${toolIds.join(', ')} for action: ${action}`);
 
         // Check if all tools are available
         const unavailableTools = toolIds.filter(toolId => {
@@ -585,7 +585,7 @@ class AppleOverseer {
      */
     clearHistory() {
         this.operationHistory = [];
-        console.log('🍎 Operation history cleared');
+        Logger.info('Overseer', 'Operation history cleared');
     }
 
     /**
@@ -597,7 +597,7 @@ class AppleOverseer {
         this.operationHistory = [];
         this.status.alerts = [];
         this.updateStatus();
-        console.log('🍎 Apple Overseer reset');
+        Logger.info('Overseer', 'Apple Overseer reset');
     }
 }
 

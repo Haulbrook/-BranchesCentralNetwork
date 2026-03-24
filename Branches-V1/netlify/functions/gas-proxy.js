@@ -2,6 +2,7 @@
 // Proxies all Google Apps Script calls server-side so GAS URLs never reach the browser.
 
 const { validateAuth, corsHeaders } = require('./_shared/auth');
+const { resolveTenant, updateUsageSnapshot } = require('./_shared/tiers');
 
 // In-memory rate limiting (per function instance)
 const rateLimits = new Map();
@@ -53,6 +54,19 @@ exports.handler = async (event) => {
     return { statusCode: 429, headers: corsHeaders(), body: JSON.stringify({ error: 'Rate limit exceeded' }) };
   }
 
+  // Tier enforcement
+  let tenantInfo = null;
+  if (auth.user?.id) {
+    tenantInfo = await resolveTenant(auth.user.id);
+    if (!tenantInfo) {
+      return { statusCode: 403, headers: corsHeaders(), body: JSON.stringify({ error: 'No subscription found. Please subscribe to use this feature.', code: 'NO_SUBSCRIPTION' }) };
+    }
+    if (!tenantInfo.isActive) {
+      const msg = tenantInfo.trialExpired ? 'Free trial expired. Please subscribe to continue.' : 'Subscription inactive.';
+      return { statusCode: 403, headers: corsHeaders(), body: JSON.stringify({ error: msg, code: 'SUBSCRIPTION_INACTIVE' }) };
+    }
+  }
+
   // Request body size validation (100KB limit)
   if (event.body && event.body.length > 102400) {
     return { statusCode: 413, headers: corsHeaders(), body: JSON.stringify({ error: 'Request too large' }) };
@@ -79,6 +93,32 @@ exports.handler = async (event) => {
   const gasUrl = process.env[envKey];
   if (!gasUrl) {
     return { statusCode: 500, headers: corsHeaders(), body: JSON.stringify({ error: 'Service not configured' }) };
+  }
+
+  // Write-gating: check tier limits before allowing creates
+  if (tenantInfo && tenantInfo.tenant.subscription_status !== 'grandfathered') {
+    const httpMethod = (method || 'GET').toUpperCase();
+    const action = reqBody?.action || params?.action || '';
+
+    if (httpMethod === 'POST' && service === 'inventory' && ['addItem', 'addInventory', 'updateInventory'].includes(action)) {
+      if (tenantInfo.usage.inventory_items >= tenantInfo.limits.inventoryItems) {
+        return { statusCode: 429, headers: corsHeaders(), body: JSON.stringify({
+          error: 'Inventory item limit reached. Upgrade your plan for more.',
+          code: 'LIMIT_EXCEEDED',
+          usage: { used: tenantInfo.usage.inventory_items, limit: tenantInfo.limits.inventoryItems },
+        }) };
+      }
+    }
+
+    if (httpMethod === 'POST' && service === 'activeJobs' && action === 'addWorkOrder') {
+      if (tenantInfo.usage.active_jobs >= tenantInfo.limits.activeJobs) {
+        return { statusCode: 429, headers: corsHeaders(), body: JSON.stringify({
+          error: 'Active job limit reached. Upgrade your plan for more.',
+          code: 'LIMIT_EXCEEDED',
+          usage: { used: tenantInfo.usage.active_jobs, limit: tenantInfo.limits.activeJobs },
+        }) };
+      }
+    }
   }
 
   try {
@@ -119,6 +159,18 @@ exports.handler = async (event) => {
       data = JSON.parse(text);
     } catch {
       data = { raw: text };
+    }
+
+    // Update usage snapshots from read responses (fire-and-forget)
+    if (tenantInfo && response.ok) {
+      if (service === 'inventory' && data?.data && Array.isArray(data.data)) {
+        updateUsageSnapshot(tenantInfo.tenantId, tenantInfo.month, 'inventory_items', data.data.length);
+      } else if (service === 'inventory' && data?.items && Array.isArray(data.items)) {
+        updateUsageSnapshot(tenantInfo.tenantId, tenantInfo.month, 'inventory_items', data.items.length);
+      }
+      if (service === 'activeJobs' && data?.data && Array.isArray(data.data)) {
+        updateUsageSnapshot(tenantInfo.tenantId, tenantInfo.month, 'active_jobs', data.data.length);
+      }
     }
 
     return {

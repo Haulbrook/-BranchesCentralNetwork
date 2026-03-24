@@ -50,6 +50,11 @@ class AuthManager {
                 this.startTokenRefresh();
             } else if (event === 'SIGNED_OUT') {
                 this.stopTokenRefresh();
+                // Redirect to landing page instead of showing inline login
+                if (window.location.pathname.startsWith('/dashboard') || window.location.pathname === '/index.html') {
+                    window.location.href = '/';
+                    return;
+                }
                 this._showLoginScreen();
             }
         });

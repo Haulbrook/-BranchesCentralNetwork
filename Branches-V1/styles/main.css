@@ -358,6 +358,147 @@ body {
 .tool-item[data-tool="tools"]:hover { background-color: var(--tools-color); color: white; }
 
 /* ========================================
+   📊 Usage View (full-page)
+   ======================================== */
+
+.usage-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: var(--background-color);
+  padding: 2rem;
+}
+
+.usage-view.hidden { display: none; }
+
+.usage-view-container {
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.usage-view-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.usage-view-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.usage-plan-badge {
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--secondary-color);
+  color: #fff;
+}
+
+.usage-status-line {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+
+.usage-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.usage-card {
+  background: var(--card-bg, var(--surface-color));
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.usage-ring-wrap {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin-bottom: 1rem;
+}
+
+.usage-ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.usage-ring-bg {
+  fill: none;
+  stroke: var(--border-color);
+  stroke-width: 8;
+}
+
+.usage-ring-fill {
+  fill: none;
+  stroke: var(--secondary-color);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 326.73;
+  stroke-dashoffset: 326.73;
+  transition: stroke-dashoffset 0.8s ease, stroke 0.3s ease;
+}
+
+.usage-ring-fill.warning { stroke: #f0ad4e; }
+.usage-ring-fill.danger  { stroke: #d9534f; }
+
+.usage-ring-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+.usage-card-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.25rem;
+}
+
+.usage-card-detail {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.usage-billing-info {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  padding: 1rem 0;
+  border-top: 1px solid var(--border-color);
+}
+
+@media (max-width: 640px) {
+  .usage-cards {
+    grid-template-columns: 1fr;
+  }
+  .usage-view {
+    padding: 1rem;
+  }
+}
+
+/* ========================================
    👤 Sidebar Footer
    ======================================== */
 

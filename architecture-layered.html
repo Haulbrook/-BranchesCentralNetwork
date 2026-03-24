@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Branches Architecture — Layered View</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface-2: #1c2333;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-dim: #8b949e;
+    --green: #3fb950;
+    --green-dim: rgba(63,185,80,0.15);
+    --blue: #58a6ff;
+    --blue-dim: rgba(88,166,255,0.12);
+    --purple: #bc8cff;
+    --purple-dim: rgba(188,140,255,0.12);
+    --orange: #f0883e;
+    --orange-dim: rgba(240,136,62,0.12);
+    --red: #f85149;
+    --red-dim: rgba(248,81,73,0.12);
+    --yellow: #e3b341;
+    --yellow-dim: rgba(227,179,65,0.12);
+    --cyan: #39d2c0;
+    --cyan-dim: rgba(57,210,192,0.12);
+    --radius: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    padding: 32px;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin-bottom: 36px;
+  }
+
+  .layer {
+    margin-bottom: 12px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    transition: box-shadow 0.2s;
+  }
+  .layer:hover { box-shadow: 0 0 20px rgba(88,166,255,0.08); }
+
+  .layer-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 600;
+    font-size: 0.8rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .layer-header .arrow {
+    transition: transform 0.2s;
+    font-size: 0.7rem;
+    opacity: 0.5;
+  }
+  .layer.collapsed .arrow { transform: rotate(-90deg); }
+  .layer.collapsed .layer-body { display: none; }
+
+  .layer-header .layer-num {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .layer-body {
+    padding: 16px 20px 20px;
+    background: var(--surface);
+  }
+
+  .node-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+
+  .node {
+    border-radius: 8px;
+    padding: 12px 14px;
+    cursor: default;
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+  }
+  .node:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
+  .node.future {
+    border: 1px dashed var(--border);
+    opacity: 0.5;
+  }
+  .node.future:hover { opacity: 0.8; }
+
+  .node-icon { font-size: 1.1rem; margin-bottom: 6px; }
+  .node-name { font-weight: 600; font-size: 0.82rem; margin-bottom: 4px; }
+  .node-desc { font-size: 0.72rem; color: var(--text-dim); line-height: 1.4; }
+  .node-url {
+    display: block;
+    font-size: 0.62rem;
+    color: var(--text-dim);
+    opacity: 0.6;
+    margin-top: 6px;
+    word-break: break-all;
+    font-family: 'SF Mono', Menlo, monospace;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .node-url:hover { opacity: 1; color: var(--blue); }
+
+  .node-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-size: 0.58rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Layer colors */
+  .layer-1 .layer-header { background: var(--green-dim); color: var(--green); }
+  .layer-1 .layer-num { background: var(--green); color: var(--bg); }
+  .layer-1 .node { background: var(--green-dim); border: 1px solid rgba(63,185,80,0.2); }
+
+  .layer-2 .layer-header { background: var(--orange-dim); color: var(--orange); }
+  .layer-2 .layer-num { background: var(--orange); color: var(--bg); }
+  .layer-2 .node { background: var(--orange-dim); border: 1px solid rgba(240,136,62,0.2); }
+
+  .layer-3 .layer-header { background: var(--red-dim); color: var(--red); }
+  .layer-3 .layer-num { background: var(--red); color: var(--bg); }
+  .layer-3 .node { background: var(--red-dim); border: 1px solid rgba(248,81,73,0.2); }
+
+  .layer-4 .layer-header { background: var(--blue-dim); color: var(--blue); }
+  .layer-4 .layer-num { background: var(--blue); color: var(--bg); }
+  .layer-4 .node { background: var(--blue-dim); border: 1px solid rgba(88,166,255,0.2); }
+
+  .layer-5 .layer-header { background: var(--purple-dim); color: var(--purple); }
+  .layer-5 .layer-num { background: var(--purple); color: var(--bg); }
+  .layer-5 .node { background: var(--purple-dim); border: 1px solid rgba(188,140,255,0.2); }
+
+  .layer-6 .layer-header { background: var(--cyan-dim); color: var(--cyan); }
+  .layer-6 .layer-num { background: var(--cyan); color: var(--bg); }
+  .layer-6 .node { background: var(--cyan-dim); border: 1px solid rgba(57,210,192,0.2); }
+
+  .badge-proxy { background: var(--red-dim); color: var(--red); }
+  .badge-iframe { background: var(--blue-dim); color: var(--blue); }
+  .badge-native { background: var(--green-dim); color: var(--green); }
+  .badge-direct { background: var(--yellow-dim); color: var(--yellow); }
+  .badge-planned { background: var(--surface-2); color: var(--text-dim); }
+
+  /* Connector lines between layers */
+  .connector {
+    display: flex;
+    justify-content: center;
+    padding: 0;
+    position: relative;
+  }
+  .connector::before {
+    content: '';
+    width: 2px;
+    height: 12px;
+    background: var(--border);
+  }
+  .connector-label {
+    position: absolute;
+    right: calc(50% + 16px);
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  /* Tooltip */
+  .tooltip {
+    display: none;
+    position: fixed;
+    background: #1c2333;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    max-width: 320px;
+    z-index: 999;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+  .tooltip.show { display: block; }
+  .tooltip-title { font-weight: 700; margin-bottom: 4px; }
+  .tooltip-detail { color: var(--text-dim); }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+    font-size: 0.72rem;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-dim);
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+  }
+
+  @media (max-width: 768px) {
+    body { padding: 16px; }
+    .node-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>BRANCHES ARCHITECTURE</h1>
+<p class="subtitle">Layered View — click layers to collapse / expand &middot; hover nodes for details</p>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> Data Stores</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div> GAS Backends</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Proxy / Auth</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div> Dashboard App</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div> AI Agents</div>
+  <div class="legend-item"><div class="legend-dot" style="background:var(--cyan)"></div> Standalone / External</div>
+  <div class="legend-item"><div class="legend-dot" style="border:1px dashed var(--text-dim);background:transparent"></div> Growth Slot</div>
+</div>
+
+<!-- LAYER 1: DATA STORES -->
+<div class="layer layer-1" id="layer1">
+  <div class="layer-header" onclick="toggleLayer('layer1')">
+    <span class="arrow">&#9660;</span>
+    <span class="layer-num">1</span>
+    Data Stores — Google Sheets
+  </div>
+  <div class="layer-body">
+    <div class="node-grid">
+      <div class="node" data-tip="Master inventory of plants, materials, and supplies. Source of truth for stock levels.">
+        <div class="node-icon">📊</div>
+        <div class="node-name">I&A Master Inventory</div>
+        <div class="node-desc">Plants, materials, stock levels</div>
+        <span class="node-url" onclick="copyUrl(this)">docs.google.com/spreadsheets/d/1mhQfC40Zm9EcRmN44LdWt...</span>
+      </div>
+      <div class="node" data-tip="Work order tracking with line items, progress, and crew assignments.">
+        <div class="node-icon">📊</div>
+        <div class="node-name">Active Work Orders</div>
+        <div class="node-desc">WO tracking, line items, progress</div>
+        <span class="node-url" onclick="copyUrl(this)">docs.google.com/spreadsheets/d/13bnntgZiXdCA2KQvJXplBA1r...</span>
+      </div>
+      <div class="node" data-tip="Shop ticket records for repair tracking and service history.">
+        <div class="node-icon">📊</div>
+        <div class="node-name">Shop Tickets Sheet</div>
+        <div class="node-desc">Repair tickets, service history</div>
+      </div>
+      <div class="node" data-tip="Equipment condition data, repair vs replace cost analysis.">
+        <div class="node-icon">📊</div>
+        <div class="node-name">Repair v Replace Sheet</div>
+        <div class="node-desc">Equipment grading, cost analysis</div>
+        <span class="node-url" onclick="copyUrl(this)">spreadsheets/d/1aF_6nHHp8NA-eeTkwZMUuTlPRPOiiKEvou...</span>
+      </div>
+      <div class="node" data-tip="Daily crew assignments, truck allocation, equipment distribution.">
+        <div class="node-icon">📊</div>
+        <div class="node-name">Crew Schedule DB</div>
+        <div class="node-desc">Crew assignments, truck allocation</div>
+        <span class="node-url" onclick="copyUrl(this)">docs.google.com/spreadsheets/d/1yB9_Bq4O_bG_MKn3E9Z...</span>
+      </div>
+      <div class="node" data-tip="Asset tracking for items moving in and out of the yard.">
+        <div class="node-icon">📊</div>
+        <div class="node-name">Asset In/Out Sheet</div>
+        <div class="node-desc">Yard asset movement tracking</div>
+      </div>
+      <div class="node" data-tip="Weekly vehicle inspection data and maintenance tracking.">
+        <div class="node-icon">📊</div>
+        <div class="node-name">Weekly Truck Check</div>
+        <div class="node-desc">Vehicle inspections, maintenance</div>
+      </div>
+      <div class="node future" data-tip="Growth slot — add new Google Sheet data sources here.">
+        <div class="node-icon">📊</div>
+        <div class="node-name">___________</div>
+        <div class="node-desc">Future data store</div>
+        <span class="node-badge badge-planned">GROWTH</span>
+      </div>
+      <div class="node future" data-tip="Growth slot — add new Google Sheet data sources here.">
+        <div class="node-icon">📊</div>
+        <div class="node-name">___________</div>
+        <div class="node-desc">Future data store</div>
+        <span class="node-badge badge-planned">GROWTH</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="connector"><span class="connector-label">read / write</span></div>
+
+<!-- LAYER 2: GAS BACKENDS -->
+<div class="layer layer-2" id="layer2">
+  <div class="layer-header" onclick="toggleLayer('layer2')">
+    <span class="arrow">&#9660;</span>
+    <span class="layer-num">2</span>
+    GAS Backends — Google Apps Script
+  </div>
+  <div class="layer-body">
+    <div class="node-grid">
+      <div class="node" data-tip="Inventory CRUD operations. Handles getInventoryReport, checkLowStock, search, browse. Reads/writes I&A Master Inventory sheet.">
+        <div class="node-icon">⚙️</div>
+        <div class="node-name">Inventory GAS</div>
+        <div class="node-desc">I&A CRUD, stock reports, search</div>
+        <span class="node-badge badge-proxy">PROXIED</span>
+      </div>
+      <div class="node" data-tip="Work order management. getProgress, getLineItems, toggleCheckbox, addWorkOrder. Reads/writes Active Work Orders sheet.">
+        <div class="node-icon">⚙️</div>
+        <div class="node-name">Active Jobs GAS</div>
+        <div class="node-desc">WO CRUD, progress, line items</div>
+        <span class="node-badge badge-proxy">PROXIED</span>
+      </div>
+      <div class="node" data-tip="Shop ticket management. Returns JSON. Script ID: 1XgyAX9qXW7KX-... Deployment @6.">
+        <div class="node-icon">⚙️</div>
+        <div class="node-name">Shop Tickets GAS</div>
+        <div class="node-desc">Ticket CRUD, returns JSON</div>
+      </div>
+      <div class="node" data-tip="Equipment grading web app. Repair vs replace cost analysis. Script ID: 1_B94ctCDNI55GWV_... Deployment @51.">
+        <div class="node-icon">⚙️</div>
+        <div class="node-name">Repair v Replace GAS</div>
+        <div class="node-desc">Grading web app, cost analysis</div>
+        <span class="node-badge badge-iframe">IFRAME</span>
+      </div>
+      <div class="node" data-tip="Chess Map backend. Crew location data, Haversine distance calculations. Script ID: 1qIRjcWZPvp57RG5_...">
+        <div class="node-icon">⚙️</div>
+        <div class="node-name">Chess Map GAS</div>
+        <div class="node-desc">Crew locations, distance calc</div>
+      </div>
+      <div class="node" data-tip="Crew scheduling web app served as iframe. Handles daily crew/truck/equipment assignments.">
+        <div class="node-icon">⚙️</div>
+        <div class="node-name">Scheduler GAS</div>
+        <div class="node-desc">Crew scheduling web app</div>
+        <span class="node-badge badge-iframe">IFRAME</span>
+      </div>
+      <div class="node" data-tip="Hand tool checkout web app served as iframe. Tool rental and crew checkout tracking.">
+        <div class="node-icon">⚙️</div>
+        <div class="node-name">Tools GAS</div>
+        <div class="node-desc">Tool checkout web app</div>
+        <span class="node-badge badge-iframe">IFRAME</span>
+      </div>
+      <div class="node" data-tip="Weekly truck inspection form and data collection.">
+        <div class="node-icon">⚙️</div>
+        <div class="node-name">Weekly Truck Check GAS</div>
+        <div class="node-desc">Vehicle inspection forms</div>
+      </div>
+      <div class="node future" data-tip="Growth slot — add new GAS backend here.">
+        <div class="node-icon">⚙️</div>
+        <div class="node-name">___________</div>
+        <div class="node-desc">Future GAS backend</div>
+        <span class="node-badge badge-planned">GROWTH</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="connector"><span class="connector-label">proxied via Netlify</span></div>
+
+<!-- LAYER 3: PROXY / AUTH -->
+<div class="layer layer-3" id="layer3">
+  <div class="layer-header" onclick="toggleLayer('layer3')">
+    <span class="arrow">&#9660;</span>
+    <span class="layer-num">3</span>
+    Proxy & Auth Layer — Netlify Functions + Supabase
+  </div>
+  <div class="layer-body">
+    <div class="node-grid">
+      <div class="node" data-tip="Routes to 6+ GAS endpoints via env vars: GAS_INVENTORY_URL, GAS_ACTIVE_JOBS_URL, GAS_GRADING_URL, GAS_INVENTORY_AGENT_URL, GAS_REPAIR_AGENT_URL, GAS_JOBS_AGENT_URL. POST only.">
+        <div class="node-icon">🔒</div>
+        <div class="node-name">gas-proxy.js</div>
+        <div class="node-desc">Routes to all GAS endpoints. Maps service names to env var URLs.</div>
+        <span class="node-url">/.netlify/functions/gas-proxy</span>
+      </div>
+      <div class="node" data-tip="Proxies all Anthropic API calls. Supports type: chat, analysis, parse. Uses CLAUDE_API_KEY env var. Calls api.anthropic.com/v1/messages.">
+        <div class="node-icon">🔒</div>
+        <div class="node-name">claude-proxy.js</div>
+        <div class="node-desc">Routes to Anthropic API. chat / analysis / parse.</div>
+        <span class="node-url">/.netlify/functions/claude-proxy</span>
+      </div>
+      <div class="node" data-tip="Shared JWT validation. Verifies Supabase tokens using SUPABASE_JWT_SECRET. Permissive when no token sent (Phase 1).">
+        <div class="node-icon">🔒</div>
+        <div class="node-name">_shared/auth.js</div>
+        <div class="node-desc">JWT validation helper. Permissive Phase 1.</div>
+      </div>
+      <div class="node" data-tip="Supabase project: fclnvrxxycaaxhndocfg. Email/password + magic link auth. JWT tokens refresh every 50 min. Anon key in HTML (by design).">
+        <div class="node-icon">🔑</div>
+        <div class="node-name">Supabase Auth</div>
+        <div class="node-desc">Login, JWT, magic link. Token refresh 50min.</div>
+        <span class="node-url">fclnvrxxycaaxhndocfg.supabase.co</span>
+      </div>
+      <div class="node future" data-tip="Growth slot — future proxy function (e.g., webhook handler, Supabase DB proxy, real-time).">
+        <div class="node-icon">🔒</div>
+        <div class="node-name">___________</div>
+        <div class="node-desc">Future proxy / auth function</div>
+        <span class="node-badge badge-planned">GROWTH</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="connector"><span class="connector-label">serves</span></div>
+
+<!-- LAYER 4: DASHBOARD APP -->
+<div class="layer layer-4" id="layer4">
+  <div class="layer-header" onclick="toggleLayer('layer4')">
+    <span class="arrow">&#9660;</span>
+    <span class="layer-num">4</span>
+    Dashboard App — branchesv1.netlify.app
+  </div>
+  <div class="layer-body">
+    <div class="node-grid">
+      <div class="node" data-tip="App controller. Orchestrates all managers. Handles init, auth flow, view switching, settings, keyboard shortcuts.">
+        <div class="node-icon">🚀</div>
+        <div class="node-name">main.js</div>
+        <div class="node-desc">App controller, init orchestration</div>
+      </div>
+      <div class="node" data-tip="Fetch interceptor, proxy headers, callOpenAI, callAgent, routeQuery, browseInventory, request queue, offline support.">
+        <div class="node-icon">📡</div>
+        <div class="node-name">api.js</div>
+        <div class="node-desc">API manager, fetch interceptor, proxy calls</div>
+      </div>
+      <div class="node" data-tip="Chat interface, AI message routing, Master Agent orchestration, tool keyword matching, conversation history.">
+        <div class="node-icon">💬</div>
+        <div class="node-name">chat.js</div>
+        <div class="node-desc">Chat UI, AI routing, message history</div>
+      </div>
+      <div class="node" data-tip="Dashboard metrics, active jobs cards, WO detail/add modals, weather alerts, auto-refresh with pause/resume.">
+        <div class="node-icon">📊</div>
+        <div class="node-name">dashboard.js</div>
+        <div class="node-desc">Metrics, WO management, weather</div>
+      </div>
+      <div class="node" data-tip="Iframe messaging, postMessage security (origin validation), tool sessions, recent activity logging.">
+        <div class="node-icon">🔧</div>
+        <div class="node-name">tools.js</div>
+        <div class="node-desc">Tool iframes, postMessage, sessions</div>
+      </div>
+      <div class="node" data-tip="Modal management, notifications (stacking), theme, sidebar, loading states, responsive handlers.">
+        <div class="node-icon">🎨</div>
+        <div class="node-name">ui.js</div>
+        <div class="node-desc">UI state, modals, notifications, theme</div>
+      </div>
+      <div class="node" data-tip="Supabase auth integration. Login screen, JWT token management, 50-min auto refresh, sign in/out.">
+        <div class="node-icon">🔑</div>
+        <div class="node-name">auth.js</div>
+        <div class="node-desc">Auth manager, login, token refresh</div>
+      </div>
+      <div class="node" data-tip="App config loader. Reads app.config.json, merges localStorage overrides, env overrides.">
+        <div class="node-icon">⚙️</div>
+        <div class="node-name">config.js</div>
+        <div class="node-desc">Config loader, env overrides</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="connector"><span class="connector-label">orchestrates</span></div>
+
+<!-- LAYER 5: AI AGENTS -->
+<div class="layer layer-5" id="layer5">
+  <div class="layer-header" onclick="toggleLayer('layer5')">
+    <span class="arrow">&#9660;</span>
+    <span class="layer-num">5</span>
+    AI Layer — Master Agent, Sub-Agents & Skills
+  </div>
+  <div class="layer-body">
+    <div class="node-grid" style="grid-template-columns: 1fr;">
+      <!-- Master Agent full width -->
+      <div class="node" style="text-align:center;" data-tip="Claude Haiku-powered orchestrator. Analyzes queries, routes to 1+ sub-agents in parallel, synthesizes multi-domain responses. Cost gate threshold: 4.">
+        <div class="node-icon">🧠</div>
+        <div class="node-name" style="font-size:1rem;">MASTER AGENT</div>
+        <div class="node-desc">Claude Haiku routing &middot; Multi-agent orchestration &middot; Cost gate: 4 &middot; Memory: 10 msgs</div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:center;padding:8px 0;">
+      <svg width="300" height="24"><line x1="40" y1="0" x2="40" y2="24" stroke="#30363d" stroke-width="2"/><line x1="150" y1="0" x2="150" y2="24" stroke="#30363d" stroke-width="2"/><line x1="260" y1="0" x2="260" y2="24" stroke="#30363d" stroke-width="2"/></svg>
+    </div>
+    <div class="node-grid">
+      <div class="node" data-tip="Inventory sub-agent 'Clippings'. Keywords: inventory, stock, plants, supplies, mulch, fertilizer, truck, fleet. Routes through GAS_INVENTORY_AGENT_URL.">
+        <div class="node-icon">🤖</div>
+        <div class="node-name">Inventory Agent</div>
+        <div class="node-desc">"Clippings" — stock, plants, fleet</div>
+        <span class="node-badge badge-proxy">GAS AGENT</span>
+      </div>
+      <div class="node" data-tip="Repair sub-agent 'GradeBot'. Keywords: repair, replace, asset, maintenance, broken, cost, grading. Routes through GAS_REPAIR_AGENT_URL.">
+        <div class="node-icon">🤖</div>
+        <div class="node-name">Repair Agent</div>
+        <div class="node-desc">"GradeBot" — repair, grading, assets</div>
+        <span class="node-badge badge-proxy">GAS AGENT</span>
+      </div>
+      <div class="node" data-tip="Jobs sub-agent 'Foreman'. Keywords: job, work order, progress, crew, dispatch, line items. Routes through GAS_JOBS_AGENT_URL.">
+        <div class="node-icon">🤖</div>
+        <div class="node-name">Foreman Agent</div>
+        <div class="node-desc">"Foreman" — jobs, WOs, crew dispatch</div>
+        <span class="node-badge badge-proxy">GAS AGENT</span>
+      </div>
+      <div class="node future" data-tip="Planned scheduler agent. Keywords: schedule, calendar, assign, availability. No GAS URL assigned yet.">
+        <div class="node-icon">🤖</div>
+        <div class="node-name">Scheduler Agent</div>
+        <div class="node-desc">Planned — schedule, calendar, assign</div>
+        <span class="node-badge badge-planned">PLANNED</span>
+      </div>
+      <div class="node future" data-tip="Growth slot — add new sub-agent here.">
+        <div class="node-icon">🤖</div>
+        <div class="node-name">___________</div>
+        <div class="node-desc">Future agent</div>
+        <span class="node-badge badge-planned">GROWTH</span>
+      </div>
+    </div>
+    <div style="height:12px;"></div>
+    <div class="node-grid">
+      <div class="node" data-tip="Breaks complex multi-step queries into components. Analyzes dependencies, parallel execution, resource requirements.">
+        <div class="node-icon">💡</div>
+        <div class="node-name">Deconstruction Skill</div>
+        <div class="node-desc">Complex query decomposition</div>
+      </div>
+      <div class="node" data-tip="Predicts next steps after a query. Suggests follow-up actions, warns of consequences, offers optimizations.">
+        <div class="node-icon">💡</div>
+        <div class="node-name">Forward Thinker Skill</div>
+        <div class="node-desc">Next-step prediction, suggestions</div>
+      </div>
+      <div class="node" data-tip="Quality control and operation monitoring. Tracks all operations, generates recommendations, alert management.">
+        <div class="node-icon">💡</div>
+        <div class="node-name">Apple Overseer</div>
+        <div class="node-desc">Quality control, op monitoring</div>
+      </div>
+      <div class="node future" data-tip="Growth slot — add new AI skill here.">
+        <div class="node-icon">💡</div>
+        <div class="node-name">___________</div>
+        <div class="node-desc">Future skill</div>
+        <span class="node-badge badge-planned">GROWTH</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="connector"><span class="connector-label">standalone</span></div>
+
+<!-- LAYER 6: STANDALONE / EXTERNAL -->
+<div class="layer layer-6" id="layer6">
+  <div class="layer-header" onclick="toggleLayer('layer6')">
+    <span class="arrow">&#9660;</span>
+    <span class="layer-num">6</span>
+    Standalone & External Services
+  </div>
+  <div class="layer-body">
+    <div class="node-grid">
+      <div class="node" data-tip="Shop TV dashboard. Dark theme, real-time operational metrics, crew status, equipment tracking. Standalone HTML page.">
+        <div class="node-icon">📺</div>
+        <div class="node-name">tv.html</div>
+        <div class="node-desc">Shop TV — real-time metrics display</div>
+        <span class="node-badge badge-native">STANDALONE</span>
+      </div>
+      <div class="node" data-tip="Native crew scheduler. Drag-drop crew/truck/equipment assignment. Date-keyed localStorage. Presets.">
+        <div class="node-icon">📅</div>
+        <div class="node-name">crew-scheduler.html</div>
+        <div class="node-desc">Native drag-drop crew scheduling</div>
+        <span class="node-badge badge-native">NATIVE</span>
+      </div>
+      <div class="node" data-tip="Native hand tool checkout. 98 default tools, drag-drop checkout, crew-based tracking. localStorage persistence.">
+        <div class="node-icon">🔧</div>
+        <div class="node-name">hand-tool-checkout.html</div>
+        <div class="node-desc">Native tool checkout, 98 tools</div>
+        <span class="node-badge badge-native">NATIVE</span>
+      </div>
+      <div class="node" data-tip="Crew chess map. Real-time crew locations, drive-time estimates, Haversine distance. Separate Netlify deploy.">
+        <div class="node-icon">🗺️</div>
+        <div class="node-name">Daily Chess Map</div>
+        <div class="node-desc">Crew location tracking</div>
+        <span class="node-url">dailychessmap.netlify.app</span>
+        <span class="node-badge badge-iframe">IFRAME</span>
+      </div>
+      <div class="node" data-tip="Open-Meteo weather API. Free, no auth. Provides freeze/heat/storm alerts for dashboard. Lat: 34.2979, Lon: -83.8241.">
+        <div class="node-icon">🌤️</div>
+        <div class="node-name">Open-Meteo Weather</div>
+        <div class="node-desc">Weather alerts, 3-day forecast</div>
+        <span class="node-badge badge-direct">DIRECT API</span>
+      </div>
+      <div class="node" data-tip="Anthropic Claude API. Powers chat, WO parsing (Sonnet), agent routing (Haiku). Proxied server-side only.">
+        <div class="node-icon">🤖</div>
+        <div class="node-name">Claude API (Anthropic)</div>
+        <div class="node-desc">Haiku + Sonnet, chat/parse/route</div>
+        <span class="node-badge badge-proxy">PROXIED</span>
+      </div>
+      <div class="node future" data-tip="Growth slot — add new standalone app or external service.">
+        <div class="node-icon">🔲</div>
+        <div class="node-name">___________</div>
+        <div class="node-desc">Future standalone / external</div>
+        <span class="node-badge badge-planned">GROWTH</span>
+      </div>
+      <div class="node future">
+        <div class="node-icon">🔲</div>
+        <div class="node-name">___________</div>
+        <div class="node-desc">Future standalone / external</div>
+        <span class="node-badge badge-planned">GROWTH</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tooltip element -->
+<div class="tooltip" id="tooltip">
+  <div class="tooltip-title" id="tooltipTitle"></div>
+  <div class="tooltip-detail" id="tooltipDetail"></div>
+</div>
+
+<script>
+function toggleLayer(id) {
+  document.getElementById(id).classList.toggle('collapsed');
+}
+
+// Tooltip handling
+const tooltip = document.getElementById('tooltip');
+const tooltipTitle = document.getElementById('tooltipTitle');
+const tooltipDetail = document.getElementById('tooltipDetail');
+
+document.querySelectorAll('.node[data-tip]').forEach(node => {
+  node.addEventListener('mouseenter', (e) => {
+    const name = node.querySelector('.node-name')?.textContent || '';
+    const tip = node.dataset.tip;
+    tooltipTitle.textContent = name;
+    tooltipDetail.textContent = tip;
+    tooltip.classList.add('show');
+  });
+
+  node.addEventListener('mousemove', (e) => {
+    const x = e.clientX + 16;
+    const y = e.clientY + 16;
+    const maxX = window.innerWidth - tooltip.offsetWidth - 20;
+    const maxY = window.innerHeight - tooltip.offsetHeight - 20;
+    tooltip.style.left = Math.min(x, maxX) + 'px';
+    tooltip.style.top = Math.min(y, maxY) + 'px';
+  });
+
+  node.addEventListener('mouseleave', () => {
+    tooltip.classList.remove('show');
+  });
+});
+
+function copyUrl(el) {
+  navigator.clipboard.writeText(el.textContent.trim()).then(() => {
+    const orig = el.textContent;
+    el.textContent = 'Copied!';
+    el.style.color = 'var(--green)';
+    setTimeout(() => { el.textContent = orig; el.style.color = ''; }, 1200);
+  });
+}
+</script>
+</body>
+</html>

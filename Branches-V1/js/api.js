@@ -166,7 +166,8 @@ class APIManager {
 
             if (!response.ok) {
                 const error = await response.json();
-                throw new Error(error.error?.message || 'Claude API request failed');
+                this._checkLimitErrors(response, error);
+                throw new Error(error.error?.message || error.error || 'Claude API request failed');
             }
 
             const data = await response.json();
@@ -320,7 +321,8 @@ User: "schedule tomorrow" -> Call open_tool with toolId='scheduler'`;
 
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.error?.message || 'Claude chat call failed');
+            this._checkLimitErrors(response, error);
+            throw new Error(error.error?.message || error.error || 'Claude chat call failed');
         }
 
         const data = await response.json();
@@ -957,6 +959,37 @@ Rules:
             isOnline: this.isOnline,
             endpoints: Array.from(this.endpoints.keys())
         };
+    }
+
+    /**
+     * Fetch current usage/tier info from the get-usage endpoint.
+     * Returns { subscribed, tier, status, usage, limits, billingPeriod } or null on error.
+     */
+    async getUsageInfo() {
+        try {
+            const response = await fetch('/.netlify/functions/get-usage', {
+                method: 'GET',
+                headers: this._proxyHeaders(),
+            });
+            if (!response.ok) return null;
+            return await response.json();
+        } catch (e) {
+            console.error('getUsageInfo failed:', e.message);
+            return null;
+        }
+    }
+
+    /**
+     * Check a proxy response for tier limit errors and dispatch events.
+     * Call this after any fetch to claude-proxy or gas-proxy.
+     */
+    _checkLimitErrors(response, data) {
+        if (!data || !data.code) return;
+        if (['LIMIT_EXCEEDED', 'SUBSCRIPTION_INACTIVE', 'NO_SUBSCRIPTION'].includes(data.code)) {
+            window.dispatchEvent(new CustomEvent('usageLimitHit', {
+                detail: { code: data.code, error: data.error, usage: data.usage }
+            }));
+        }
     }
 
     /**

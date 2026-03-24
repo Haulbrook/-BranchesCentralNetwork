@@ -15,7 +15,12 @@ class MasterAgent {
         // Rolling conversation memory with structured metadata
         this.conversationMemory = [];
 
-        console.log('🧠 Master Agent initialized', {
+        // Consecutive failure tracking — after 3 failures, disable master for session
+        this.consecutiveFailures = 0;
+        this.maxConsecutiveFailures = 3;
+        this.disabled = false;
+
+        Logger.info('MasterAgent', '🧠 Master Agent initialized', {
             agents: Object.keys(this.agents),
             model: this.model,
             costGateThreshold: this.costGateThreshold
@@ -27,15 +32,20 @@ class MasterAgent {
      * Returns { handled: true, response } or { handled: false }
      */
     async orchestrate(message, context = {}) {
+        // Circuit breaker: disable after too many consecutive failures
+        if (this.disabled) {
+            return { handled: false, error: 'Master Agent disabled after repeated failures' };
+        }
+
         try {
             // Cost gate: check if we even need the master
             const gate = this.shouldUseMaster(message);
             if (!gate.useMaster) {
-                console.log(`🧠 Master: cost gate skip — ${gate.reason}`);
+                Logger.info('MasterAgent', `🧠 Master: cost gate skip — ${gate.reason}`);
                 return { handled: false };
             }
 
-            console.log(`🧠 Master: engaging — ${gate.reason}`);
+            Logger.info('MasterAgent', `🧠 Master: engaging — ${gate.reason}`);
 
             // Register with Apple Overseer if available
             let operationId = null;
@@ -49,13 +59,13 @@ class MasterAgent {
             const plan = await this.analyzeQuery(message, context.history || []);
 
             if (!plan || plan.strategy === 'none') {
-                console.log('🧠 Master: analysis returned no strategy');
+                Logger.info('MasterAgent', '🧠 Master: analysis returned no strategy');
                 return { handled: false };
             }
 
             // Single-agent plan — let existing pipeline handle it for efficiency
             if (plan.strategy === 'single') {
-                console.log(`🧠 Master: single-agent (${plan.agents[0]?.key}), deferring to pipeline`);
+                Logger.info('MasterAgent', `🧠 Master: single-agent (${plan.agents[0]?.key}), deferring to pipeline`);
                 return { handled: false };
             }
 
@@ -76,13 +86,21 @@ class MasterAgent {
                 } catch (e) { /* non-critical */ }
             }
 
+            // Reset failure counter on success
+            this.consecutiveFailures = 0;
+
             return {
                 handled: true,
                 response: synthesis
             };
 
         } catch (error) {
-            console.error('🧠 Master: orchestration failed, falling back', error);
+            this.consecutiveFailures++;
+            Logger.error('MasterAgent', `orchestration failed (${this.consecutiveFailures}/${this.maxConsecutiveFailures}), falling back`, error);
+            if (this.consecutiveFailures >= this.maxConsecutiveFailures) {
+                this.disabled = true;
+                Logger.warn('MasterAgent', 'Disabled after repeated failures — single-agent pipeline will be used for this session');
+            }
             return { handled: false, error: error.message };
         }
     }
@@ -222,14 +240,19 @@ Rules:
 
         messages.push({ role: 'user', content: message });
 
-        const result = await api.callOpenAIChat(messages, { jsonMode: true, temperature: 0.1 });
+        // 30-second timeout for analysis
+        const result = await Promise.race([
+            api.callOpenAIChat(messages, { jsonMode: true, temperature: 0.1 }),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Analysis timeout (30s)')), 30000))
+        ]);
 
         try {
             const parsed = typeof result === 'string' ? JSON.parse(result) : result;
-            console.log('🧠 Master analysis:', parsed);
+            Logger.info('MasterAgent', 'Analysis result:', parsed);
             return parsed;
         } catch (e) {
-            console.error('🧠 Master: failed to parse analysis', result);
+            const preview = typeof result === 'string' ? result.substring(0, 500) : JSON.stringify(result).substring(0, 500);
+            Logger.warn('MasterAgent', 'Failed to parse analysis response:', preview);
             return null;
         }
     }
@@ -249,7 +272,7 @@ Rules:
             }));
 
         if (agentCalls.length === 0) {
-            console.warn('🧠 Master: no callable agents in plan');
+            Logger.warn('MasterAgent', '🧠 Master: no callable agents in plan');
             return {};
         }
 
@@ -263,9 +286,13 @@ Rules:
             } catch (e) { /* non-critical */ }
         }
 
-        console.log(`🧠 Master: dispatching to ${agentCalls.length} agents`, agentCalls.map(a => a.key));
+        Logger.info('MasterAgent', `Dispatching to ${agentCalls.length} agents`, agentCalls.map(a => a.key));
 
-        const results = await api.callAgentsParallel(agentCalls, sessionId);
+        // Wrap with 30-second overall timeout
+        const results = await Promise.race([
+            api.callAgentsParallel(agentCalls, sessionId),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Agent dispatch timeout (30s)')), 30000))
+        ]);
         return results;
     }
 
@@ -338,14 +365,22 @@ Instructions:
 - If agents provided conflicting info, note the discrepancy
 - Keep it concise but complete
 - Do NOT mention "agents" or "synthesis" — just answer naturally
-- CRITICAL: Do NOT invent people, locations, storage areas, or action items that are not in the agent data. Only reference names, places, and facts that appear in the responses above. If you don't know a location or person, do not guess.
-- Storage locations (e.g. yard areas, sheds, bays) ONLY come from the inventory agent's Location column. Never fabricate storage locations like "Shed A" or "Shed B" — if no location is provided, just say "check inventory for location".`;
+- CRITICAL ANTI-HALLUCINATION RULES (violating these is a failure):
+  1. NEVER invent people. No "Maria", "John", "the warehouse manager", or any person not explicitly named in the agent data above. If no person is mentioned, do NOT suggest contacting anyone by name.
+  2. NEVER invent locations. No "Shed A", "Shed B", "Bay 3", "Warehouse", or any storage area not explicitly named in the agent data above. Only use location names that appear verbatim in the inventory agent's response (e.g. "Gen Pop", "Shade House", "Container").
+  3. NEVER invent processes, systems, or departments not mentioned in the data. No "procurement team", "receiving department", etc.
+  4. If information is missing, say it plainly: "not specified in the data" — do NOT fill gaps with plausible-sounding fabrications.
+  5. Action items must reference only real data points. "Order more" is fine. "Contact Maria about the order" is NOT fine unless "Maria" appears in the agent data above.`;
 
         try {
-            const synthesized = await api.callOpenAIChat([
-                { role: 'system', content: synthesisPrompt },
-                { role: 'user', content: 'Please synthesize the above into a unified response.' }
-            ], { temperature: 0.3, maxTokens: 1500 });
+            // 30-second timeout for synthesis
+            const synthesized = await Promise.race([
+                api.callOpenAIChat([
+                    { role: 'system', content: synthesisPrompt },
+                    { role: 'user', content: 'Please synthesize the above into a unified response.' }
+                ], { temperature: 0.3, maxTokens: 1500 }),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Synthesis timeout (30s)')), 30000))
+            ]);
 
             const content = typeof synthesized === 'string' ? synthesized : synthesized.content || String(synthesized);
 
@@ -362,7 +397,7 @@ Instructions:
             };
 
         } catch (error) {
-            console.error('🧠 Master: synthesis failed, concatenating responses', error);
+            Logger.error('MasterAgent', '🧠 Master: synthesis failed, concatenating responses', error);
             return this.fallbackConcatenation(responses, failedAgents, plan);
         }
     }
@@ -408,9 +443,11 @@ Instructions:
      * Build the multi-agent badge HTML
      */
     buildMultiAgentBadge(agentNames, strategy) {
+        const esc = (s) => Utils?.SecurityUtils?.escapeHtml(s) || String(s).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const safeNames = agentNames.map(esc);
         const label = strategy === 'multi'
-            ? `Master Agent · ${agentNames.join(' + ')}`
-            : `Master Agent · ${agentNames[0]}`;
+            ? `Master Agent · ${safeNames.join(' + ')}`
+            : `Master Agent · ${safeNames[0]}`;
 
         return `<div class="master-badge">${label}</div>\n\n`;
     }

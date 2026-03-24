@@ -64,7 +64,12 @@ class DashboardApp {
                 this.auth.renderLoginScreen();
                 const isAuthed = await this.auth.isAuthenticated();
                 if (!isAuthed) {
-                    // Show login, hide loading screen
+                    // Redirect to landing page if not authenticated
+                    if (window.location.pathname === '/dashboard' || window.location.pathname.startsWith('/dashboard/') || window.location.pathname === '/index.html') {
+                        window.location.href = '/';
+                        return;
+                    }
+                    // Fallback: show login screen if on index.html directly
                     this.auth._showLoginScreen();
                     document.getElementById('loadingScreen').style.display = 'none';
                     // Wait for auth state change to continue init
@@ -148,6 +153,12 @@ class DashboardApp {
 
             // Start proactive suggestions (if forward thinker is enabled)
             this.startProactiveSuggestions();
+
+            // Fetch usage info (non-blocking)
+            this.fetchUsageInfo();
+
+            // Listen for usage limit events
+            window.addEventListener('usageLimitHit', (e) => this.handleUsageLimitHit(e.detail));
 
             // Wait for intro video to finish, then show app
             this.appReady = true;
@@ -666,6 +677,11 @@ Recommendations: ${report.recommendations.length}
         // Disable unconfigured tools (but event listeners are already attached)
         this.updateToolButtonStates();
 
+        // Usage view
+        document.getElementById('usageBtn')?.addEventListener('click', () => {
+            this.showUsageView();
+        });
+
         // Settings
         document.getElementById('settingsBtn')?.addEventListener('click', () => {
             this.ui.showSettingsModal();
@@ -813,6 +829,7 @@ Recommendations: ${report.recommendations.length}
         document.getElementById('dashboardView')?.classList.remove('hidden');
         document.getElementById('chatInterface')?.classList.add('hidden');
         document.getElementById('toolContainer')?.classList.add('hidden');
+        document.getElementById('usageView')?.classList.add('hidden');
 
         // Update navigation
         document.querySelectorAll('.nav-item').forEach(item => {
@@ -830,6 +847,22 @@ Recommendations: ${report.recommendations.length}
         }
     }
 
+    showUsageView() {
+        this.currentTool = null;
+        if (this.dashboard) this.dashboard.pauseAutoRefresh();
+        document.getElementById('gasAuthHint')?.remove();
+        document.getElementById('dashboardView')?.classList.add('hidden');
+        document.getElementById('chatInterface')?.classList.add('hidden');
+        document.getElementById('toolContainer')?.classList.add('hidden');
+        document.getElementById('usageView')?.classList.remove('hidden');
+
+        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+        document.getElementById('usageBtn')?.classList.add('active');
+
+        // Refresh usage data
+        this.fetchUsageInfo();
+    }
+
     showChatInterface() {
         Logger.info('App', '💬 Showing chat interface');
         this.currentTool = null;
@@ -838,6 +871,7 @@ Recommendations: ${report.recommendations.length}
         document.getElementById('dashboardView')?.classList.add('hidden');
         document.getElementById('chatInterface')?.classList.remove('hidden');
         document.getElementById('toolContainer')?.classList.add('hidden');
+        document.getElementById('usageView')?.classList.add('hidden');
 
         // Update navigation
         document.querySelectorAll('.nav-item').forEach(item => {
@@ -858,6 +892,7 @@ Recommendations: ${report.recommendations.length}
     async openTool(toolId) {
         Logger.info('App', `🔧 Opening tool: ${toolId}`);
         if (this.dashboard) this.dashboard.pauseAutoRefresh();
+        document.getElementById('usageView')?.classList.add('hidden');
 
         const tool = this.config.services[toolId];
         if (!tool) {
@@ -1360,6 +1395,102 @@ Recommendations: ${report.recommendations.length}
                 fallbackMessage: "I can help you with inventory, grading, scheduling, or tool checkout. What would you like to do?"
             }
         };
+    }
+
+    async fetchUsageInfo() {
+        try {
+            const info = await this.api.getUsageInfo();
+            if (info && info.subscribed) {
+                this.usageInfo = info;
+                this.renderUsagePanel(info);
+            }
+        } catch (e) {
+            Logger.warn('App', 'Failed to fetch usage info:', e);
+        }
+    }
+
+    renderUsagePanel(info) {
+        // Update plan badge
+        const badge = document.getElementById('usagePlanBadge');
+        if (badge) badge.textContent = `${info.tier} plan`;
+
+        // Update sidebar badge
+        const navBadge = document.getElementById('usageBadge');
+        if (navBadge) {
+            navBadge.textContent = info.tier.charAt(0).toUpperCase() + info.tier.slice(1);
+            navBadge.style.display = '';
+        }
+
+        // Status line
+        const statusLine = document.getElementById('usageStatusLine');
+        if (statusLine) {
+            if (info.status === 'grandfathered') {
+                statusLine.textContent = 'Grandfathered account — no usage limits enforced.';
+            } else if (info.status === 'trialing' && info.trialEndsAt) {
+                const daysLeft = Math.max(0, Math.ceil((new Date(info.trialEndsAt) - new Date()) / 86400000));
+                statusLine.textContent = `Free trial — ${daysLeft} days remaining.`;
+            } else {
+                statusLine.textContent = `Billing period: ${info.billingPeriod}`;
+            }
+        }
+
+        // Ring circumference: 2 * PI * 52 = 326.73
+        const circumference = 326.73;
+        const rings = [
+            { ringId: 'ringAI', labelId: 'ringLabelAI', detailId: 'usageDetailAI', used: info.usage.aiQueries, limit: info.limits.aiQueries, label: 'this month' },
+            { ringId: 'ringInventory', labelId: 'ringLabelInventory', detailId: 'usageDetailInventory', used: info.usage.inventoryItems, limit: info.limits.inventoryItems, label: 'items' },
+            { ringId: 'ringJobs', labelId: 'ringLabelJobs', detailId: 'usageDetailJobs', used: info.usage.activeJobs, limit: info.limits.activeJobs, label: 'active' },
+        ];
+
+        rings.forEach(({ ringId, labelId, detailId, used, limit, label }) => {
+            const ring = document.getElementById(ringId);
+            const ringLabel = document.getElementById(labelId);
+            const detail = document.getElementById(detailId);
+            if (!ring) return;
+
+            const isUnlimited = !isFinite(limit);
+            const pct = isUnlimited ? 0 : Math.min((used / limit) * 100, 100);
+            const offset = circumference - (pct / 100) * circumference;
+
+            ring.style.strokeDasharray = circumference;
+            ring.style.strokeDashoffset = offset;
+
+            ring.className = 'usage-ring-fill';
+            if (pct >= 90) ring.classList.add('danger');
+            else if (pct >= 75) ring.classList.add('warning');
+
+            if (ringLabel) ringLabel.textContent = isUnlimited ? 'N/A' : `${Math.round(pct)}%`;
+            if (detail) detail.textContent = isUnlimited ? `${used} ${label} (unlimited)` : `${used} / ${limit} ${label}`;
+        });
+
+        // Billing info
+        const billingInfo = document.getElementById('usageBillingInfo');
+        if (billingInfo) {
+            if (info.status === 'grandfathered') {
+                billingInfo.textContent = 'This account has no billing — all features are permanently unlocked.';
+            } else {
+                billingInfo.textContent = `Usage resets at the start of each billing month. Current period: ${info.billingPeriod}.`;
+            }
+        }
+    }
+
+    handleUsageLimitHit(detail) {
+        const messages = {
+            LIMIT_EXCEEDED: detail.error || 'You have reached a usage limit. Upgrade your plan for more.',
+            SUBSCRIPTION_INACTIVE: detail.error || 'Your subscription is inactive.',
+            NO_SUBSCRIPTION: detail.error || 'No subscription found. Please subscribe.',
+        };
+        const msg = messages[detail.code] || detail.error || 'Usage limit reached.';
+
+        // Show a notification (re-use existing notification system if available)
+        if (this.ui?.showNotification) {
+            this.ui.showNotification(msg, 'warning');
+        } else {
+            alert(msg);
+        }
+
+        // Refresh usage display
+        this.fetchUsageInfo();
     }
 }
 
