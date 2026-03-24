@@ -21,7 +21,7 @@
     X-XSS-Protection = "1; mode=block"
     Referrer-Policy = "strict-origin-when-cross-origin"
     # Allow connections to Google Apps Script backend
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.open-meteo.com https://*.supabase.co https://cdn.jsdelivr.net https://script.google.com; img-src 'self' data: https:; worker-src 'self' blob: https://cdn.jsdelivr.net; frame-src 'self' https://script.google.com https://script.googleusercontent.com https://dailychessmap.netlify.app https://drshoptickets.netlify.app;"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.open-meteo.com https://*.supabase.co https://cdn.jsdelivr.net https://script.google.com https://script.googleusercontent.com; img-src 'self' data: https:; worker-src 'self' blob: https://cdn.jsdelivr.net; frame-src 'self' https://script.google.com https://script.googleusercontent.com https://dailychessmap.netlify.app https://drshoptickets.netlify.app;"
 
 # Cache static assets
 [[headers]]
