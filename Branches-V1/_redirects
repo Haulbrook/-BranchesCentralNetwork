@@ -1,6 +1,9 @@
 # Netlify Redirects Configuration for Deep Roots Dashboard
 # Static assets must be served before catch-all SPA routing
 
+# Landing page — public root (no auth required)
+/  /landing.html  200!
+
 # Serve static assets first (CSS, JS, images)
 /styles/*  /styles/:splat  200
 /js/*      /js/:splat      200
@@ -9,6 +12,15 @@
 
 # Service Worker
 /sw.js  /sw.js  200
+
+# Dashboard — auth-gated app
+/dashboard  /index.html  200
+/dashboard/*  /index.html  200
+
+# Other apps
+/hand-tool-checkout  /hand-tool-checkout.html  200
+/tools  /hand-tool-checkout.html  200
+/tv  /tv.html  200
 
 # Single Page Application routing - catch-all must be LAST
 /*  /index.html  200
