@@ -17,7 +17,47 @@ This codebase has been **corrected** to properly separate backend and frontend d
 
 ---
 
-## 🌱 Features
+## GAS Deployment Checkpoint (2026-03-24)
+
+All GAS deployments below are confirmed working as of this date. If something breaks, use these as the known-good values.
+
+**GAS Script ID:** `16IvTBnru9Fpqtc383yedLbGjrUDXCoiEtWgsnI0k6dtgNEjY-ILmKjbc`
+**Push ONLY from:** `Branches-V1/backend/`
+
+### Netlify Env Vars (branchesv1.netlify.app / landscapebrain.com)
+
+| Env Var | Deployment URL (AKfycb...) | Purpose |
+|---------|---------------------------|---------|
+| `GAS_ACTIVE_JOBS_URL` | `AKfycbwOXQMJJOBCJdauegN5IFNmzQGBKr21WNBMratfF39Sej_MQ_8GSJdTkOpi5mrT2AHU` | Active jobs, fleet, TV dashboard backend |
+| `GAS_INVENTORY_URL` | `AKfycbyA_4UC-_ay5sdU6dWWVQItE9bJRJ6lBgb3MXmnrXHiz5T_zgY_Pp6Xs6KQ0oIn3884` | Inventory (Clippings) |
+| `GAS_INVENTORY_AGENT_URL` | `AKfycbxa-ldx8OZwPIUh5Bty8tuI91K0eLYqG3DvY7k2RuUp32_ybjcO7m2HsPi4O-m8OaMi` | Inventory AI agent |
+| `GAS_JOBS_AGENT_URL` | `AKfycbyE90S18qOnAtgcwqbd0H5WwadOW7GzdAjfKPWOdHvJYB3FtRqeyi7-20xjdAxEBp6xBQ` | Jobs AI agent |
+| `GAS_REPAIR_AGENT_URL` | `AKfycbyfn5brMiPgDd6IZDnNxfXZhQgJqEb-1zC8aSGMOMbE8UayiGgv4E7CGA6wrs0V0XhY` | Repair vs Replace agent |
+| `GAS_GRADING_URL` | `AKfycbz6-tC9CSeqrpZrIhC-4Omhw671fhJ062dxyn6m8EnglwEz4vywkB_g7zlHWVG-vDRh` | Grading tool (separate GAS project) |
+| `GAS_SCHEDULER_URL` | `AKfycbzoD17CuJefae15VWIAh6hSTr3Kk_dbs4vQFQeAWOvsHsNAyVoceXfm0jjcrcJFadQ` | Crew Scheduler (separate GAS project) |
+
+### Hardcoded URLs in Code
+
+| File | URL (AKfycb...) | Purpose |
+|------|----------------|---------|
+| `tv.html` (line 865) | `AKfycbwOXQMJJOBCJdauegN5IFNmzQGBKr21WNBMratfF39Sej_MQ_8GSJdTkOpi5mrT2AHU` | TV Dashboard backend |
+
+### Google Sheets Connected
+
+| Sheet ID | Tab Name | Used By |
+|----------|----------|---------|
+| `1AmyIFL74or_Nh0QLMu_n18YosrSP9E4EA6k5MTzlq1Y` | Master | Fleet/Trucks |
+| `13bnntgZiXdCA2KQvJXpIBA1rCBzx3ZmeKakzYFFg7QA` | WorkOrders | Active Jobs |
+| `18qeP1XG9sDtknL3UKc7bb2utHvnJNpYNKkfMNsSVDRQ` | Sheet1 | Inventory |
+| `1vSKSpjK5rsGlImaGDguwFwdnUQZwl85epgHBCelDFMRReu` | Sheet1 | Crew Schedule |
+
+### Previous (replaced) URLs — DO NOT USE
+- `AKfycbwbWeC-M7CItQhBn2ratLrcaiSoDMwzmurX4IEBv8dQz_glh2j9w4hsglfGVHGr95nRow` — old deployment, missing `getTVDashboardData`
+- `AKfycbxWHqo7-YySZyMKrGTQMcnhhEtg4s_p57o5XhP-9tmxU8aSEBDvQ1CKq1l52I1Te6MneQ` — original TV dashboard URL, overwritten by clasp push
+
+---
+
+## Features
 
 - **Claude-like Interface**: Natural language queries with AI-powered tool routing
 - **Unified Dashboard**: Access all 4 operational tools in one interface
