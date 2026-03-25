@@ -47,7 +47,7 @@
 const CONFIG = {
   INVENTORY_SHEET_ID: "18qeP1XG9sDtknL3UKc7bb2utHvnJNpYNKkfMNsSVDRQ", // Replace with your actual sheet ID
   KNOWLEDGE_BASE_SHEET_ID: "1I8Wp0xfcQCHLeJyIPsQoM2moebZUy35zNGBLzDLpl8Q", // Replace with your knowledge base sheet ID
-  TRUCK_SHEET_ID: "1AmyIFL74or_Nh0QLMu_n18YosrSP9E4EA6k5MTzlq1Y", // Replace with your truck sheet ID
+  TRUCK_SHEET_ID: "1xI6gCkkOa0KeGhFGIGN0mP3Ey20BTd9wTLLZsR_eC0Y", // Landscapebrain demo Fleet Assets sheet
   CREW_SCHEDULE_SHEET_ID: "1vSKSpjK5rsGlImaGDguwFwdnUQZwl85epgHBCelDFMRReu", // Crew Schedule Database sheet ID (extract from user's URL)
   INVENTORY_SHEET_NAME: "Sheet1",
   KNOWLEDGE_SHEET_NAME: "Sheet1",
