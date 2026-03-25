@@ -418,6 +418,11 @@ function doGet(e) {
     return ContentService.createTextOutput(JSON.stringify(response))
       .setMimeType(ContentService.MimeType.JSON);
   }
+  if (params.action === 'getLineItems' && params.woNumber) {
+    var liResult = getLineItems(params.woNumber);
+    return ContentService.createTextOutput(JSON.stringify(liResult))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
   if (params.route) {
     var result = routeQuery(params.route);
     return ContentService.createTextOutput(JSON.stringify({ success: true, response: result }))
@@ -2893,6 +2898,56 @@ function getActiveJobs() {
   } catch (error) {
     Logger.log('Error in getActiveJobs: ' + error.toString());
     return { success: false, error: error.toString(), jobs: [], count: 0 };
+  }
+}
+
+/**
+ * Get line items for a specific work order from the LineItems tab.
+ */
+function getLineItems(woNumber) {
+  try {
+    var ss = SpreadsheetApp.openById(CONFIG.ACTIVE_JOBS_SHEET_ID);
+    var sheet = ss.getSheetByName(CONFIG.LINE_ITEMS_SHEET_NAME);
+
+    if (!sheet) {
+      return { success: true, data: [] };
+    }
+
+    var data = sheet.getDataRange().getValues();
+    if (data.length < 2) {
+      return { success: true, data: [] };
+    }
+
+    var headers = data[0].map(function(h) { return String(h).trim().toLowerCase(); });
+    var colWo = findCol(headers, ['wonumber', 'wo number', 'wo #', 'wo']);
+    var colLine = findCol(headers, ['linenumber', 'line number', 'line #', 'line']);
+    var colItem = findCol(headers, ['itemname', 'item name', 'item', 'name']);
+    var colDesc = findCol(headers, ['description', 'desc']);
+    var colQty = findCol(headers, ['quantity', 'qty']);
+    var colUnit = findCol(headers, ['unit', 'uom']);
+    var colDone = findCol(headers, ['completed', 'done', 'complete', '_done']);
+
+    var items = [];
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      var rowWo = colWo >= 0 ? String(row[colWo]).trim() : '';
+      if (rowWo !== String(woNumber).trim()) continue;
+
+      items.push({
+        _rowIndex: i + 1,
+        _done: colDone >= 0 ? (row[colDone] === true || String(row[colDone]).toLowerCase() === 'true') : false,
+        lineNumber: colLine >= 0 ? row[colLine] : i,
+        itemName: colItem >= 0 ? String(row[colItem] || '') : '',
+        description: colDesc >= 0 ? String(row[colDesc] || '') : '',
+        quantity: colQty >= 0 ? (row[colQty] || 0) : 0,
+        unit: colUnit >= 0 ? String(row[colUnit] || '') : ''
+      });
+    }
+
+    return { success: true, data: items };
+  } catch (error) {
+    Logger.log('Error in getLineItems: ' + error.toString());
+    return { success: false, error: error.toString(), data: [] };
   }
 }
 
