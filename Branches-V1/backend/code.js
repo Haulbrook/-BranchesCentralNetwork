@@ -412,6 +412,12 @@ function addMinStockColumn() {
 function doGet(e) {
   // Handle routeQuery via GET (avoids Apps Script POST redirect issue)
   var params = e ? e.parameter : {};
+  if (params.action === 'getProgress') {
+    var jobsResult = getActiveJobs();
+    var response = { success: true, data: jobsResult.jobs || [] };
+    return ContentService.createTextOutput(JSON.stringify(response))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
   if (params.route) {
     var result = routeQuery(params.route);
     return ContentService.createTextOutput(JSON.stringify({ success: true, response: result }))
