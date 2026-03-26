@@ -45,7 +45,7 @@ dashboard/
 1. **Upload to GitHub**
    ```bash
    # Create new repository on github.com
-   # Name it: deep-roots-dashboard
+   # Name it: brain-dashboard
    # Upload all dashboard files
    ```
 
@@ -61,7 +61,7 @@ dashboard/
    - Wait 2-3 minutes for deployment
 
 4. **Access Your Dashboard**
-   - URL: `https://yourusername.github.io/deep-roots-dashboard`
+   - URL: `https://yourusername.github.io/brain-dashboard`
    - Bookmark for easy access
 
 ## ⚙️ Tool Configuration

@@ -615,7 +615,7 @@ Recommendations: ${report.recommendations.length}
             Logger.warn('App', '⚠️ Using guest user:', error);
             this.user = {
                 name: 'Guest User',
-                email: 'guest@deeproots.com',
+                email: 'guest@brain.app',
                 avatar: '👤'
             };
             this.ui.updateUserInfo(this.user);
@@ -629,7 +629,7 @@ Recommendations: ${report.recommendations.length}
             setTimeout(() => {
                 resolve({
                     name: 'BRAIN User',
-                    email: 'user@deeprootslandscape.com',
+                    email: 'user@brain.app',
                     avatar: '🌱'
                 });
             }, 500);

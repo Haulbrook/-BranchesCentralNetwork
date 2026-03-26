@@ -119,7 +119,7 @@ Google Apps Script backends are the biggest scalability bottleneck:
 
 **Migration path:**
 1. **Phase 1 (now):** Keep GAS for BRAIN. Abstract all GAS calls behind the existing `gas-proxy.js` Netlify Function
-2. **Phase 2 (SaaS launch):** New tenants get Supabase PostgreSQL tables instead of GAS. The proxy layer routes based on tenant: `if (tenant === 'deep-roots') → GAS; else → Supabase`
+2. **Phase 2 (SaaS launch):** New tenants get Supabase PostgreSQL tables instead of GAS. The proxy layer routes based on tenant: `if (tenant === 'brain') → GAS; else → Supabase`
 3. **Phase 3 (maturity):** Migrate BRAIN off GAS to Supabase too
 
 ### Netlify Functions: shared vs per-tenant
@@ -169,8 +169,8 @@ Every file below has hardcoded "BRAIN" strings that must become config-driven:
   "company_full_name": "Branches Artificial Intelligence Network",
   "app_title": "BRAIN Operations Dashboard",
   "logo_emoji": "🌱",
-  "login_email_placeholder": "you@deeproots.com",
-  "guest_email": "guest@deeproots.com",
+  "login_email_placeholder": "you@brain.app",
+  "guest_email": "guest@brain.app",
   "primary_color": "#7eb83a",
   "accent_color": "#5a8a28"
 }
@@ -218,7 +218,7 @@ const SERVICE_ENV_MAP = {
 
 // For SaaS tenants, look up from Supabase instead:
 async function getServiceUrl(tenantId, service) {
-  if (!tenantId || tenantId === 'deep-roots') {
+  if (!tenantId || tenantId === 'brain') {
     // Legacy path: use env vars
     return process.env[SERVICE_ENV_MAP[service]];
   }

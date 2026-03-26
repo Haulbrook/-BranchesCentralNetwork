@@ -860,7 +860,7 @@ Rules:
             Logger.warn('API', 'Could not get user info:', error);
             return {
                 name: 'Guest User',
-                email: 'guest@deeproots.com',
+                email: 'guest@brain.app',
                 avatar: '👤'
             };
         }
