@@ -6,7 +6,7 @@
     </linearGradient>
   </defs>
   <rect width="1200" height="630" fill="url(#bg)"/>
-  <text x="600" y="250" font-family="system-ui, -apple-system, sans-serif" font-size="120" fill="white" text-anchor="middle">Deep Roots</text>
+  <text x="600" y="250" font-family="system-ui, -apple-system, sans-serif" font-size="120" fill="white" text-anchor="middle">BRAIN</text>
   <text x="600" y="350" font-family="system-ui, -apple-system, sans-serif" font-size="48" fill="rgba(255,255,255,0.9)" text-anchor="middle">Operations Dashboard</text>
   <text x="600" y="450" font-family="system-ui, -apple-system, sans-serif" font-size="28" fill="rgba(255,255,255,0.7)" text-anchor="middle">Inventory | Scheduling | Tool Management | AI Assistant</text>
 </svg>

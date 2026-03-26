@@ -35,7 +35,7 @@ This project uses **SEPARATE deployments** for backend and frontend to avoid pla
 1. **Open Google Apps Script**
    - Go to https://script.google.com
    - Click "New Project"
-   - Name it "Deep Roots Inventory Backend"
+   - Name it "BRAIN Inventory Backend"
 
 2. **Copy code.js**
    - Open `code.js` from this repository

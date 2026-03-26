@@ -11,7 +11,7 @@ The `code.js` file has been updated with CORS headers. **You need to redeploy it
 ### 1. Open Google Apps Script
 
 1. Go to [script.google.com](https://script.google.com)
-2. Click **"New project"** (or open your existing Deep Roots project)
+2. Click **"New project"** (or open your existing BRAIN project)
 3. Delete any existing code
 4. Copy the entire contents of `code.js` from this repository
 5. Paste it into the script editor
@@ -42,7 +42,7 @@ const CONFIG = {
 2. Click the gear icon ⚙️ next to "Select type"
 3. Choose **"Web app"**
 4. Configure the deployment:
-   - **Description:** "Deep Roots API v1.0"
+   - **Description:** "BRAIN API v1.0"
    - **Execute as:** **Me** (your email)
    - **Who has access:** **Anyone** ⚠️ CRITICAL!
 5. Click **Deploy**

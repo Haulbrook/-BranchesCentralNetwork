@@ -12,7 +12,7 @@ I cannot automatically deploy to Google Apps Script since it requires logging in
 ### 1. Open Google Apps Script
 - Go to: **https://script.google.com**
 - Click "New Project" button
-- Name it: **"Deep Roots Inventory Backend"**
+- Name it: **"BRAIN Inventory Backend"**
 
 ### 2. Copy the Backend Code
 - Open the file `code.js` in this repository
@@ -32,7 +32,7 @@ I cannot automatically deploy to Google Apps Script since it requires logging in
 - Choose "Web app"
 - Configure:
   ```
-  Description: Deep Roots Inventory API v1.0
+  Description: BRAIN Inventory API v1.0
   Execute as: User accessing the web app
   Who has access: Anyone (or "Anyone with Google account" for more security)
   ```

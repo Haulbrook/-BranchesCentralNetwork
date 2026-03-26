@@ -13,7 +13,7 @@ class SetupWizard {
         this.steps = [
             {
                 id: 'welcome',
-                title: 'Welcome to Deep Roots Operations Setup',
+                title: 'Welcome to BRAIN Operations Setup',
                 description: 'This wizard will help you configure external connections and advanced AI capabilities.',
                 fields: []
             },

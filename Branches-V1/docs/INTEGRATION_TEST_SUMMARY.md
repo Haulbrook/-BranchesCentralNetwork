@@ -1,4 +1,4 @@
-# 🧪 Deep Roots Dashboard - Integration Test Summary
+# 🧪 BRAIN Dashboard - Integration Test Summary
 
 **Test Date:** 2025-11-04
 **Branch:** claude/check-folder-contents-011CUkH8EvL4MU9eoKxXjdRY
@@ -314,7 +314,7 @@ def3a49 Merge pull request #2
 
 **Steps:**
 1. Open https://script.google.com
-2. Open "Deep Roots Inventory Backend" project
+2. Open "BRAIN Inventory Backend" project
 3. Replace entire code.js content
 4. Save (Ctrl+S / Cmd+S)
 5. Test `getRecentActivity()` function manually

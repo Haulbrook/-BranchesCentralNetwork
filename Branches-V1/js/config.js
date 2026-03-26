@@ -275,9 +275,9 @@ class ConfigManager {
     getDefaultConfig() {
         return {
             app: {
-                name: "Deep Roots Operations Dashboard",
+                name: "BRAIN Operations Dashboard",
                 version: "1.0.0",
-                description: "Unified dashboard for all Deep Roots Landscape operational tools"
+                description: "Unified dashboard for all Branches Artificial Intelligence Network operational tools"
             },
             services: {
                 inventory: {

@@ -1,12 +1,12 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════
- * 🌱 DEEP ROOTS LANDSCAPE - INVENTORY & FLEET MANAGEMENT SYSTEM
+ * 🌱 BRAIN - INVENTORY & FLEET MANAGEMENT SYSTEM
  * ═══════════════════════════════════════════════════════════════════════
  *
  * Backend API for inventory tracking, fleet management, and operations
  *
  * @version 2.0.0
- * @author Deep Roots Landscape
+ * @author Branches Artificial Intelligence Network
  * @lastModified 2024-11-02
  *
  * ARCHITECTURE:
@@ -61,7 +61,7 @@ const CONFIG = {
   CLAUDE_MODEL: "claude-sonnet-4-20250514",
   OPENAI_API_KEY: "", // Replace with your actual API key
   OPENAI_MODEL: "gpt-4",
-  SYSTEM_PROMPT: "You are the internal operations assistant for Deep Roots Landscape, a landscaping company. " +
+  SYSTEM_PROMPT: "You are the internal operations assistant for Branches Artificial Intelligence Network, a landscaping company. " +
     "You help team members with inventory management, fleet tracking, and operational questions.\n\n" +
     "CONTEXT:\n" +
     "- You support field crews, managers, and office staff with real-time operational data\n" +
@@ -328,7 +328,7 @@ function setupSheets() {
 
 function setupTruckSheet() {
   try {
-    const ss = SpreadsheetApp.create("Deep Roots Fleet Information");
+    const ss = SpreadsheetApp.create("BRAIN Fleet Information");
     const sheet = ss.getActiveSheet();
     
     // Set up headers for truck information
@@ -439,7 +439,7 @@ function doGet(e) {
     '.status { color: #4CAF50; font-weight: bold; }' +
     '.section { background: #f9f9f9; padding: 15px; margin: 20px 0; border-radius: 5px; }' +
     '</style></head><body>' +
-    '<h1>🌱 Deep Roots Inventory Backend API</h1>' +
+    '<h1>🌱 BRAIN Inventory Backend API</h1>' +
     '<p class="status">✅ Backend is running!</p>' +
     '<div class="section">' +
     '<h2>📋 This is the backend API</h2>' +
@@ -466,7 +466,7 @@ function doGet(e) {
     '</body></html>';
 
   return HtmlService.createHtmlOutput(html)
-    .setTitle("Deep Roots Inventory Backend API")
+    .setTitle("BRAIN Inventory Backend API")
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
@@ -3164,7 +3164,7 @@ function parsePDFWithClaude(base64PDF) {
       return { success: false, error: 'Claude API key not configured' };
     }
 
-    var systemPrompt = 'You are a work order data extraction assistant for Deep Roots Landscape, a landscaping company. ' +
+    var systemPrompt = 'You are a work order data extraction assistant for Branches Artificial Intelligence Network, a landscaping company. ' +
       'You will receive a PDF of a work order. Extract all relevant information and return it as a single JSON object.\n\n' +
       'DATA RULES:\n' +
       '- Strip commas from all text fields\n' +

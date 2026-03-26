@@ -1,9 +1,9 @@
 {
   "_comment": "DEPLOYMENT INSTRUCTIONS: 1) Deploy code.js to Google Apps Script as backend API, 2) Deploy this dashboard to GitHub Pages/Netlify, 3) Update the 'inventory' URL below with your Google Apps Script deployment URL",
   "app": {
-    "name": "Deep Roots Operations Dashboard",
+    "name": "BRAIN Operations Dashboard",
     "version": "1.0.0",
-    "description": "Unified dashboard for all Deep Roots Landscape operational tools"
+    "description": "Unified dashboard for all Branches Artificial Intelligence Network operational tools"
   },
   "services": {
     "inventory": {

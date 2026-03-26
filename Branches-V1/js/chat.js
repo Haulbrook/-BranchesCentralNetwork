@@ -611,9 +611,9 @@ class ChatManager {
         // General AI-like responses for common queries
         const generalResponses = {
             greeting: [
-                "Hello! I'm here to help you with Deep Roots operations. I can assist with inventory management, plant grading, crew scheduling, tool checkout, and logistics planning.",
+                "Hello! I'm here to help you with BRAIN operations. I can assist with inventory management, plant grading, crew scheduling, tool checkout, and logistics planning.",
                 "Hi there! What can I help you with today? I can help with inventory, grading, scheduling, tools, or logistics.",
-                "Welcome to Deep Roots Operations! I'm ready to help with any operational questions you have."
+                "Welcome to BRAIN Operations! I'm ready to help with any operational questions you have."
             ],
             help: [
                 "I can help you with:\n\n🌱 **Inventory Management** - Search stock, check quantities, manage supplies\n⭐ **Plant Grading** - Quality assessment and pricing decisions\n📅 **Crew Scheduling** - Daily planning and task assignments\n🔧 **Tool Checkout** - Rental and equipment management\n🚛 **Logistics Planning** - Transportation routing and procurement tracking\n\nWhat would you like to work on?",

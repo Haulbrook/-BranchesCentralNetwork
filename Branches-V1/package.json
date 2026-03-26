@@ -1,7 +1,7 @@
 {
   "name": "deep-roots-dashboard",
   "version": "1.0.0",
-  "description": "Integrated dashboard for Deep Roots Landscape operations tools",
+  "description": "Integrated dashboard for BRAIN operations tools",
   "main": "index.html",
   "scripts": {
     "start": "python -m http.server 8080"
@@ -18,7 +18,7 @@
     "tools",
     "landscaping"
   ],
-  "author": "Deep Roots Landscape",
+  "author": "Branches Artificial Intelligence Network",
   "license": "MIT",
   "devDependencies": {
     "node-fetch": "^3.3.2"

@@ -93,10 +93,10 @@ CREATE POLICY "Service role full access on usage_monthly" ON public.usage_monthl
   FOR ALL USING (auth.role() = 'service_role');
 
 -- ============================================================================
--- 6. SEED: Deep Roots as grandfathered tenant (Max tier, no limits)
+-- 6. SEED: BRAIN as grandfathered tenant (Max tier, no limits)
 -- ============================================================================
 INSERT INTO public.tenants (name, tier, subscription_status, max_users)
-VALUES ('Deep Roots Landscape', 'max', 'grandfathered', 15);
+VALUES ('Branches Artificial Intelligence Network', 'max', 'grandfathered', 15);
 
 -- ============================================================================
 -- 7. LINK YOUR USER — Run this AFTER the above, replacing the UUID below
@@ -104,7 +104,7 @@ VALUES ('Deep Roots Landscape', 'max', 'grandfathered', 15);
 -- ============================================================================
 -- INSERT INTO public.tenant_members (tenant_id, user_id, role)
 -- VALUES (
---   (SELECT id FROM public.tenants WHERE name = 'Deep Roots Landscape'),
+--   (SELECT id FROM public.tenants WHERE name = 'Branches Artificial Intelligence Network'),
 --   'REPLACE_WITH_YOUR_USER_UUID',
 --   'owner'
 -- );

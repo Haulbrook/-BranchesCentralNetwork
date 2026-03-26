@@ -10,7 +10,7 @@ Quick guide to apply all professional enhancements to your deployment.
 
 1. **Open your Google Apps Script project**
    - Go to https://script.google.com
-   - Open "Deep Roots Inventory Backend"
+   - Open "BRAIN Inventory Backend"
 
 2. **Replace code.js**
    - Select all code (Ctrl+A / Cmd+A)

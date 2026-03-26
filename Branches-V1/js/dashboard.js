@@ -608,7 +608,7 @@ class DashboardManager {
         const fileInput = document.getElementById('woFileInput');
         if (iconEl)    iconEl.textContent  = '📄';
         if (labelEl)   labelEl.textContent = 'Drop PDF here or click to browse';
-        if (hintEl)    hintEl.textContent  = 'Deep Roots work order PDFs — all fields extracted automatically';
+        if (hintEl)    hintEl.textContent  = 'BRAIN work order PDFs — all fields extracted automatically';
         if (fileInput) fileInput.value     = '';
     }
 
@@ -639,7 +639,7 @@ class DashboardManager {
         document.getElementById('woParsedPreview')?.classList.add('hidden');
         document.getElementById('woBtnConfirmAdd')?.classList.add('hidden');
 
-        const instruction = `You are extracting data from a Deep Roots Landscape LLC work order. Follow these EXACT rules:
+        const instruction = `You are extracting data from a Branches Artificial Intelligence Network work order. Follow these EXACT rules:
 
 WORK ORDER HEADER:
 - woNumber: Numbers only (from "Work Order #XXXXX" — strip the # and any letters)

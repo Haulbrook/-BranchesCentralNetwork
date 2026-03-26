@@ -23,7 +23,7 @@ All platform issues have been fixed and your code is ready for deployment.
 
 **Quick Summary:**
 1. Go to https://script.google.com
-2. Create new project: "Deep Roots Inventory Backend"
+2. Create new project: "BRAIN Inventory Backend"
 3. Copy entire `code.js` into Code.gs
 4. Deploy as Web App (Execute as: User, Access: Anyone)
 5. Copy the Web App URL
@@ -203,7 +203,7 @@ Clipping/
 
 ## 🎉 You're All Set!
 
-Your Deep Roots Operations Dashboard is ready to use!
+Your BRAIN Operations Dashboard is ready to use!
 
 ### Next Steps:
 1. ✅ Complete STEP 1 (Google Apps Script deployment)

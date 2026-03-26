@@ -2,7 +2,7 @@
 
 ## Overview
 
-Your Deep Roots Dashboard has been completely revamped with professional-grade frontend and backend improvements. This document outlines all enhancements made.
+Your BRAIN Dashboard has been completely revamped with professional-grade frontend and backend improvements. This document outlines all enhancements made.
 
 ---
 
@@ -160,7 +160,7 @@ Features:
 ```javascript
 /**
  * ═══════════════════════════════════════════════════
- * 🌱 DEEP ROOTS LANDSCAPE - INVENTORY & FLEET SYSTEM
+ * 🌱 BRAIN - INVENTORY & FLEET SYSTEM
  * ═══════════════════════════════════════════════════
  *
  * @version 2.0.0

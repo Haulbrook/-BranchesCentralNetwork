@@ -41,7 +41,7 @@ I've automated as much as possible, but there are **2 manual steps** you need to
 
 **Quick summary:**
 1. Go to https://script.google.com
-2. Create project: "Deep Roots Inventory Backend"
+2. Create project: "BRAIN Inventory Backend"
 3. Copy all of `code.js` into Code.gs
 4. Deploy as Web App
 5. **Copy the Web App URL** (you'll need this!)

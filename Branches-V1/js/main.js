@@ -1,5 +1,5 @@
 /**
- * 🚀 Deep Roots Dashboard - Main Application Controller
+ * 🚀 BRAIN Dashboard - Main Application Controller
  * Initializes and orchestrates all dashboard functionality
  */
 
@@ -628,7 +628,7 @@ Recommendations: ${report.recommendations.length}
         return new Promise((resolve) => {
             setTimeout(() => {
                 resolve({
-                    name: 'Deep Roots User',
+                    name: 'BRAIN User',
                     email: 'user@deeprootslandscape.com',
                     avatar: '🌱'
                 });
@@ -1380,7 +1380,7 @@ Recommendations: ${report.recommendations.length}
     getDefaultConfig() {
         return {
             app: {
-                name: "Deep Roots Operations Dashboard",
+                name: "BRAIN Operations Dashboard",
                 version: "1.0.0"
             },
             services: {

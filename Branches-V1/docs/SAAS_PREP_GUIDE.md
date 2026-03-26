@@ -25,10 +25,10 @@ A white-label operations dashboard that any landscaping company, general contrac
 
 - Their own branding (logo, colors, company name)
 - Their own data (work orders, inventory, crew schedules, tool checkout)
-- AI chat with the same Master Agent orchestration Deep Roots uses today
+- AI chat with the same Master Agent orchestration BRAIN uses today
 - The same feature set: Active Jobs, Inventory, Repair vs Replace, Crew Scheduler, Hand Tool Checkout, Chess Map, PDF work order intake
 
-Deep Roots Landscape continues running on its current standalone instance at `branchesv1.netlify.app` — completely unaffected.
+Branches Artificial Intelligence Network continues running on its current standalone instance at `branchesv1.netlify.app` — completely unaffected.
 
 ### Target audience
 
@@ -101,7 +101,7 @@ CSS custom properties in `styles/enhanced-components.css` (lines 1688-1764) alre
 
 ### Data isolation strategy
 
-| Layer | Current (Deep Roots) | SaaS Target |
+| Layer | Current (BRAIN) | SaaS Target |
 |-------|---------------------|-------------|
 | Auth | Single Supabase project, no tenant concept | Supabase RLS with `tenant_id` on every row |
 | Work Orders | GAS spreadsheet per company | Supabase `work_orders` table with `tenant_id` |
@@ -118,15 +118,15 @@ Google Apps Script backends are the biggest scalability bottleneck:
 - You cannot programmatically create GAS deployments per tenant
 
 **Migration path:**
-1. **Phase 1 (now):** Keep GAS for Deep Roots. Abstract all GAS calls behind the existing `gas-proxy.js` Netlify Function
+1. **Phase 1 (now):** Keep GAS for BRAIN. Abstract all GAS calls behind the existing `gas-proxy.js` Netlify Function
 2. **Phase 2 (SaaS launch):** New tenants get Supabase PostgreSQL tables instead of GAS. The proxy layer routes based on tenant: `if (tenant === 'deep-roots') → GAS; else → Supabase`
-3. **Phase 3 (maturity):** Migrate Deep Roots off GAS to Supabase too
+3. **Phase 3 (maturity):** Migrate BRAIN off GAS to Supabase too
 
 ### Netlify Functions: shared vs per-tenant
 
 Keep shared. The current `gas-proxy.js` and `claude-proxy.js` already authenticate per-user via JWT. Changes needed:
 
-- **`gas-proxy.js`**: Instead of reading `GAS_ACTIVE_JOBS_URL` from a single env var, look up the tenant's backend URL from a Supabase `tenants` config table (or keep GAS env vars only for Deep Roots and route all other tenants to Supabase queries)
+- **`gas-proxy.js`**: Instead of reading `GAS_ACTIVE_JOBS_URL` from a single env var, look up the tenant's backend URL from a Supabase `tenants` config table (or keep GAS env vars only for BRAIN and route all other tenants to Supabase queries)
 - **`claude-proxy.js`**: Add tenant-aware rate limiting (per-tenant, not just per-user). Add tenant's company name to system prompts server-side so tenants can't impersonate each other
 - **`_shared/auth.js`**: Extract `tenant_id` from the JWT payload and pass it downstream
 
@@ -134,11 +134,11 @@ Keep shared. The current `gas-proxy.js` and `claude-proxy.js` already authentica
 
 ## Phase 1: SaaS-Ready Refactors
 
-These changes benefit Deep Roots standalone AND prepare for SaaS. Do them in the current codebase before any fork.
+These changes benefit BRAIN standalone AND prepare for SaaS. Do them in the current codebase before any fork.
 
-### 1.1 Extract hardcoded "Deep Roots" into config
+### 1.1 Extract hardcoded "BRAIN" into config
 
-Every file below has hardcoded "Deep Roots" strings that must become config-driven:
+Every file below has hardcoded "BRAIN" strings that must become config-driven:
 
 | File | What to change |
 |------|---------------|
@@ -151,7 +151,7 @@ Every file below has hardcoded "Deep Roots" strings that must become config-driv
 | `js/dashboard.js` lines 611, 642 | PDF hint text, Claude extraction prompt |
 | `js/api.js` lines 215, 494, 618, 870 | System prompts for all agents, guest email |
 | `js/setupWizard.js` line 16 | Welcome step title |
-| `backend/code.js` lines 9, 64, 326, 426, 453, 2802 | GAS backend (Deep Roots stays, SaaS won't use this) |
+| `backend/code.js` lines 9, 64, 326, 426, 453, 2802 | GAS backend (BRAIN stays, SaaS won't use this) |
 | `netlify.toml` line 1 | Comment (cosmetic) |
 | `package.json` lines 2, 4, 11, 21 | Package metadata |
 | `tv.html` lines 6, 782 | TV dashboard title and heading |
@@ -165,9 +165,9 @@ Every file below has hardcoded "Deep Roots" strings that must become config-driv
 ```javascript
 // Add to app.config.json:
 "branding": {
-  "company_name": "Deep Roots",
-  "company_full_name": "Deep Roots Landscape",
-  "app_title": "Deep Roots Operations Dashboard",
+  "company_name": "BRAIN",
+  "company_full_name": "Branches Artificial Intelligence Network",
+  "app_title": "BRAIN Operations Dashboard",
   "logo_emoji": "🌱",
   "login_email_placeholder": "you@deeproots.com",
   "guest_email": "guest@deeproots.com",
@@ -184,14 +184,14 @@ Then create a `js/branding.js` module that:
 5. Sets CSS custom properties on `:root`
 6. Exposes `Branding.companyName` etc. for JS templates
 
-Every hardcoded "Deep Roots" string in JS becomes `Branding.companyName` or `Branding.appTitle`.
+Every hardcoded "BRAIN" string in JS becomes `Branding.companyName` or `Branding.appTitle`.
 
 ### 1.2 Make CSS design tokens config-driven
 
 The design tokens in `styles/enhanced-components.css` (lines 1688-1764) are already well-structured. Refactor:
 
 1. Rename `--dr-*` variables to `--brand-*` (find-and-replace across all CSS files)
-2. Keep the default values as Deep Roots' colors
+2. Keep the default values as BRAIN's colors
 3. In `js/branding.js`, override `:root` properties from tenant config:
 
 ```javascript
@@ -284,16 +284,16 @@ No more `'unsafe-inline'` for scripts.
 
 ### 2.1 How to create the SaaS fork
 
-Do NOT fork the Deep Roots repo. Instead:
+Do NOT fork the BRAIN repo. Instead:
 
 1. **Create a new repo** called `branches-saas` (or `branches-platform`)
 2. **Copy the Phase 1 codebase** (after all refactors above are complete)
-3. **Delete Deep Roots-specific files**: `backend/code.js` (GAS backend), `tv.html`, any DR-specific assets
+3. **Delete BRAIN-specific files**: `backend/code.js` (GAS backend), `tv.html`, any DR-specific assets
 4. **Update `app.config.json`** with empty/placeholder branding
 5. **Deploy to a new Netlify site** (e.g., `branches-app.netlify.app` or custom domain)
-6. **Create a new Supabase project** for SaaS tenants (Deep Roots keeps its existing one)
+6. **Create a new Supabase project** for SaaS tenants (BRAIN keeps its existing one)
 
-Deep Roots continues at `branchesv1.netlify.app` on the original repo. It never merges from `branches-saas`. Feature improvements flow manually (cherry-pick) as needed.
+BRAIN continues at `branchesv1.netlify.app` on the original repo. It never merges from `branches-saas`. Feature improvements flow manually (cherry-pick) as needed.
 
 ### 2.2 Tenant provisioning flow
 
@@ -361,7 +361,7 @@ Netlify Function: `netlify/functions/stripe-webhook.js`
 
 ### 3.1 Moving from GAS to Supabase PostgreSQL
 
-For SaaS tenants (not Deep Roots), all data lives in Supabase from day one. Schema:
+For SaaS tenants (not BRAIN), all data lives in Supabase from day one. Schema:
 
 ```sql
 -- Work orders
@@ -527,7 +527,7 @@ Also add:
 
 | Issue | Impact | Fix effort | Phase |
 |-------|--------|-----------|-------|
-| **Hardcoded "Deep Roots" in 15+ files** | Every tenant sees "Deep Roots" branding | Medium (1-2 days) | Phase 1.1 |
+| **Hardcoded "BRAIN" in 15+ files** | Every tenant sees "BRAIN" branding | Medium (1-2 days) | Phase 1.1 |
 | **CSP requires `'unsafe-inline'` for scripts** | Security weakness, fails stricter audits | Medium (1-2 days) | Phase 1.5 |
 | **GAS backends are per-spreadsheet** | Cannot programmatically provision new tenants | Large (Phase 2-3) | Phase 3.1 |
 | **No tenant concept in auth** | All users share one auth pool with no isolation | Medium (1 day) | Phase 2.2 |
@@ -563,9 +563,9 @@ Track major decisions here as you work through phases.
 | Date | Decision | Rationale |
 |------|----------|-----------|
 | 2026-03-16 | Single Supabase project with RLS (not separate projects per tenant) | Cost, operational simplicity, migration ease |
-| 2026-03-16 | Deep Roots stays on original repo/deploy; SaaS is a clean copy, not a fork | Avoids breaking production; DR instance stays simple |
+| 2026-03-16 | BRAIN stays on original repo/deploy; SaaS is a clean copy, not a fork | Avoids breaking production; DR instance stays simple |
 | 2026-03-16 | Phase 1 refactors happen in current codebase (benefit both DR and SaaS) | Branding extraction and CSP fixes improve DR too |
-| 2026-03-16 | GAS backends stay for Deep Roots; new SaaS tenants get Supabase from day one | Avoids risky migration of working DR system |
+| 2026-03-16 | GAS backends stay for BRAIN; new SaaS tenants get Supabase from day one | Avoids risky migration of working DR system |
 | | | |
 
 ---

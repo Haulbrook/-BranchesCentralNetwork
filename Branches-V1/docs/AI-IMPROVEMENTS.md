@@ -39,7 +39,7 @@ async callOpenAI(message, context = {}) {
             messages: [
                 {
                     role: 'system',
-                    content: `You are a helpful assistant for Deep Roots Landscape.
+                    content: `You are a helpful assistant for Branches Artificial Intelligence Network.
                     You help with inventory management, crew scheduling, equipment tracking, and logistics.
                     Available tools: ${Object.keys(context.services || {}).join(', ')}`
                 },
@@ -106,7 +106,7 @@ async callClaude(message, context = {}) {
                     content: message
                 }
             ],
-            system: `You are a helpful assistant for Deep Roots Landscape operations.
+            system: `You are a helpful assistant for Branches Artificial Intelligence Network operations.
             Help with: inventory search, crew scheduling, equipment checkout, and logistics planning.`
         })
     });

@@ -1,4 +1,4 @@
-# Netlify Redirects Configuration for Deep Roots Dashboard
+# Netlify Redirects Configuration for BRAIN Dashboard
 # Static assets must be served before catch-all SPA routing
 
 # Landing page — public root (no auth required)

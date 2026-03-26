@@ -1680,7 +1680,7 @@
 }
 
 /* ============================================================
-   DEEP ROOTS DESIGN SYSTEM
+   BRAIN DESIGN SYSTEM
    CSS custom properties from deep-roots-design-reference.md
    Applied GLOBALLY — overrides Branches-V1 light-theme vars so
    the entire app matches the DR dark aesthetic.
@@ -1788,7 +1788,7 @@
 }
 
 /* ============================================================
-   ACTIVE JOBS SECTION — DEEP ROOTS THEME
+   ACTIVE JOBS SECTION — BRAIN THEME
    ============================================================ */
 .active-jobs-section {
   background: var(--dr-bg);
@@ -1829,7 +1829,7 @@
 .active-jobs-section #addWoBtn:active { transform: scale(0.97); }
 
 /* ============================================================
-   STATS BAR — DEEP ROOTS THEME
+   STATS BAR — BRAIN THEME
    ============================================================ */
 .wo-stats-bar {
   background: var(--dr-surface);
@@ -1855,7 +1855,7 @@
 }
 
 /* ============================================================
-   JOB CARDS — DEEP ROOTS THEME
+   JOB CARDS — BRAIN THEME
    ============================================================ */
 .wo-card {
   background: var(--dr-surface);
@@ -1907,7 +1907,7 @@
 .active-jobs-section .empty-hint    { color: var(--dr-muted); }
 
 /* ============================================================
-   WO MODALS — DEEP ROOTS THEME
+   WO MODALS — BRAIN THEME
    ============================================================ */
 .wo-modal-overlay {
   background: rgba(0, 0, 0, 0.82);

@@ -1,4 +1,4 @@
-# 🚀 Installation Guide - Deep Roots Operations Dashboard
+# 🚀 Installation Guide - BRAIN Operations Dashboard
 
 **Complete setup instructions for your unified dashboard system**
 
