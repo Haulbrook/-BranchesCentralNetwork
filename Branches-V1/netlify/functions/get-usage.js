@@ -42,6 +42,9 @@ exports.handler = async (event) => {
       trialEndsAt: tenantInfo.tenant.trial_ends_at,
       isActive: tenantInfo.isActive,
       trialExpired: tenantInfo.trialExpired,
+      tenantName: tenantInfo.tenant.name || '',
+      slug: tenantInfo.tenant.slug || '',
+      branding: tenantInfo.tenant.branding || {},
       usage: {
         aiQueries: tenantInfo.usage.ai_queries || 0,
         inventoryItems: tenantInfo.usage.inventory_items || 0,

@@ -105,6 +105,17 @@ class DashboardApp {
             Branding.applyToDOM();
             Branding.applyTheme();
 
+            // Initialize tenant context (fetches usage/branding, may override branding)
+            if (window.TenantContext) {
+                await TenantContext.init();
+                // Hide GAS-only tools for non-grandfathered tenants
+                if (TenantContext.isSubscribed() && !TenantContext.features().allTools) {
+                    document.querySelectorAll('.gas-only').forEach(el => {
+                        el.style.display = 'none';
+                    });
+                }
+            }
+
             // Initialize API manager with loaded config
             this.api.init();
             Logger.info('App', '✅ API Manager initialized with endpoints:', this.api.endpoints);
@@ -1485,6 +1496,41 @@ Recommendations: ${report.recommendations.length}
             } else {
                 billingInfo.textContent = `Usage resets at the start of each billing month. Current period: ${info.billingPeriod}.`;
             }
+        }
+
+        // Manage Billing button (visible for non-grandfathered paying tenants)
+        const billingBtn = document.getElementById('manageBillingBtn');
+        if (billingBtn) {
+            if (info.status !== 'grandfathered' && info.subscribed) {
+                billingBtn.style.display = '';
+                billingBtn.onclick = () => this.openBillingPortal();
+            }
+        }
+
+        // Upgrade button (visible for starter/pro tiers, links to pricing)
+        const upgradeBtn = document.getElementById('upgradePlanBtn');
+        if (upgradeBtn) {
+            if (info.tier && info.tier !== 'max' && info.status !== 'grandfathered') {
+                upgradeBtn.style.display = '';
+                upgradeBtn.onclick = () => window.open('/landing.html#pricing', '_blank');
+            }
+        }
+    }
+
+    async openBillingPortal() {
+        try {
+            const resp = await fetch('/.netlify/functions/create-portal-session', {
+                method: 'POST',
+                headers: this.api._proxyHeaders(),
+            });
+            const data = await resp.json();
+            if (data.url) {
+                window.open(data.url, '_blank');
+            } else {
+                this.ui?.showNotification(data.error || 'Failed to open billing portal', 'error');
+            }
+        } catch (e) {
+            this.ui?.showNotification('Failed to open billing portal', 'error');
         }
     }
 

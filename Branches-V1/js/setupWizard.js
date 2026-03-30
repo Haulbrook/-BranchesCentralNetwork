@@ -79,11 +79,23 @@ class SetupWizard {
     }
 
     /**
-     * Check if wizard needs to run
+     * Check if wizard needs to run.
+     * For new SaaS tenants, trigger if branding hasn't been customized yet.
      */
     needsSetup() {
         const completed = localStorage.getItem(this.wizardCompleteKey);
         const hasConfig = localStorage.getItem(this.configKey);
+
+        // For SaaS tenants: check if branding still looks like the default email-derived name
+        if (window.TenantContext && TenantContext.isSubscribed() && !TenantContext.isGrandfathered()) {
+            const branding = TenantContext.branding || {};
+            const name = branding.company_name || '';
+            // If company_name is empty or looks like an email local part, wizard should run
+            if (!completed && (!name || name.includes('@') || name === 'My Company')) {
+                return true;
+            }
+        }
+
         return !completed || !hasConfig;
     }
 
@@ -318,7 +330,7 @@ class SetupWizard {
      * Complete wizard
      */
     completeWizard() {
-        // Save configuration
+        // Save configuration locally
         localStorage.setItem(this.configKey, JSON.stringify(this.config));
         localStorage.setItem(this.wizardCompleteKey, 'true');
 
@@ -327,6 +339,11 @@ class SetupWizard {
             Branding.update(this.config);
             Branding.applyToDOM();
             Branding.applyTheme();
+        }
+
+        // Persist branding to server for SaaS tenants (fire-and-forget)
+        if (window.TenantContext && TenantContext.isSubscribed() && !TenantContext.isGrandfathered()) {
+            this._persistBrandingToServer();
         }
 
         // Remove wizard UI
@@ -340,6 +357,37 @@ class SetupWizard {
         // Resolve promise with config
         if (this.resolve) {
             this.resolve(this.config);
+        }
+    }
+
+    /**
+     * Persist branding changes to the server via update-tenant endpoint
+     */
+    async _persistBrandingToServer() {
+        try {
+            const branding = {};
+            const brandingKeys = ['company_name', 'company_full_name', 'app_acronym', 'app_title', 'primary_color', 'accent_color'];
+            for (const key of brandingKeys) {
+                if (this.config[key] !== undefined) {
+                    branding[key] = this.config[key];
+                }
+            }
+            if (Object.keys(branding).length === 0) return;
+
+            const raw = localStorage.getItem('sb-fclnvrxxycaaxhndocfg-auth-token');
+            const token = raw ? JSON.parse(raw)?.access_token : null;
+            if (!token) return;
+
+            await fetch('/.netlify/functions/update-tenant', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({ branding }),
+            });
+        } catch (e) {
+            console.warn('SetupWizard: failed to persist branding to server:', e);
         }
     }
 

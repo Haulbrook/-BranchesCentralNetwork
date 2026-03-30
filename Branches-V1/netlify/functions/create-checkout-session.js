@@ -47,7 +47,7 @@ exports.handler = async function (event) {
     }
 
     try {
-        const { priceId, email } = JSON.parse(event.body || '{}');
+        const { priceId, email, userId } = JSON.parse(event.body || '{}');
 
         if (!priceId) {
             return {
@@ -74,6 +74,7 @@ exports.handler = async function (event) {
                 'success_url': `${event.headers.origin || 'https://branchesv1.netlify.app'}/dashboard?checkout=success`,
                 'cancel_url': `${event.headers.origin || 'https://branchesv1.netlify.app'}/#pricing`,
                 ...(email ? { 'customer_email': email } : {}),
+                ...(userId ? { 'client_reference_id': userId } : {}),
             }).toString(),
         });
 

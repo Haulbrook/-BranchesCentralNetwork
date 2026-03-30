@@ -93,37 +93,37 @@
                         <span class="nav-text">Inventory</span>
                         <span class="nav-badge">Clippings</span>
                     </button>
-                    <button class="nav-item tool-item" data-tool="grading" aria-label="Open Repair vs Replace Analysis">
+                    <button class="nav-item tool-item gas-only" data-tool="grading" aria-label="Open Repair vs Replace Analysis">
                         <span class="nav-icon" aria-hidden="true">🛠️</span>
                         <span class="nav-text">Repair vs Replace</span>
                         <span class="nav-badge">Analysis</span>
                     </button>
-                    <button class="nav-item tool-item" data-tool="scheduler" aria-label="Open Crew Scheduler">
+                    <button class="nav-item tool-item gas-only" data-tool="scheduler" aria-label="Open Crew Scheduler">
                         <span class="nav-icon" aria-hidden="true">📅</span>
                         <span class="nav-text">Scheduler</span>
                         <span class="nav-badge">Crew</span>
                     </button>
-                    <button class="nav-item tool-item" data-tool="tools" aria-label="Open Hand Tool Checkout - Rental">
+                    <button class="nav-item tool-item gas-only" data-tool="tools" aria-label="Open Hand Tool Checkout - Rental">
                         <span class="nav-icon" aria-hidden="true">🔧</span>
                         <span class="nav-text">Hand Tool Checkout</span>
                         <span class="nav-badge">Rental</span>
                     </button>
-                    <button class="nav-item tool-item" data-tool="chessmap" aria-label="Open Chess Map and Logistics Tracking">
+                    <button class="nav-item tool-item gas-only" data-tool="chessmap" aria-label="Open Chess Map and Logistics Tracking">
                         <span class="nav-icon" aria-hidden="true">♟️</span>
                         <span class="nav-text">Chess Map & Logistics</span>
                         <span class="nav-badge">Tracking</span>
                     </button>
-                    <button class="nav-item tool-item" data-tool="truckcheck" aria-label="Open Weekly Truck Checks">
+                    <button class="nav-item tool-item gas-only" data-tool="truckcheck" aria-label="Open Weekly Truck Checks">
                         <span class="nav-icon" aria-hidden="true">🚛</span>
                         <span class="nav-text">Weekly Truck Checks</span>
                         <span class="nav-badge">Weekly</span>
                     </button>
-                    <button class="nav-item tool-item" data-tool="tvdashboard" aria-label="Open TV Dashboard">
+                    <button class="nav-item tool-item gas-only" data-tool="tvdashboard" aria-label="Open TV Dashboard">
                         <span class="nav-icon" aria-hidden="true">📺</span>
                         <span class="nav-text">TV Dashboard</span>
                         <span class="nav-badge">Display</span>
                     </button>
-                    <button class="nav-item tool-item" data-tool="shoptickets" aria-label="Open Shop Tickets">
+                    <button class="nav-item tool-item gas-only" data-tool="shoptickets" aria-label="Open Shop Tickets">
                         <span class="nav-icon" aria-hidden="true">🎫</span>
                         <span class="nav-text">Shop Tickets</span>
                         <span class="nav-badge">Repairs</span>
@@ -275,6 +275,10 @@
                     </div>
 
                     <div class="usage-billing-info" id="usageBillingInfo"></div>
+                    <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+                        <button id="manageBillingBtn" class="btn btn-secondary" style="display:none;">Manage Billing</button>
+                        <button id="upgradePlanBtn" class="btn btn-primary" style="display:none;">Upgrade Plan</button>
+                    </div>
                 </div>
             </section>
 
@@ -662,6 +666,7 @@
     <!-- Core Components -->
     <script src="js/chat.js?v=20260317a"></script>
     <script src="js/tools.js?v=20260317a"></script>
+    <script src="js/tenant.js?v=20260329a"></script>
     <script src="js/dashboard.js?v=20260317a"></script>
     <script src="js/main.js?v=20260317a"></script>
 

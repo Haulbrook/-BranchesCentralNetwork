@@ -122,6 +122,21 @@ async function handleCheckoutCompleted(session) {
     return;
   }
 
+  // Derive slug from email domain (e.g., "user@acmelandscaping.com" → "acme-landscaping")
+  const slug = deriveSlug(customerEmail);
+
+  // Default branding for new tenants (generic, not BRAIN-branded)
+  const defaultBranding = {
+    company_name: customerEmail ? customerEmail.split('@')[0] : 'My Company',
+    company_full_name: '',
+    app_acronym: '',
+    app_title: 'Operations Dashboard',
+    logo_img: 'images/root-apex-logo.jpeg',
+    login_heading: 'Welcome',
+    primary_color: '#4A90D9',
+    accent_color: '#357ABD',
+  };
+
   // Create new tenant
   const tenantData = {
     name: customerEmail || `Customer ${customerId}`,
@@ -131,6 +146,9 @@ async function handleCheckoutCompleted(session) {
     stripe_subscription_id: subscriptionId,
     subscription_status: status,
     trial_ends_at: trialEnd,
+    slug,
+    branding: defaultBranding,
+    gas_urls: {},
   };
 
   const created = await supabaseRest('tenants', {
@@ -141,18 +159,52 @@ async function handleCheckoutCompleted(session) {
 
   const tenantId = Array.isArray(created) ? created[0]?.id : created?.id;
 
-  // Try to link the Supabase auth user by email
-  if (customerEmail && tenantId) {
+  if (!tenantId) {
+    console.error('stripe-webhook: failed to create tenant');
+    return;
+  }
+
+  // Create initial usage_monthly row
+  const month = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+  try {
+    await supabaseRest('usage_monthly', {
+      method: 'POST',
+      body: JSON.stringify({
+        tenant_id: tenantId,
+        month,
+        ai_queries: 0,
+        inventory_items: 0,
+        active_jobs: 0,
+      }),
+    });
+  } catch (e) {
+    console.warn('stripe-webhook: failed to create usage_monthly row:', e.message);
+  }
+
+  // Link the Supabase auth user to the tenant
+  // Prefer client_reference_id (Supabase user UUID passed at checkout) over email search
+  const clientRefId = session.client_reference_id;
+
+  if (clientRefId) {
+    // Reliable: direct user ID from checkout
+    try {
+      await supabaseRest('tenant_members', {
+        method: 'POST',
+        body: JSON.stringify({
+          tenant_id: tenantId,
+          user_id: clientRefId,
+          role: 'owner',
+        }),
+      });
+    } catch (e) {
+      console.error('stripe-webhook: failed to link user by client_reference_id:', e.message);
+    }
+  } else if (customerEmail) {
+    // Fallback: search by email in auth users
     try {
       const usersRes = await fetch(
-        `${process.env.SUPABASE_URL}/auth/v1/admin/users?page=1&per_page=1`,
-        {
-          headers: {
-            ...supabaseHeaders(),
-            // Filter isn't supported via query params in all Supabase versions,
-            // so we'll fetch and filter. For now, search by listing.
-          },
-        }
+        `${process.env.SUPABASE_URL}/auth/v1/admin/users?page=1&per_page=50`,
+        { headers: supabaseHeaders() }
       );
       const usersData = await usersRes.json();
       const users = usersData?.users || usersData || [];
@@ -171,9 +223,21 @@ async function handleCheckoutCompleted(session) {
         });
       }
     } catch (e) {
-      console.error('stripe-webhook: failed to link user to tenant:', e.message);
+      console.error('stripe-webhook: failed to link user by email:', e.message);
     }
   }
+}
+
+/**
+ * Derive a URL-friendly slug from an email address.
+ * "user@acme-landscaping.com" → "acme-landscaping"
+ * "john@gmail.com" → "john-gmail"
+ */
+function deriveSlug(email) {
+  if (!email) return `tenant-${Date.now()}`;
+  const domain = email.split('@')[1] || '';
+  const name = domain.split('.')[0] || email.split('@')[0];
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || `tenant-${Date.now()}`;
 }
 
 async function handleSubscriptionUpdated(subscription) {

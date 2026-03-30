@@ -85,6 +85,17 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers: corsHeaders(), body: JSON.stringify({ error: 'Missing type or payload' }) };
   }
 
+  // Inject tenant name into system prompts for personalization
+  if (tenantInfo && tenantInfo.tenant.name) {
+    const tenantName = tenantInfo.tenant.name;
+    const prefix = `You are an AI assistant for ${tenantName}.`;
+    if (payload.system) {
+      payload.system = `${prefix} ${payload.system}`;
+    } else {
+      payload.system = prefix;
+    }
+  }
+
   // Allowed models whitelist — reject or clamp unknown models
   const ALLOWED_MODELS = ['claude-haiku-4-5-20251001', 'claude-sonnet-4-5-20241022'];
   const clampModel = (m) => ALLOWED_MODELS.includes(m) ? m : 'claude-haiku-4-5-20251001';
