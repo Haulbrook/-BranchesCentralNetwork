@@ -72,11 +72,15 @@ const Branding = (() => {
 
     // Meta tags
     _setMeta('apple-mobile-web-app-title', acronym);
+    const description = `${fullName} Operations Dashboard - Unified access to all operational tools`;
+
+    _setMeta('description', description);
     _setMetaProperty('og:title', title);
-    _setMetaProperty('og:image:alt', `${title} - Landscaping management platform`);
+    _setMetaProperty('og:description', description);
+    _setMetaProperty('og:image:alt', title);
     _setMeta('twitter:title', title, 'name');
-    _setMeta('twitter:image:alt', `${title} - Landscaping management platform`, 'name');
-    _setMeta('description', `${fullName} Operations Dashboard - Unified access to all operational tools`);
+    _setMeta('twitter:description', description, 'name');
+    _setMeta('twitter:image:alt', title, 'name');
 
     // Logo text
     const logoText = document.querySelector('.logo-text');

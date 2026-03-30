@@ -1,7 +1,7 @@
 # Branches-V1 SaaS Preparation Guide
 
-> Last updated: 2026-03-16
-> Status: Planning document — no code changes yet
+> Last updated: 2026-03-30
+> Status: **Phase 1 COMPLETE** — Phase 2 planning next
 
 ---
 
@@ -97,7 +97,7 @@ Currently, branding is hardcoded in 15+ locations (see [Blockers](#current-block
 }
 ```
 
-CSS custom properties in `styles/enhanced-components.css` (lines 1688-1764) already use a design-token pattern (`--dr-bg`, `--dr-accent`, etc.). These just need to be renamed from `--dr-*` to `--brand-*` and injected dynamically from tenant config at login.
+CSS custom properties in `styles/enhanced-components.css` use a design-token pattern (`--brand-token-bg`, `--brand-token-accent`, etc.) that are injected dynamically from tenant config via `Branding.applyTheme()` at login.
 
 ### Data isolation strategy
 
@@ -132,151 +132,47 @@ Keep shared. The current `gas-proxy.js` and `claude-proxy.js` already authentica
 
 ---
 
-## Phase 1: SaaS-Ready Refactors
+## Phase 1: SaaS-Ready Refactors — COMPLETE (2026-03-30)
 
-These changes benefit BRAIN standalone AND prepare for SaaS. Do them in the current codebase before any fork.
+All Phase 1 changes are deployed to production at `landscapebrain.com`.
 
-### 1.1 Extract hardcoded "BRAIN" into config
+### 1.1 Config-driven branding — DONE
 
-Every file below has hardcoded "BRAIN" strings that must become config-driven:
+- Created `js/branding.js` IIFE module (`Branding.init()`, `.get(key)`, `.update()`, `.applyToDOM()`, `.applyTheme()`)
+- Added `branding` section to `app.config.json` with 10 config keys
+- Replaced 100+ hardcoded "BRAIN"/"Branches" strings across 14 files with `Branding.get()` calls
+- `applyToDOM()` updates: document.title, meta description, og:title, og:description, og:image:alt, twitter:title, twitter:description, twitter:image:alt, apple-mobile-web-app-title, logo text/image, aria-label, welcome heading
 
-| File | What to change |
-|------|---------------|
-| `app.config.json` lines 4, 6 | `app.name`, `app.description` |
-| `index.html` lines 6, 10, 15, 20, 25, 28, 31, 61, 67, 221, 485 | Meta tags, `<title>`, logo text, welcome message, PDF hint |
-| `js/config.js` lines 278, 280 | Default config `app.name`, `app.description` |
-| `js/auth.js` lines 206, 212 | Login screen heading, email placeholder |
-| `js/main.js` lines 2, 607, 620-621, 1345 | File header, guest email, user email, fallback config |
-| `js/chat.js` lines 614, 616 | Welcome messages |
-| `js/dashboard.js` lines 611, 642 | PDF hint text, Claude extraction prompt |
-| `js/api.js` lines 215, 494, 618, 870 | System prompts for all agents, guest email |
-| `js/setupWizard.js` line 16 | Welcome step title |
-| `backend/code.js` lines 9, 64, 326, 426, 453, 2802 | GAS backend (BRAIN stays, SaaS won't use this) |
-| `netlify.toml` line 1 | Comment (cosmetic) |
-| `package.json` lines 2, 4, 11, 21 | Package metadata |
-| `tv.html` lines 6, 782 | TV dashboard title and heading |
-| `hand-tool-checkout.html` lines 6, 449 | Page title and footer |
-| `crew-scheduler.html` lines 6, 458 | Page title and footer |
-| `styles/main.css` line 2 | CSS comment (cosmetic) |
-| `styles/enhanced-components.css` line 1684 | CSS comment (cosmetic) |
+### 1.2 CSS design tokens — DONE
 
-**Action plan:**
+- Renamed all 105 `--dr-*` CSS custom properties to `--brand-token-*` in `enhanced-components.css`
+- Used `--brand-token-*` prefix (not `--brand-*`) to avoid collision with existing `--brand-accent`, `--brand-primary` variables
+- `Branding.applyTheme()` sets `--brand-token-*`, `--brand-*`, and legacy `--primary-color` vars from config
 
-```javascript
-// Add to app.config.json:
-"branding": {
-  "company_name": "BRAIN",
-  "company_full_name": "Branches Artificial Intelligence Network",
-  "app_title": "BRAIN Operations Dashboard",
-  "logo_emoji": "🌱",
-  "login_email_placeholder": "you@brain.app",
-  "guest_email": "guest@brain.app",
-  "primary_color": "#7eb83a",
-  "accent_color": "#5a8a28"
-}
-```
+### 1.3 GAS proxy URL abstraction — DONE
 
-Then create a `js/branding.js` module that:
-1. Reads `branding` from the loaded config
-2. Sets `document.title`
-3. Updates `.logo-text` inner text
-4. Updates meta tags
-5. Sets CSS custom properties on `:root`
-6. Exposes `Branding.companyName` etc. for JS templates
+- Extracted `resolveServiceUrl(service, _tenantInfo)` in `gas-proxy.js`
+- `_tenantInfo` parameter is a placeholder — future tenant routing is a ~5-line change
 
-Every hardcoded "BRAIN" string in JS becomes `Branding.companyName` or `Branding.appTitle`.
+### 1.4 Setup wizard modernization — DONE
 
-### 1.2 Make CSS design tokens config-driven
+- Removed obsolete `google_services` and `external_apis` steps
+- Added `company_branding` step: company name, dashboard acronym, brand color
+- Wizard calls `Branding.update()` then `Branding.applyToDOM()` + `applyTheme()` on complete
 
-The design tokens in `styles/enhanced-components.css` (lines 1688-1764) are already well-structured. Refactor:
+### 1.5 CSP hardening — DONE
 
-1. Rename `--dr-*` variables to `--brand-*` (find-and-replace across all CSS files)
-2. Keep the default values as BRAIN's colors
-3. In `js/branding.js`, override `:root` properties from tenant config:
+- Removed all inline `onclick`/`onchange`/`oninput`/`onmouseover`/`ondragstart` handlers from:
+  - 3 HTML pages (hand-tool-checkout, crew-scheduler, tv)
+  - 7 JS files (main, dashboard, chat, tools, auth, error-boundary, logger)
+- Replaced with `addEventListener` and event delegation patterns
+- Removed `'unsafe-inline'` from `script-src` in both `index.html` CSP meta tag and `netlify.toml` header
 
-```javascript
-// js/branding.js
-static applyTheme(config) {
-  const root = document.documentElement;
-  if (config.primary_color) root.style.setProperty('--brand-accent', config.primary_color);
-  if (config.bg_color)      root.style.setProperty('--brand-bg', config.bg_color);
-  // ... etc
-}
-```
+### 1.6 Security hardening (backend) — DONE
 
-### 1.3 Abstract GAS URLs into tenant config
-
-Currently `gas-proxy.js` uses a flat `SERVICE_ENV_MAP` (lines 23-31) mapping service names to env vars. Refactor to support per-tenant routing:
-
-```javascript
-// gas-proxy.js — future state
-const SERVICE_ENV_MAP = {
-  inventory:  'GAS_INVENTORY_URL',
-  activeJobs: 'GAS_ACTIVE_JOBS_URL',
-  // ... existing
-};
-
-// For SaaS tenants, look up from Supabase instead:
-async function getServiceUrl(tenantId, service) {
-  if (!tenantId || tenantId === 'brain') {
-    // Legacy path: use env vars
-    return process.env[SERVICE_ENV_MAP[service]];
-  }
-  // SaaS path: query Supabase tenant_configs table
-  // return row.service_urls[service];
-}
-```
-
-**Phase 1 action (now):** Don't implement the Supabase lookup yet. Just refactor the proxy so the URL resolution is in a single function rather than inline, making the future change a 5-line diff.
-
-### 1.4 Standardize the setup wizard for onboarding
-
-The current `SetupWizard` in `js/setupWizard.js` asks for GAS URLs and API keys — which are now server-side. Repurpose it for tenant onboarding:
-
-**Phase 1 (now):**
-- Remove the `googleAppsScriptUrl` field (server-side now)
-- Remove `inventorySheetId` and `knowledgeBaseSheetId` (server-side now)
-- Add company name, logo upload, and color picker fields
-- Store results in `branding` config key
-
-**Phase 2 (SaaS):**
-- Wizard writes to Supabase `tenants` table instead of localStorage
-- Wizard includes Stripe checkout step for paid tiers
-- Admin can re-run wizard to update branding
-
-### 1.5 Remove inline event handlers (CSP fix)
-
-Four files use `onclick=` and `onchange=` attributes that require `unsafe-inline` in CSP:
-
-| File | Inline handlers |
-|------|----------------|
-| `hand-tool-checkout.html` | `onclick="changeDate(-1)"`, `savePreset()`, `loadPreset()`, `addNewTool()`, `addCrew()`, `toggleStack()`, `removeCrew()` |
-| `crew-scheduler.html` | `onclick="changeDate(-1)"`, `savePreset()`, `loadPreset()`, `addCrew()`, `removeCrew()` |
-| `js/dashboard.js` line 785 | `onclick="this.closest('tr').remove();..."` on delete buttons |
-| `js/main.js` lines 505, 511 | `onclick` on suggestion items and close buttons |
-| `js/chat.js` line 874 | `onclick` on sortable table headers |
-| `js/tools.js` line 131 | `onclick="window.app.refreshCurrentTool()"` |
-| `tv.html` line 1142 | `onchange="assignEquipmentToJob(this)"` |
-
-**Action:** Replace all inline handlers with `addEventListener` calls. For dynamically generated HTML (like in `dashboard.js` and `chat.js`), use event delegation:
-
-```javascript
-// Instead of: onclick="window.toastManager.remove(${id})"
-// Use event delegation on the toast container:
-document.getElementById('toastContainer').addEventListener('click', (e) => {
-  const closeBtn = e.target.closest('.toast-close');
-  if (closeBtn) {
-    const id = closeBtn.dataset.toastId;
-    window.toastManager.remove(Number(id));
-  }
-});
-```
-
-Once all inline handlers are removed, tighten CSP:
-```
-script-src 'self' https://cdn.jsdelivr.net;
-```
-No more `'unsafe-inline'` for scripts.
+- GAS `code.js`: function whitelist, CORS restricted to known origins, sanitized error responses (no stack traces), Sheet IDs read from Script Properties, shared-secret auth check
+- Renamed `window.DR_DEBUG` → `window.DEBUG_MODE`
+- Fixed `branding.js` ConfigManager integration (used `.config` property instead of nonexistent `.getConfig()`)
 
 ---
 
@@ -525,25 +421,24 @@ Also add:
 
 ### Critical (must fix before SaaS)
 
-| Issue | Impact | Fix effort | Phase |
-|-------|--------|-----------|-------|
-| **Hardcoded "BRAIN" in 15+ files** | Every tenant sees "BRAIN" branding | Medium (1-2 days) | Phase 1.1 |
-| **CSP requires `'unsafe-inline'` for scripts** | Security weakness, fails stricter audits | Medium (1-2 days) | Phase 1.5 |
-| **GAS backends are per-spreadsheet** | Cannot programmatically provision new tenants | Large (Phase 2-3) | Phase 3.1 |
-| **No tenant concept in auth** | All users share one auth pool with no isolation | Medium (1 day) | Phase 2.2 |
-| **Supabase anon key hardcoded in `index.html` line 48** | Must be per-environment, not in source | Small (env var injection) | Phase 1 |
+| Issue | Impact | Fix effort | Phase | Status |
+|-------|--------|-----------|-------|--------|
+| ~~Hardcoded "BRAIN" in 15+ files~~ | ~~Every tenant sees "BRAIN" branding~~ | ~~Medium~~ | ~~Phase 1.1~~ | **DONE** |
+| ~~CSP requires `'unsafe-inline'` for scripts~~ | ~~Security weakness~~ | ~~Medium~~ | ~~Phase 1.5~~ | **DONE** |
+| **GAS backends are per-spreadsheet** | Cannot programmatically provision new tenants | Large (Phase 2-3) | Phase 3.1 | Open |
+| **No tenant concept in auth** | All users share one auth pool with no isolation | Medium (1 day) | Phase 2.2 | Open |
+| Supabase anon key hardcoded in `index.html` | Must be per-environment, not in source | Small (env var injection) | Phase 2 | Open |
 
 ### Important (fix for production quality)
 
-| Issue | Impact | Fix effort |
-|-------|--------|-----------|
-| `_shared/auth.js` uses raw crypto instead of JWT library | Brittle, doesn't validate iss/aud claims | Small |
-| `ALLOWED_ORIGIN` in `_shared/auth.js` line 95 defaults to `branchesv1.netlify.app` | SaaS domain won't match | Small (env var) |
-| `claude-proxy.js` model whitelist (line 67) is hardcoded | Can't add new models without deploy | Small |
-| Inline `onclick` handlers in `dashboard.js`, `main.js`, `chat.js`, `tools.js` | Blocks CSP tightening | Medium |
-| `hand-tool-checkout.html` and `crew-scheduler.html` are standalone pages with their own inline handlers | Duplicated code, CSP issues | Medium |
-| Rate limiting in proxy functions is per-instance (in-memory `Map`) | Resets on cold start, not shared across instances | Medium (use Supabase or Redis) |
-| No test suite | Refactors are risky without tests | Large |
+| Issue | Impact | Fix effort | Status |
+|-------|--------|-----------|--------|
+| `_shared/auth.js` uses raw crypto instead of JWT library | Brittle, doesn't validate iss/aud claims | Small | Open |
+| `ALLOWED_ORIGIN` in `_shared/auth.js` defaults to `branchesv1.netlify.app` | SaaS domain won't match | Small (env var) | Open |
+| `claude-proxy.js` model whitelist is hardcoded | Can't add new models without deploy | Small | Open |
+| ~~Inline `onclick` handlers across JS and HTML~~ | ~~Blocks CSP tightening~~ | ~~Medium~~ | **DONE** |
+| Rate limiting in proxy functions is per-instance (in-memory `Map`) | Resets on cold start, not shared across instances | Medium (use Supabase or Redis) | Open |
+| No test suite | Refactors are risky without tests | Large | Open |
 
 ### Nice-to-have
 
@@ -566,7 +461,9 @@ Track major decisions here as you work through phases.
 | 2026-03-16 | BRAIN stays on original repo/deploy; SaaS is a clean copy, not a fork | Avoids breaking production; DR instance stays simple |
 | 2026-03-16 | Phase 1 refactors happen in current codebase (benefit both DR and SaaS) | Branding extraction and CSP fixes improve DR too |
 | 2026-03-16 | GAS backends stay for BRAIN; new SaaS tenants get Supabase from day one | Avoids risky migration of working DR system |
-| | | |
+| 2026-03-29 | CSS tokens use `--brand-token-*` prefix, not `--brand-*` | `--brand-accent`, `--brand-primary` already existed (3 usages) — collision avoidance |
+| 2026-03-29 | Phase 1 complete: branding, CSP, proxy abstraction, wizard, security hardening | All deployed to production at landscapebrain.com |
+| 2026-03-30 | GAS backend: function whitelist + CORS restriction + sanitized errors | Defense-in-depth behind Netlify proxy; Sheet IDs moved to Script Properties |
 
 ---
 
@@ -592,10 +489,10 @@ Branches-V1/
 │   ├── dashboard.js                   # WO cards, PDF parsing prompt
 │   ├── setupWizard.js                 # Onboarding wizard — repurpose for tenants
 │   ├── masterAgent.js                 # Multi-agent orchestrator
-│   └── [NEW] branding.js             # Tenant branding applicator
+│   └── branding.js                    # Tenant branding module (IIFE, window.Branding)
 ├── styles/
-│   └── enhanced-components.css        # Design tokens (--dr-* → --brand-*)
-├── hand-tool-checkout.html            # Standalone page — inline handlers
-├── crew-scheduler.html                # Standalone page — inline handlers
-└── tv.html                            # TV dashboard — DR-specific
+│   └── enhanced-components.css        # Design tokens (--brand-token-*)
+├── hand-tool-checkout.html            # Standalone page — event delegation
+├── crew-scheduler.html                # Standalone page — event delegation
+└── tv.html                            # TV dashboard — event delegation
 ```
