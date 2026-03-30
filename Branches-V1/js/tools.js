@@ -271,8 +271,7 @@ class ToolManager {
                     cursor: pointer;
                     font-size: 0.875rem;
                     transition: background-color var(--transition-fast);
-                " onmouseover="this.style.backgroundColor='var(--border-color)'" 
-                   onmouseout="this.style.backgroundColor='transparent'">
+                ">
                     <span style="font-size: 1rem;">${icon}</span>
                     <div style="flex: 1; min-width: 0;">
                         <div style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">

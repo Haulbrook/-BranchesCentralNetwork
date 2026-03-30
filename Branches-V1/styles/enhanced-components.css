@@ -2819,3 +2819,8 @@
     padding: 16px 20px;
     border-top: 1px solid var(--border-color, #2e3329);
 }
+
+/* Recent activity item hover */
+.recent-item:hover {
+    background-color: var(--border-color);
+}

@@ -102,6 +102,16 @@ class ChatManager {
             });
         }
 
+        // Delegated input handler for inventory browse filter
+        const chatHistory = document.getElementById('chatHistory');
+        if (chatHistory) {
+            chatHistory.addEventListener('input', (e) => {
+                if (e.target.classList.contains('inventory-browse-filter')) {
+                    this.filterInventoryTable(e.target.value);
+                }
+            });
+        }
+
         // Auto-resize textarea
         this.autoResizeInput();
     }
@@ -864,7 +874,7 @@ class ChatManager {
         let html = `<div class="inventory-browse-container">`;
         html += `<div class="inventory-browse-header">`;
         html += `<h4>Inventory (${total} items)</h4>`;
-        html += `<input type="text" class="inventory-browse-filter" placeholder="Filter items..." oninput="window.app.chat.filterInventoryTable(this.value)">`;
+        html += `<input type="text" class="inventory-browse-filter" placeholder="Filter items...">`;
         html += `</div>`;
         html += `<div class="inventory-browse-table-wrapper">`;
         html += `<table class="inventory-browse-table">`;
