@@ -446,13 +446,28 @@ class DashboardManager {
                     throw new Error(json.error || 'GAS returned an error');
                 }
             }
+
+            // Optimistically update in-memory job data so progress bar updates immediately
+            const jobs = this.metrics.get('activeJobs') || [];
+            const job = jobs.find(j => String(j.woNumber) === String(woNumber));
+            if (job) {
+                const delta = newValue ? 1 : -1;
+                job.completedItems = Math.max(0, (job.completedItems || 0) + delta);
+                job.tasksComplete = job.completedItems;
+                job.percentage = job.totalItems > 0 ? Math.round((job.completedItems / job.totalItems) * 100) : 0;
+                job.progress = job.percentage;
+                job.progressLabel = `${job.completedItems} / ${job.totalItems} tasks complete`;
+                this.renderJobCards();
+            }
+
+            // Also refresh from server after delay to get authoritative data
             setTimeout(async () => {
                 await this.loadActiveJobs();
                 this.renderJobCards();
                 if (!document.getElementById('woDetailModal')?.classList.contains('hidden')) {
                     this.openDetail(woNumber);
                 }
-            }, 1500);
+            }, 2000);
         } catch (ex) {
             // Revert on error
             row.dataset.done = String(!newValue);
