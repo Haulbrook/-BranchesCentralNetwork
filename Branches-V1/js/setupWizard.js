@@ -322,8 +322,9 @@ class SetupWizard {
         localStorage.setItem(this.configKey, JSON.stringify(this.config));
         localStorage.setItem(this.wizardCompleteKey, 'true');
 
-        // Apply branding from wizard config
+        // Push wizard values into Branding, then apply
         if (window.Branding) {
+            Branding.update(this.config);
             Branding.applyToDOM();
             Branding.applyTheme();
         }

@@ -215,6 +215,14 @@ class DashboardManager {
             });
             if (cacheChanged) this._saveWoMetaCache(cache);
 
+            // Normalize field names: GAS returns tasksComplete/tasksTotal/progress,
+            // but cards expect completedItems/totalItems/percentage
+            serverJobs.forEach(job => {
+                job.completedItems = job.completedItems ?? job.tasksComplete ?? 0;
+                job.totalItems     = job.totalItems     ?? job.tasksTotal    ?? 0;
+                job.percentage     = job.percentage      ?? job.progress     ?? 0;
+            });
+
             this.metrics.set('activeJobs', serverJobs);
         } catch (error) {
             Logger.error('Dashboard', 'Failed to load active jobs:', error);

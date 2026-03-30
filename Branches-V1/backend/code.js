@@ -44,22 +44,27 @@
 // ═══════════════════════════════════════════════════════════════════════
 // 📋 CONFIGURATION
 // ═══════════════════════════════════════════════════════════════════════
+// Sheet IDs and API keys are read from Script Properties (Apps Script > Settings > Script Properties).
+// Hardcoded fallbacks are kept for backward-compat but should be migrated to properties.
+const _props = PropertiesService.getScriptProperties();
+const _prop = (key, fallback) => _props.getProperty(key) || fallback || '';
+
 const CONFIG = {
-  INVENTORY_SHEET_ID: "18qeP1XG9sDtknL3UKc7bb2utHvnJNpYNKkfMNsSVDRQ", // Replace with your actual sheet ID
-  KNOWLEDGE_BASE_SHEET_ID: "1I8Wp0xfcQCHLeJyIPsQoM2moebZUy35zNGBLzDLpl8Q", // Replace with your knowledge base sheet ID
-  TRUCK_SHEET_ID: "1xI6gCkkOa0KeGhFGIGN0mP3Ey20BTd9wTLLZsR_eC0Y", // Landscapebrain demo Fleet Assets sheet
-  CREW_SCHEDULE_SHEET_ID: "1vSKSpjK5rsGlImaGDguwFwdnUQZwl85epgHBCelDFMRReu", // Crew Schedule Database sheet ID (extract from user's URL)
+  INVENTORY_SHEET_ID: _prop('INVENTORY_SHEET_ID', '18qeP1XG9sDtknL3UKc7bb2utHvnJNpYNKkfMNsSVDRQ'),
+  KNOWLEDGE_BASE_SHEET_ID: _prop('KNOWLEDGE_BASE_SHEET_ID', '1I8Wp0xfcQCHLeJyIPsQoM2moebZUy35zNGBLzDLpl8Q'),
+  TRUCK_SHEET_ID: _prop('TRUCK_SHEET_ID', '1xI6gCkkOa0KeGhFGIGN0mP3Ey20BTd9wTLLZsR_eC0Y'),
+  CREW_SCHEDULE_SHEET_ID: _prop('CREW_SCHEDULE_SHEET_ID', '1vSKSpjK5rsGlImaGDguwFwdnUQZwl85epgHBCelDFMRReu'),
   INVENTORY_SHEET_NAME: "Sheet1",
   KNOWLEDGE_SHEET_NAME: "Sheet1",
   TRUCK_SHEET_NAME: "Master",
   CREW_SCHEDULE_SHEET_NAME: "Sheet1",
-  ACTIVE_JOBS_SHEET_ID: "13bnntgZiXdCA2KQvJXpIBA1rCBzx3ZmeKakzYFFg7QA",
+  ACTIVE_JOBS_SHEET_ID: _prop('ACTIVE_JOBS_SHEET_ID', '13bnntgZiXdCA2KQvJXpIBA1rCBzx3ZmeKakzYFFg7QA'),
   ACTIVE_JOBS_SHEET_NAME: "WorkOrders",
   WORK_ORDERS_SHEET_NAME: "WorkOrders",
   LINE_ITEMS_SHEET_NAME: "LineItems",
-  CLAUDE_API_KEY: PropertiesService.getScriptProperties().getProperty('CLAUDE_API_KEY') || "",
+  CLAUDE_API_KEY: _prop('CLAUDE_API_KEY'),
   CLAUDE_MODEL: "claude-sonnet-4-20250514",
-  OPENAI_API_KEY: "", // Replace with your actual API key
+  OPENAI_API_KEY: _prop('OPENAI_API_KEY'),
   OPENAI_MODEL: "gpt-4",
   SYSTEM_PROMPT: "You are the internal operations assistant for Branches Artificial Intelligence Network, a landscaping company. " +
     "You help team members with inventory management, fleet tracking, and operational questions.\n\n" +
@@ -471,142 +476,126 @@ function doGet(e) {
 }
 
 // =============================
-// 🌐 Handle CORS Preflight (OPTIONS requests)
+// 🌐 CORS & Auth Helpers
 // =============================
+const ALLOWED_ORIGINS = [
+  'https://branchesv1.netlify.app',
+  'https://landscapebrain.com',
+  'https://www.landscapebrain.com',
+];
+
+function _getCorsOrigin(e) {
+  // GAS doesn't reliably expose request headers, so we allow our known origins.
+  // The Netlify proxy is the primary caller; direct browser calls are rare.
+  return ALLOWED_ORIGINS[0];
+}
+
 function doOptions(e) {
+  var origin = _getCorsOrigin(e);
   return ContentService.createTextOutput('')
     .setMimeType(ContentService.MimeType.TEXT)
-    .setHeader('Access-Control-Allow-Origin', '*')
+    .setHeader('Access-Control-Allow-Origin', origin)
     .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-    .setHeader('Access-Control-Allow-Headers', 'Content-Type')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
     .setHeader('Access-Control-Max-Age', '86400');
+}
+
+// =============================
+// 🔒 Allowed API functions (whitelist)
+// =============================
+const ALLOWED_FUNCTIONS = {
+  // Read operations
+  'askInventory':           (params)       => askInventory(params[0]),
+  'searchTruckInfo':        (params)       => searchTruckInfo(params[0]),
+  'searchKnowledgeBase':    (params)       => searchKnowledgeBase(params[0]),
+  'getInventoryReport':     ()             => getInventoryReport(),
+  'getFleetReport':         ()             => getFleetReport(),
+  'checkLowStock':          ()             => checkLowStock(),
+  'findDuplicates':         ()             => findDuplicates(),
+  'getRecentActivity':      (params)       => getRecentActivity(params[0] || 5),
+  'getActiveProjects':      ()             => getActiveProjects(),
+  'getArchivedProjects':    ()             => getArchivedProjects(),
+  'getActiveJobs':          ()             => getActiveJobs(),
+  'getLineItems':           (params, data) => getLineItems(data.woNumber || params[0]),
+  'getTVDashboardData':     ()             => getTVDashboardData(),
+  'browseInventory':        ()             => browseInventory(),
+  'browseInventoryPaginated': (params)     => browseInventoryPaginated(params[0] || {}),
+  'routeQuery':             (params)       => routeQuery(params[0]),
+  // Write operations
+  'updateInventory':        (params)       => updateInventory(params[0]),
+  'batchImportItems':       (params)       => batchImportItems(params[0]),
+  'mergeDuplicates':        (params)       => mergeDuplicates(params[0], params[1], params[2]),
+  'addProject':             (params)       => addProject(params[0]),
+  'updateProject':          (params)       => updateProject(params[0], params[1]),
+  'archiveProject':         (params)       => archiveProject(params[0]),
+  'parsePDFWithClaude':     (params)       => parsePDFWithClaude(params[0]),
+  'writeWorkOrder':         (params)       => writeWorkOrder(params[0]),
+  'writeLineItems':         (params)       => writeLineItems(params[0]),
+  'toggleCheckbox':         (params, data) => toggleCheckbox(
+    data.woNumber || (params[0] && params[0].woNumber),
+    data.rowIndex || (params[0] && params[0].rowIndex),
+    data.value    || (params[0] && params[0].value)
+  ),
+};
+
+// =============================
+// 🔐 Request authentication
+// =============================
+function _validateRequest(e) {
+  // The primary security boundary is the Netlify proxy (gas-proxy.js),
+  // which validates Supabase JWTs before forwarding requests here.
+  // As a defense-in-depth measure, check for a shared secret that
+  // gas-proxy.js includes in forwarded requests.
+  var secret = _prop('GAS_SHARED_SECRET');
+  if (!secret) return true; // No secret configured = legacy mode (proxy is sole gate)
+
+  var authHeader = '';
+  try {
+    // GAS doesn't expose headers reliably in Web App mode, but
+    // the proxy sends the secret as a JSON field for compatibility.
+    var data = JSON.parse(e.postData.contents);
+    authHeader = data._authToken || '';
+  } catch (_) {}
+
+  return authHeader === secret;
 }
 
 // =============================
 // 🌐 API Endpoint: Handle POST requests from dashboard
 // =============================
 function doPost(e) {
+  var origin = _getCorsOrigin(e);
   try {
+    // Auth check
+    if (!_validateRequest(e)) {
+      return ContentService.createTextOutput(
+        JSON.stringify({ success: false, error: { message: 'Unauthorized' } })
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
+
     // Parse incoming request
     const data = JSON.parse(e.postData.contents);
     const functionName = data.function || data.action;
     const params = data.parameters || [];
 
-    Logger.log("API Call: " + functionName + " with params: " + JSON.stringify(params));
-
-    // Route to the correct function
-    let result;
-    switch(functionName) {
-      case 'askInventory':
-        result = askInventory(params[0]);
-        break;
-
-      case 'updateInventory':
-        result = updateInventory(params[0]);
-        break;
-
-      case 'searchTruckInfo':
-        result = searchTruckInfo(params[0]);
-        break;
-
-      case 'searchKnowledgeBase':
-        result = searchKnowledgeBase(params[0]);
-        break;
-
-      case 'getInventoryReport':
-        result = getInventoryReport();
-        break;
-
-      case 'getFleetReport':
-        result = getFleetReport();
-        break;
-
-      case 'checkLowStock':
-        result = checkLowStock();
-        break;
-
-      case 'batchImportItems':
-        result = batchImportItems(params[0]);
-        break;
-
-      case 'findDuplicates':
-        result = findDuplicates();
-        break;
-
-      case 'mergeDuplicates':
-        result = mergeDuplicates(params[0], params[1], params[2]);
-        break;
-
-      case 'getRecentActivity':
-        // Return recent activity (last 5 changes)
-        result = getRecentActivity(params[0] || 5);
-        break;
-
-      case 'addProject':
-        result = addProject(params[0]);
-        break;
-
-      case 'updateProject':
-        result = updateProject(params[0], params[1]);
-        break;
-
-      case 'archiveProject':
-        result = archiveProject(params[0]);
-        break;
-
-      case 'getActiveProjects':
-        result = getActiveProjects();
-        break;
-
-      case 'getArchivedProjects':
-        result = getArchivedProjects();
-        break;
-
-      case 'parsePDFWithClaude':
-        result = parsePDFWithClaude(params[0]);
-        break;
-
-      case 'writeWorkOrder':
-        result = writeWorkOrder(params[0]);
-        break;
-
-      case 'writeLineItems':
-        result = writeLineItems(params[0]);
-        break;
-
-      case 'getActiveJobs':
-        result = getActiveJobs();
-        break;
-
-      case 'toggleCheckbox':
-        result = toggleCheckbox(data.woNumber || (params[0] && params[0].woNumber),
-                                data.rowIndex || (params[0] && params[0].rowIndex),
-                                data.value    || (params[0] && params[0].value));
-        break;
-
-      case 'getLineItems':
-        result = getLineItems(data.woNumber || params[0]);
-        break;
-
-      case 'getTVDashboardData':
-        result = getTVDashboardData();
-        break;
-
-      case 'routeQuery':
-        result = routeQuery(params[0]);
-        break;
-
-      case 'browseInventory':
-        result = browseInventory();
-        break;
-
-      case 'browseInventoryPaginated':
-        result = browseInventoryPaginated(params[0] || {});
-        break;
-
-      default:
-        throw new Error('Unknown function: ' + functionName);
+    // Validate function name against whitelist
+    if (typeof functionName !== 'string' || !ALLOWED_FUNCTIONS[functionName]) {
+      return ContentService.createTextOutput(
+        JSON.stringify({ success: false, error: { message: 'Unknown function' } })
+      ).setMimeType(ContentService.MimeType.JSON);
     }
+
+    // Validate params is an array
+    if (!Array.isArray(params)) {
+      return ContentService.createTextOutput(
+        JSON.stringify({ success: false, error: { message: 'Invalid parameters' } })
+      ).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    Logger.log("API Call: " + functionName + " (" + params.length + " params)");
+
+    // Route to the correct function via whitelist
+    const result = ALLOWED_FUNCTIONS[functionName](params, data);
 
     // Return successful response
     return ContentService.createTextOutput(
@@ -620,13 +609,12 @@ function doPost(e) {
   } catch (error) {
     Logger.log("API Error: " + error.toString());
 
-    // Return error response
+    // Return sanitized error response — no stack traces
     return ContentService.createTextOutput(
       JSON.stringify({
         success: false,
         error: {
-          message: error.toString(),
-          stack: error.stack
+          message: 'Internal error. Contact support if this persists.'
         }
       })
     )
@@ -2855,20 +2843,28 @@ function getActiveJobs() {
       salesRep: findCol(headers, ['sales rep', 'salesman', 'sales', 'rep', 'sales person'])
     };
 
-    // Identify checkbox columns (columns with TRUE/FALSE boolean values)
-    var checkboxCols = [];
-    for (var c = 0; c < headers.length; c++) {
-      var hasCheckbox = false;
-      for (var r = 1; r < Math.min(data.length, 10); r++) {
-        var val = data[r][c];
-        if (val === true || val === false) {
-          hasCheckbox = true;
-          break;
+    // Build progress map from LineItems sheet
+    var progressMap = {};
+    try {
+      var liSheet = ss.getSheetByName(CONFIG.LINE_ITEMS_SHEET_NAME);
+      if (liSheet && liSheet.getLastRow() > 1) {
+        var liData = liSheet.getDataRange().getValues();
+        var liHeaders = liData[0].map(function(h) { return String(h).trim().toLowerCase(); });
+        var liColWo = findCol(liHeaders, ['wonumber', 'wo number', 'wo #', 'wo']);
+        var liColDone = findCol(liHeaders, ['completed', 'done', 'complete', '_done']);
+
+        for (var li = 1; li < liData.length; li++) {
+          var liWo = liColWo >= 0 ? String(liData[li][liColWo]).trim() : '';
+          if (!liWo) continue;
+          if (!progressMap[liWo]) progressMap[liWo] = { total: 0, checked: 0 };
+          progressMap[liWo].total++;
+          if (liColDone >= 0 && (liData[li][liColDone] === true || String(liData[li][liColDone]).toLowerCase() === 'true')) {
+            progressMap[liWo].checked++;
+          }
         }
       }
-      if (hasCheckbox) {
-        checkboxCols.push(c);
-      }
+    } catch (e) {
+      Logger.log('Warning: could not read LineItems for progress: ' + e.toString());
     }
 
     var jobs = [];
@@ -2879,15 +2875,9 @@ function getActiveJobs() {
       var woNum = colMap.woNumber >= 0 ? String(row[colMap.woNumber] || '').trim() : '';
       if (!woNum && colMap.jobName >= 0 && !String(row[colMap.jobName] || '').trim()) continue;
 
-      // Count checkbox progress
-      var checked = 0;
-      var total = checkboxCols.length;
-      for (var j = 0; j < checkboxCols.length; j++) {
-        if (row[checkboxCols[j]] === true) {
-          checked++;
-        }
-      }
-      var percent = total > 0 ? Math.round((checked / total) * 100) : 0;
+      // Get progress from LineItems
+      var prog = progressMap[woNum] || { total: 0, checked: 0 };
+      var percent = prog.total > 0 ? Math.round((prog.checked / prog.total) * 100) : 0;
 
       jobs.push({
         woNumber: woNum || 'N/A',
@@ -2898,9 +2888,9 @@ function getActiveJobs() {
         address: colMap.address >= 0 ? String(row[colMap.address] || '') : '',
         salesRep: colMap.salesRep >= 0 ? String(row[colMap.salesRep] || '') : '',
         progress: percent,
-        tasksComplete: checked,
-        tasksTotal: total,
-        progressLabel: total > 0 ? checked + ' / ' + total + ' tasks complete' : 'No tasks tracked'
+        tasksComplete: prog.checked,
+        tasksTotal: prog.total,
+        progressLabel: prog.total > 0 ? prog.checked + ' / ' + prog.total + ' tasks complete' : 'No tasks tracked'
       });
     }
 

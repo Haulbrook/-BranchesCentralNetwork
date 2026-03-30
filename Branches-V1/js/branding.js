@@ -33,14 +33,11 @@ const Branding = (() => {
   /** Load branding from ConfigManager (if available) or fetch config directly. */
   async function init() {
     try {
-      // If ConfigManager already loaded, read from it
-      if (window.ConfigManager && typeof window.ConfigManager.getConfig === 'function') {
-        const full = window.ConfigManager.getConfig();
-        if (full && full.branding) {
-          _config = { ...DEFAULTS, ...full.branding };
-          _ready = true;
-          return;
-        }
+      // If ConfigManager already loaded, read branding from it
+      if (window.ConfigManager && window.ConfigManager.config && window.ConfigManager.config.branding) {
+        _config = { ...DEFAULTS, ...window.ConfigManager.config.branding };
+        _ready = true;
+        return;
       }
 
       // Fallback: fetch config ourselves
@@ -135,7 +132,14 @@ const Branding = (() => {
     if (el) el.setAttribute('content', content);
   }
 
-  return { init, get, applyToDOM, applyTheme, get isReady() { return _ready; } };
+  /** Merge new values into branding config (e.g. from setup wizard). */
+  function update(overrides) {
+    if (overrides && typeof overrides === 'object') {
+      Object.assign(_config, overrides);
+    }
+  }
+
+  return { init, get, update, applyToDOM, applyTheme, get isReady() { return _ready; } };
 })();
 
 window.Branding = Branding;
