@@ -20,30 +20,56 @@ const TenantContext = (() => {
 
   async function init() {
     try {
+      // Check for pending team invites (fire-and-forget on first call, blocking if no tenant)
+      const inviteCheck = fetch('/.netlify/functions/check-invite', {
+        method: 'POST',
+        headers: { ..._authHeaders(), 'Content-Type': 'application/json' },
+        body: '{}',
+      }).catch(() => null);
+
       const resp = await fetch('/.netlify/functions/get-usage', {
         method: 'GET',
         headers: _authHeaders(),
       });
       if (!resp.ok) {
         console.warn('TenantContext: get-usage returned', resp.status);
+        // If no tenant, wait for invite check — user might have just been invited
+        const inviteResp = await inviteCheck;
+        if (inviteResp && inviteResp.ok) {
+          const inviteData = await inviteResp.json();
+          if (inviteData.joined) {
+            // Re-fetch usage now that we've joined a tenant
+            const retry = await fetch('/.netlify/functions/get-usage', {
+              method: 'GET',
+              headers: _authHeaders(),
+            });
+            if (retry.ok) {
+              _data = await retry.json();
+            }
+          }
+        }
         _ready = true;
+        if (_data) _applyBranding();
         return;
       }
 
       _data = await resp.json();
       _ready = true;
 
-      // Apply tenant branding if present
-      if (_data.branding && typeof _data.branding === 'object' && Object.keys(_data.branding).length > 0) {
-        if (window.Branding) {
-          Branding.update(_data.branding);
-          Branding.applyToDOM();
-          Branding.applyTheme();
-        }
-      }
+      _applyBranding();
     } catch (e) {
       console.warn('TenantContext: init failed', e);
       _ready = true;
+    }
+  }
+
+  function _applyBranding() {
+    if (_data && _data.branding && typeof _data.branding === 'object' && Object.keys(_data.branding).length > 0) {
+      if (window.Branding) {
+        Branding.update(_data.branding);
+        Branding.applyToDOM();
+        Branding.applyTheme();
+      }
     }
   }
 

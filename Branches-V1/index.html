@@ -144,6 +144,10 @@
                         <span class="nav-text">Usage</span>
                         <span class="nav-badge" id="usageBadge" style="display:none">Plan</span>
                     </button>
+                    <button id="teamBtn" class="nav-item" aria-label="Manage team members">
+                        <span class="nav-icon" aria-hidden="true">👥</span>
+                        <span class="nav-text">Team</span>
+                    </button>
                     <button id="settingsBtn" class="nav-item" aria-label="Open settings">
                         <span class="nav-icon" aria-hidden="true">⚙️</span>
                         <span class="nav-text">Settings</span>
@@ -278,6 +282,40 @@
                     <div style="display:flex;gap:0.5rem;margin-top:1rem;">
                         <button id="manageBillingBtn" class="btn btn-secondary" style="display:none;">Manage Billing</button>
                         <button id="upgradePlanBtn" class="btn btn-primary" style="display:none;">Upgrade Plan</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Team Management View -->
+            <section id="teamView" class="usage-view hidden" aria-labelledby="team-heading">
+                <div class="usage-view-container">
+                    <div class="usage-view-header">
+                        <h2 id="team-heading">Team Management</h2>
+                        <div class="usage-plan-badge" id="teamSeatsBadge">—</div>
+                    </div>
+                    <div class="usage-status-line" id="teamStatusLine"></div>
+
+                    <!-- Invite Form -->
+                    <div id="teamInviteForm" class="team-invite-form" style="display:none;margin:1rem 0;padding:1rem;border:1px solid var(--border-color);border-radius:8px;">
+                        <h3 style="margin:0 0 0.75rem 0;font-size:0.95rem;">Invite a Team Member</h3>
+                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                            <input type="email" id="inviteEmail" placeholder="colleague@company.com" style="flex:1;min-width:200px;padding:0.5rem 0.75rem;border:1px solid var(--border-color);border-radius:6px;background:var(--bg-primary);color:var(--text-primary);">
+                            <select id="inviteRole" style="padding:0.5rem 0.75rem;border:1px solid var(--border-color);border-radius:6px;background:var(--bg-primary);color:var(--text-primary);">
+                                <option value="member">Member</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                            <button id="sendInviteBtn" class="btn btn-primary">Send Invite</button>
+                        </div>
+                        <div id="inviteStatus" style="margin-top:0.5rem;font-size:0.85rem;"></div>
+                    </div>
+
+                    <!-- Members List -->
+                    <div id="teamMembersList" style="margin-top:1rem;"></div>
+
+                    <!-- Pending Invites -->
+                    <div id="teamPendingSection" style="display:none;margin-top:1.5rem;">
+                        <h3 style="font-size:0.95rem;margin-bottom:0.5rem;">Pending Invitations</h3>
+                        <div id="teamPendingList"></div>
                     </div>
                 </div>
             </section>

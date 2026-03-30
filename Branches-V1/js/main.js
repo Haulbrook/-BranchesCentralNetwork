@@ -705,6 +705,11 @@ Recommendations: ${report.recommendations.length}
             this.showUsageView();
         });
 
+        // Team
+        document.getElementById('teamBtn')?.addEventListener('click', () => {
+            this.showTeamView();
+        });
+
         // Settings
         document.getElementById('settingsBtn')?.addEventListener('click', () => {
             this.ui.showSettingsModal();
@@ -853,6 +858,7 @@ Recommendations: ${report.recommendations.length}
         document.getElementById('chatInterface')?.classList.add('hidden');
         document.getElementById('toolContainer')?.classList.add('hidden');
         document.getElementById('usageView')?.classList.add('hidden');
+        document.getElementById('teamView')?.classList.add('hidden');
 
         // Update navigation
         document.querySelectorAll('.nav-item').forEach(item => {
@@ -886,6 +892,220 @@ Recommendations: ${report.recommendations.length}
         this.fetchUsageInfo();
     }
 
+    showTeamView() {
+        this.currentTool = null;
+        if (this.dashboard) this.dashboard.pauseAutoRefresh();
+        document.getElementById('gasAuthHint')?.remove();
+        document.getElementById('dashboardView')?.classList.add('hidden');
+        document.getElementById('chatInterface')?.classList.add('hidden');
+        document.getElementById('toolContainer')?.classList.add('hidden');
+        document.getElementById('usageView')?.classList.add('hidden');
+        document.getElementById('teamView')?.classList.remove('hidden');
+
+        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+        document.getElementById('teamBtn')?.classList.add('active');
+
+        this.fetchTeamInfo();
+    }
+
+    async fetchTeamInfo() {
+        try {
+            const resp = await fetch('/.netlify/functions/team-management', {
+                method: 'POST',
+                headers: { ...this.api._proxyHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'list' }),
+            });
+            const data = await resp.json();
+            this.renderTeamPanel(data);
+        } catch (e) {
+            Logger.warn('App', 'Failed to fetch team info:', e);
+        }
+    }
+
+    renderTeamPanel(data) {
+        const members = data.members || [];
+        const invites = data.invites || [];
+        const isOwnerOrAdmin = window.TenantContext &&
+            (TenantContext.data?.status === 'grandfathered' || true); // role check done server-side
+
+        // Seats badge
+        const maxUsers = TenantContext?.limits?.users || '?';
+        const seatsBadge = document.getElementById('teamSeatsBadge');
+        if (seatsBadge) seatsBadge.textContent = `${members.length} / ${maxUsers} seats`;
+
+        // Status line
+        const statusLine = document.getElementById('teamStatusLine');
+        if (statusLine) {
+            const tier = TenantContext?.tier || 'unknown';
+            statusLine.textContent = `${tier.charAt(0).toUpperCase() + tier.slice(1)} plan — ${maxUsers === Infinity ? 'unlimited' : maxUsers} team member${maxUsers === 1 ? '' : 's'} allowed.`;
+        }
+
+        // Show invite form for owners/admins (server enforces, but hide for members)
+        const inviteForm = document.getElementById('teamInviteForm');
+        if (inviteForm) {
+            inviteForm.style.display = '';
+            // Wire up send button (remove old listener by replacing)
+            const sendBtn = document.getElementById('sendInviteBtn');
+            if (sendBtn) {
+                const newBtn = sendBtn.cloneNode(true);
+                sendBtn.parentNode.replaceChild(newBtn, sendBtn);
+                newBtn.addEventListener('click', () => this.sendTeamInvite());
+            }
+        }
+
+        // Members list
+        const membersList = document.getElementById('teamMembersList');
+        if (membersList) {
+            if (members.length === 0) {
+                membersList.innerHTML = '<p style="color:var(--text-secondary);">No team members found.</p>';
+            } else {
+                membersList.innerHTML = members.map(m => `
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem;border:1px solid var(--border-color);border-radius:8px;margin-bottom:0.5rem;">
+                        <div>
+                            <div style="font-weight:500;">${this._escapeHtml(m.email)}</div>
+                            <div style="font-size:0.8rem;color:var(--text-secondary);">${m.role}${m.role === 'owner' ? ' (you)' : ''} — joined ${new Date(m.created_at).toLocaleDateString()}</div>
+                        </div>
+                        ${m.role !== 'owner' ? `
+                            <div style="display:flex;gap:0.25rem;">
+                                <button class="btn btn-secondary" style="font-size:0.75rem;padding:0.25rem 0.5rem;" data-member-id="${m.id}" data-action="toggle-role" data-current-role="${m.role}">${m.role === 'admin' ? 'Make Member' : 'Make Admin'}</button>
+                                <button class="btn btn-secondary" style="font-size:0.75rem;padding:0.25rem 0.5rem;color:#e53935;" data-member-id="${m.id}" data-action="remove">Remove</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('');
+
+                // Wire up action buttons
+                membersList.querySelectorAll('[data-action="toggle-role"]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const newRole = btn.dataset.currentRole === 'admin' ? 'member' : 'admin';
+                        this.updateTeamMemberRole(btn.dataset.memberId, newRole);
+                    });
+                });
+                membersList.querySelectorAll('[data-action="remove"]').forEach(btn => {
+                    btn.addEventListener('click', () => this.removeTeamMember(btn.dataset.memberId));
+                });
+            }
+        }
+
+        // Pending invites
+        const pendingSection = document.getElementById('teamPendingSection');
+        const pendingList = document.getElementById('teamPendingList');
+        if (pendingSection && pendingList) {
+            if (invites.length > 0) {
+                pendingSection.style.display = '';
+                pendingList.innerHTML = invites.map(inv => `
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0.75rem;border:1px solid var(--border-color);border-radius:8px;margin-bottom:0.5rem;opacity:0.8;">
+                        <div>
+                            <span>${this._escapeHtml(inv.email)}</span>
+                            <span style="font-size:0.8rem;color:var(--text-secondary);margin-left:0.5rem;">(${inv.role})</span>
+                        </div>
+                        <button class="btn btn-secondary" style="font-size:0.75rem;padding:0.25rem 0.5rem;" data-invite-id="${inv.id}" data-action="revoke">Revoke</button>
+                    </div>
+                `).join('');
+
+                pendingList.querySelectorAll('[data-action="revoke"]').forEach(btn => {
+                    btn.addEventListener('click', () => this.revokeTeamInvite(btn.dataset.inviteId));
+                });
+            } else {
+                pendingSection.style.display = 'none';
+            }
+        }
+    }
+
+    async sendTeamInvite() {
+        const emailInput = document.getElementById('inviteEmail');
+        const roleSelect = document.getElementById('inviteRole');
+        const status = document.getElementById('inviteStatus');
+        const email = emailInput?.value?.trim();
+        const role = roleSelect?.value || 'member';
+
+        if (!email) {
+            if (status) { status.textContent = 'Please enter an email address.'; status.style.color = '#e53935'; }
+            return;
+        }
+
+        if (status) { status.textContent = 'Sending invite...'; status.style.color = 'var(--text-secondary)'; }
+
+        try {
+            const resp = await fetch('/.netlify/functions/team-management', {
+                method: 'POST',
+                headers: { ...this.api._proxyHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'invite', email, role }),
+            });
+            const data = await resp.json();
+            if (data.error) {
+                if (status) { status.textContent = data.error; status.style.color = '#e53935'; }
+            } else {
+                if (status) { status.textContent = data.message || 'Invite sent!'; status.style.color = '#43a047'; }
+                if (emailInput) emailInput.value = '';
+                this.fetchTeamInfo();
+            }
+        } catch (e) {
+            if (status) { status.textContent = 'Failed to send invite.'; status.style.color = '#e53935'; }
+        }
+    }
+
+    async updateTeamMemberRole(memberId, newRole) {
+        try {
+            const resp = await fetch('/.netlify/functions/team-management', {
+                method: 'POST',
+                headers: { ...this.api._proxyHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'update-role', memberId, role: newRole }),
+            });
+            const data = await resp.json();
+            if (data.error) {
+                this.ui?.showNotification(data.error, 'error');
+            } else {
+                this.fetchTeamInfo();
+            }
+        } catch (e) {
+            this.ui?.showNotification('Failed to update role', 'error');
+        }
+    }
+
+    async removeTeamMember(memberId) {
+        if (!confirm('Are you sure you want to remove this team member?')) return;
+        try {
+            const resp = await fetch('/.netlify/functions/team-management', {
+                method: 'POST',
+                headers: { ...this.api._proxyHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'remove', memberId }),
+            });
+            const data = await resp.json();
+            if (data.error) {
+                this.ui?.showNotification(data.error, 'error');
+            } else {
+                this.fetchTeamInfo();
+            }
+        } catch (e) {
+            this.ui?.showNotification('Failed to remove member', 'error');
+        }
+    }
+
+    async revokeTeamInvite(inviteId) {
+        try {
+            const resp = await fetch('/.netlify/functions/team-management', {
+                method: 'POST',
+                headers: { ...this.api._proxyHeaders(), 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'revoke-invite', inviteId }),
+            });
+            const data = await resp.json();
+            if (data.error) {
+                this.ui?.showNotification(data.error, 'error');
+            } else {
+                this.fetchTeamInfo();
+            }
+        } catch (e) {
+            this.ui?.showNotification('Failed to revoke invite', 'error');
+        }
+    }
+
+    _escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
     showChatInterface() {
         Logger.info('App', '💬 Showing chat interface');
         this.currentTool = null;
@@ -895,6 +1115,7 @@ Recommendations: ${report.recommendations.length}
         document.getElementById('chatInterface')?.classList.remove('hidden');
         document.getElementById('toolContainer')?.classList.add('hidden');
         document.getElementById('usageView')?.classList.add('hidden');
+        document.getElementById('teamView')?.classList.add('hidden');
 
         // Update navigation
         document.querySelectorAll('.nav-item').forEach(item => {
@@ -916,6 +1137,7 @@ Recommendations: ${report.recommendations.length}
         Logger.info('App', `🔧 Opening tool: ${toolId}`);
         if (this.dashboard) this.dashboard.pauseAutoRefresh();
         document.getElementById('usageView')?.classList.add('hidden');
+        document.getElementById('teamView')?.classList.add('hidden');
 
         const tool = this.config.services[toolId];
         if (!tool) {
