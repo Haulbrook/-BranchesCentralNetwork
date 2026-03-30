@@ -93,6 +93,15 @@ class ChatManager {
             sendBtn.addEventListener('click', () => this.handleSendClick());
         }
 
+        // Delegated click handler for sortable inventory table headers
+        const messagesEl = document.getElementById('chatMessages');
+        if (messagesEl) {
+            messagesEl.addEventListener('click', (e) => {
+                const th = e.target.closest('[data-sort-col]');
+                if (th) this.sortInventoryTable(th.dataset.sortCol);
+            });
+        }
+
         // Auto-resize textarea
         this.autoResizeInput();
     }
@@ -611,9 +620,9 @@ class ChatManager {
         // General AI-like responses for common queries
         const generalResponses = {
             greeting: [
-                "Hello! I'm here to help you with BRAIN operations. I can assist with inventory management, plant grading, crew scheduling, tool checkout, and logistics planning.",
+                `Hello! I'm here to help you with ${Branding.get('app_acronym')} operations. I can assist with inventory management, plant grading, crew scheduling, tool checkout, and logistics planning.`,
                 "Hi there! What can I help you with today? I can help with inventory, grading, scheduling, tools, or logistics.",
-                "Welcome to BRAIN Operations! I'm ready to help with any operational questions you have."
+                `Welcome to ${Branding.get('app_acronym')} Operations! I'm ready to help with any operational questions you have.`
             ],
             help: [
                 "I can help you with:\n\n🌱 **Inventory Management** - Search stock, check quantities, manage supplies\n⭐ **Plant Grading** - Quality assessment and pricing decisions\n📅 **Crew Scheduling** - Daily planning and task assignments\n🔧 **Tool Checkout** - Rental and equipment management\n🚛 **Logistics Planning** - Transportation routing and procurement tracking\n\nWhat would you like to work on?",
@@ -871,7 +880,7 @@ class ChatManager {
         ];
 
         columns.forEach(col => {
-            html += `<th onclick="window.app.chat.sortInventoryTable('${col.key}')" data-col="${col.key}">${esc(col.label)} <span class="sort-indicator"></span></th>`;
+            html += `<th data-sort-col="${col.key}" style="cursor:pointer" data-col="${col.key}">${esc(col.label)} <span class="sort-indicator"></span></th>`;
         });
 
         html += `</tr></thead><tbody>`;

@@ -608,7 +608,7 @@ class DashboardManager {
         const fileInput = document.getElementById('woFileInput');
         if (iconEl)    iconEl.textContent  = '📄';
         if (labelEl)   labelEl.textContent = 'Drop PDF here or click to browse';
-        if (hintEl)    hintEl.textContent  = 'BRAIN work order PDFs — all fields extracted automatically';
+        if (hintEl)    hintEl.textContent  = `${Branding.get('app_acronym')} work order PDFs — all fields extracted automatically`;
         if (fileInput) fileInput.value     = '';
     }
 
@@ -639,7 +639,7 @@ class DashboardManager {
         document.getElementById('woParsedPreview')?.classList.add('hidden');
         document.getElementById('woBtnConfirmAdd')?.classList.add('hidden');
 
-        const instruction = `You are extracting data from a Branches Artificial Intelligence Network work order. Follow these EXACT rules:
+        const instruction = `You are extracting data from a ${Branding.get('company_full_name')} work order. Follow these EXACT rules:
 
 WORK ORDER HEADER:
 - woNumber: Numbers only (from "Work Order #XXXXX" — strip the # and any letters)
@@ -782,7 +782,11 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
             <td><input class="wo-li-input" value="${this.escapeHtml(item.description || '')}" placeholder="Description (no commas)"></td>
             <td><input class="wo-li-input wo-qty-input" type="number" value="${this.escapeHtml(String(item.quantity ?? ''))}" placeholder="1" step="0.5"></td>
             <td><input class="wo-li-input wo-unit-input" list="woUnitOptions" value="${this.escapeHtml(item.unit || 'Ea.')}" placeholder="Unit"></td>
-            <td><button class="wo-btn-del-li" onclick="this.closest('tr').remove();window.app?.dashboard?.updateLiCount()" aria-label="Remove row">✕</button></td>`;
+            <td><button class="wo-btn-del-li" data-action="removeLiRow" aria-label="Remove row">✕</button></td>`;
+        tr.querySelector('[data-action="removeLiRow"]').addEventListener('click', () => {
+            tr.remove();
+            this.updateLiCount();
+        });
         tbody.appendChild(tr);
         this.updateLiCount();
     }
@@ -1294,7 +1298,7 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
                     </p>
                     <button
                         class="btn btn-primary"
-                        onclick="document.getElementById('settingsBtn')?.click()"
+                        data-action="openSettings"
                         style="padding: 12px 32px; font-size: 16px; cursor: pointer;"
                     >
                         ⚙️ Open Settings & Run Setup Wizard
@@ -1304,6 +1308,8 @@ RESPOND with ONLY a valid JSON object — no markdown, no explanation:
                     </p>
                 </div>
             `;
+            const openBtn = metricsGrid.querySelector('[data-action="openSettings"]');
+            if (openBtn) openBtn.addEventListener('click', () => document.getElementById('settingsBtn')?.click());
         }
     }
 }
@@ -1345,8 +1351,9 @@ class ToastManager {
             <div class="toast-content">
                 <div class="toast-message">${this.escapeHtml(message)}</div>
             </div>
-            <button class="toast-close" onclick="window.toastManager.remove(${id})">×</button>
+            <button class="toast-close" data-toast-close="${id}">×</button>
         `;
+        toast.querySelector('[data-toast-close]').addEventListener('click', () => this.remove(id));
         return toast;
     }
 

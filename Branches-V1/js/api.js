@@ -204,7 +204,7 @@ class APIManager {
         const tools = context.tools || [];
         const toolsList = tools.map(t => `- ${t.name}: ${t.description}`).join('\n');
 
-        return `You are a helpful AI assistant for Branches Artificial Intelligence Network Operations Dashboard.
+        return `You are a helpful AI assistant for ${Branding.get('company_full_name')} Operations Dashboard.
 
 You help manage:
 - Inventory (plants, materials, equipment)
@@ -484,7 +484,7 @@ User: "schedule tomorrow" -> Call open_tool with toolId='scheduler'`;
             }
         }
 
-        const systemPrompt = `You are the Foreman agent for Branches Artificial Intelligence Network. Answer questions about active work orders using ONLY the data below. Be concise, use bold and bullets for readability.
+        const systemPrompt = `You are the Foreman agent for ${Branding.get('company_full_name')}. Answer questions about active work orders using ONLY the data below. Be concise, use bold and bullets for readability.
 
 LIVE WORK ORDER DATA (${jobs.length} active jobs):
 ${jobSummary}${lineItemSection}
@@ -608,7 +608,7 @@ Rules:
         const trucksSummary = (tags.trucks || []).map(t => t.name).join(', ') || 'None loaded';
         const equipSummary = (tags.equipment || []).map(e => e.name).join(', ') || 'None loaded';
 
-        const systemPrompt = `You are the Scheduler agent for Branches Artificial Intelligence Network. Answer questions about crew scheduling, assignments, and work history using ONLY the data below. Be concise, use bold and bullets for readability.
+        const systemPrompt = `You are the Scheduler agent for ${Branding.get('company_full_name')}. Answer questions about crew scheduling, assignments, and work history using ONLY the data below. Be concise, use bold and bullets for readability.
 
 TODAY'S SCHEDULE (${today.toLocaleDateString()}):
 ${todaySummary}

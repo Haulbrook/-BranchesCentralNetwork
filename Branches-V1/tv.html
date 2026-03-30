@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BRAIN - Shop TV Dashboard</title>
+    <title>Shop TV Dashboard</title>
     <style>
         * {
             margin: 0;
@@ -779,7 +779,7 @@
             <div class="header-left">
                 <div class="logo">🌱</div>
                 <div class="header-title">
-                    <h1>BRAIN Operations</h1>
+                    <h1 id="tvBrandTitle">BRAIN Operations</h1>
                     <p>Shop TV Dashboard</p>
                 </div>
             </div>
@@ -885,6 +885,22 @@
         // INITIALIZATION
         // ============================================
         document.addEventListener('DOMContentLoaded', () => {
+            // Apply branding from config
+            fetch('app.config.json').then(r => r.json()).then(cfg => {
+                if (cfg.branding) {
+                    const b = cfg.branding;
+                    document.title = `${b.app_acronym || 'BRAIN'} - Shop TV Dashboard`;
+                    const h1 = document.getElementById('tvBrandTitle');
+                    if (h1) h1.textContent = `${b.app_acronym || 'BRAIN'} Operations`;
+                }
+            }).catch(() => {});
+
+            // Event delegation for dynamically generated dropdowns
+            document.addEventListener('change', (e) => {
+                const select = e.target.closest('[data-action="assignEquipmentToJob"]');
+                if (select) assignEquipmentToJob(select);
+            });
+
             updateClock();
             setInterval(updateClock, 1000);
             loadDashboardData();
@@ -1139,7 +1155,7 @@
                 return `
                     <div class="equipment-item ${pillClass}">
                         <span class="equipment-name">${displayName}</span>
-                        <select class="job-dropdown" data-item-id="${itemId}" data-item-type="${itemType}" onchange="assignEquipmentToJob(this)">
+                        <select class="job-dropdown" data-item-id="${itemId}" data-item-type="${itemType}" data-action="assignEquipmentToJob">
                             ${options}
                         </select>
                     </div>

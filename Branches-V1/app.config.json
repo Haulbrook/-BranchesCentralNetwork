@@ -5,6 +5,18 @@
     "version": "1.0.0",
     "description": "Unified dashboard for all Branches Artificial Intelligence Network operational tools"
   },
+  "branding": {
+    "company_name": "Branches",
+    "company_full_name": "Branches Artificial Intelligence Network",
+    "app_acronym": "BRAIN",
+    "app_title": "BRAIN Operations Dashboard",
+    "logo_img": "images/root-apex-logo.jpeg",
+    "login_heading": "Branches",
+    "guest_name": "BRAIN User",
+    "guest_email": "user@brain.app",
+    "primary_color": "#7eb83a",
+    "accent_color": "#5a8a28"
+  },
   "services": {
     "inventory": {
       "_comment": "Inventory backend — URL is now server-side (gas-proxy). No URL needed here.",

@@ -1687,16 +1687,16 @@
    ============================================================ */
 :root {
   /* ---- DR design tokens ---- */
-  --dr-bg:       #111410;
-  --dr-surface:  #1a1d17;
-  --dr-surface2: #222620;
-  --dr-border:   #2e3329;
-  --dr-text:     #e8ead4;
-  --dr-muted:    #7a7d6a;
-  --dr-accent:   #7eb83a;
-  --dr-accent2:  #5a8a28;
-  --dr-success:  #3a8a5a;
-  --dr-danger:   #cc4444;
+  --brand-token-bg:       #111410;
+  --brand-token-surface:  #1a1d17;
+  --brand-token-surface2: #222620;
+  --brand-token-border:   #2e3329;
+  --brand-token-text:     #e8ead4;
+  --brand-token-muted:    #7a7d6a;
+  --brand-token-accent:   #7eb83a;
+  --brand-token-accent2:  #5a8a28;
+  --brand-token-success:  #3a8a5a;
+  --brand-token-danger:   #cc4444;
 
   /* ---- main.css variable overrides ---- */
   --background-color: #111410;
@@ -1782,7 +1782,7 @@
    ACTIVE JOBS SECTION — BRAIN THEME
    ============================================================ */
 .active-jobs-section {
-  background: var(--dr-bg);
+  background: var(--brand-token-bg);
   border: none !important;
   border-radius: 0 !important;
   box-shadow: none !important;
@@ -1791,23 +1791,23 @@
 }
 
 .active-jobs-section .section-header {
-  border-bottom: 1px solid var(--dr-border);
+  border-bottom: 1px solid var(--brand-token-border);
 }
 
 .active-jobs-section .section-header h2 {
   font-family: 'Bebas Neue', Impact, sans-serif;
   letter-spacing: 2px;
-  color: var(--dr-text);
+  color: var(--brand-token-text);
 }
 
 .active-jobs-section .section-header p {
-  color: var(--dr-muted);
+  color: var(--brand-token-muted);
   font-family: 'DM Sans', system-ui, sans-serif;
 }
 
 /* Add WO button */
 .active-jobs-section #addWoBtn {
-  background: var(--dr-accent);
+  background: var(--brand-token-accent);
   color: #111;
   border: none;
   font-family: 'DM Sans', system-ui, sans-serif;
@@ -1823,79 +1823,79 @@
    STATS BAR — BRAIN THEME
    ============================================================ */
 .wo-stats-bar {
-  background: var(--dr-surface);
+  background: var(--brand-token-surface);
   border-top: none !important;
   border-left: none !important;
   border-right: none !important;
-  border-bottom: 1px solid var(--dr-border) !important;
+  border-bottom: 1px solid var(--brand-token-border) !important;
   border-radius: 0 !important;
   margin-top: 0 !important;
 }
 
 .wo-stat-value {
-  color: var(--dr-accent);
+  color: var(--brand-token-accent);
 }
 
 .wo-stat-label {
-  color: var(--dr-muted);
+  color: var(--brand-token-muted);
   font-family: 'DM Mono', 'Courier New', monospace;
 }
 
 .wo-stat-overall .wo-stat-value {
-  color: var(--dr-text);
+  color: var(--brand-token-text);
 }
 
 /* ============================================================
    JOB CARDS — BRAIN THEME
    ============================================================ */
 .wo-card {
-  background: var(--dr-surface);
-  border-color: var(--dr-border);
+  background: var(--brand-token-surface);
+  border-color: var(--brand-token-border);
 }
 
 .wo-card:hover {
-  border-color: var(--dr-accent);
+  border-color: var(--brand-token-accent);
   box-shadow: 0 4px 20px rgba(126, 184, 58, 0.12);
 }
 
-.wo-number   { color: var(--dr-muted); }
-.wo-job-name { color: var(--dr-text);  }
-.wo-client   { color: var(--dr-muted); }
+.wo-number   { color: var(--brand-token-muted); }
+.wo-job-name { color: var(--brand-token-text);  }
+.wo-client   { color: var(--brand-token-muted); }
 
-.progress-track { background: var(--dr-surface2); }
+.progress-track { background: var(--brand-token-surface2); }
 
-.progress-fill.p-zero     { background: var(--dr-surface2); }
-.progress-fill.p-partial  { background: var(--dr-accent);   }
-.progress-fill.p-complete { background: var(--dr-success);  }
+.progress-fill.p-zero     { background: var(--brand-token-surface2); }
+.progress-fill.p-partial  { background: var(--brand-token-accent);   }
+.progress-fill.p-complete { background: var(--brand-token-success);  }
 
-.wo-item-count { color: var(--dr-muted); }
+.wo-item-count { color: var(--brand-token-muted); }
 
-.wo-pct.p-zero     { color: var(--dr-muted);   }
-.wo-pct.p-partial  { color: var(--dr-accent);  }
-.wo-pct.p-complete { color: var(--dr-success); }
+.wo-pct.p-zero     { color: var(--brand-token-muted);   }
+.wo-pct.p-partial  { color: var(--brand-token-accent);  }
+.wo-pct.p-complete { color: var(--brand-token-success); }
 
-.wo-details-hint { color: var(--dr-surface2); }
+.wo-details-hint { color: var(--brand-token-surface2); }
 
 /* Status badges */
 .wo-badge.not-started {
-  background: var(--dr-surface2);
-  color: var(--dr-muted);
+  background: var(--brand-token-surface2);
+  color: var(--brand-token-muted);
 }
 
 .wo-badge.in-progress {
   background: rgba(126, 184, 58, 0.15);
-  color: var(--dr-accent);
+  color: var(--brand-token-accent);
 }
 
 .wo-badge.complete {
   background: rgba(58, 138, 90, 0.2);
-  color: var(--dr-success);
+  color: var(--brand-token-success);
 }
 
 /* Empty / hint states */
-.active-jobs-section .empty-state   { color: var(--dr-muted); }
-.active-jobs-section .empty-state p { color: var(--dr-text);  }
-.active-jobs-section .empty-hint    { color: var(--dr-muted); }
+.active-jobs-section .empty-state   { color: var(--brand-token-muted); }
+.active-jobs-section .empty-state p { color: var(--brand-token-text);  }
+.active-jobs-section .empty-hint    { color: var(--brand-token-muted); }
 
 /* ============================================================
    WO MODALS — BRAIN THEME
@@ -1905,36 +1905,36 @@
 }
 
 .wo-modal-box {
-  background: var(--dr-surface);
-  border: 1px solid var(--dr-border);
+  background: var(--brand-token-surface);
+  border: 1px solid var(--brand-token-border);
   font-family: 'DM Sans', system-ui, sans-serif;
 }
 
 .wo-modal-header {
-  background: var(--dr-surface);
-  border-bottom: 1px solid var(--dr-border);
+  background: var(--brand-token-surface);
+  border-bottom: 1px solid var(--brand-token-border);
 }
 
 .wo-modal-title {
   font-family: 'Bebas Neue', Impact, sans-serif;
   letter-spacing: 2px;
-  color: var(--dr-accent);
+  color: var(--brand-token-accent);
 }
 
 .wo-modal-close {
-  color: var(--dr-muted);
+  color: var(--brand-token-muted);
 }
 
-.wo-modal-close:hover { color: var(--dr-text); }
+.wo-modal-close:hover { color: var(--brand-token-text); }
 
 .wo-modal-footer {
-  background: var(--dr-surface);
-  border-top: 1px solid var(--dr-border);
+  background: var(--brand-token-surface);
+  border-top: 1px solid var(--brand-token-border);
 }
 
 /* Modal buttons mapped to DR button system */
 .wo-modal-footer .btn-primary {
-  background: var(--dr-accent);
+  background: var(--brand-token-accent);
   color: #111;
   border: none;
   font-family: 'DM Sans', system-ui, sans-serif;
@@ -1947,135 +1947,135 @@
 .wo-modal-footer .btn-secondary,
 .wo-modal-footer .btn-ghost {
   background: transparent;
-  color: var(--dr-muted);
-  border: 1px solid var(--dr-border);
+  color: var(--brand-token-muted);
+  border: 1px solid var(--brand-token-border);
   border-radius: 8px;
   font-family: 'DM Sans', system-ui, sans-serif;
 }
 
 .wo-modal-footer .btn-secondary:hover,
 .wo-modal-footer .btn-ghost:hover {
-  color: var(--dr-text);
-  border-color: var(--dr-muted);
+  color: var(--brand-token-text);
+  border-color: var(--brand-token-muted);
 }
 
 /* Detail modal internals */
 .wo-detail-meta span {
-  background: var(--dr-surface2);
-  border-color: var(--dr-border);
-  color: var(--dr-muted);
+  background: var(--brand-token-surface2);
+  border-color: var(--brand-token-border);
+  color: var(--brand-token-muted);
 }
 
-.wo-detail-pct  { color: var(--dr-accent); }
-.wo-section-label { color: var(--dr-muted); }
+.wo-detail-pct  { color: var(--brand-token-accent); }
+.wo-section-label { color: var(--brand-token-muted); }
 
-.wo-line-item-row { border-bottom-color: var(--dr-border); }
-.wo-line-item-row:hover { background: var(--dr-surface2); }
+.wo-line-item-row { border-bottom-color: var(--brand-token-border); }
+.wo-line-item-row:hover { background: var(--brand-token-surface2); }
 
 .wo-li-checkbox {
-  background: var(--dr-surface2);
-  border-color: var(--dr-border);
+  background: var(--brand-token-surface2);
+  border-color: var(--brand-token-border);
 }
 
 .wo-line-item-row.done .wo-li-checkbox {
-  background: var(--dr-accent);
-  border-color: var(--dr-accent);
+  background: var(--brand-token-accent);
+  border-color: var(--brand-token-accent);
   color: #111;
 }
 
-.wo-li-text { color: var(--dr-text); }
+.wo-li-text { color: var(--brand-token-text); }
 .wo-line-item-row.done .wo-li-text {
-  color: var(--dr-muted);
+  color: var(--brand-token-muted);
 }
 
-.wo-li-num-badge { color: var(--dr-muted); }
+.wo-li-num-badge { color: var(--brand-token-muted); }
 
 /* Add WO modal internals */
 .wo-input-tabs {
-  background: var(--dr-surface2);
-  border-color: var(--dr-border);
+  background: var(--brand-token-surface2);
+  border-color: var(--brand-token-border);
 }
 
-.wo-input-tab { color: var(--dr-muted); }
+.wo-input-tab { color: var(--brand-token-muted); }
 
 .wo-input-tab.active {
-  background: var(--dr-surface);
-  color: var(--dr-text);
+  background: var(--brand-token-surface);
+  color: var(--brand-token-text);
 }
 
-.wo-input-tab:hover:not(.active) { color: var(--dr-text); }
+.wo-input-tab:hover:not(.active) { color: var(--brand-token-text); }
 
 .wo-pdf-dropzone {
-  background: var(--dr-surface2);
-  border-color: var(--dr-border);
+  background: var(--brand-token-surface2);
+  border-color: var(--brand-token-border);
 }
 
 .wo-pdf-dropzone:hover,
 .wo-pdf-dropzone.drag-over {
-  border-color: var(--dr-accent);
+  border-color: var(--brand-token-accent);
   background: rgba(126, 184, 58, 0.05);
 }
 
 .wo-pdf-dropzone.has-file {
-  border-color: var(--dr-accent);
+  border-color: var(--brand-token-accent);
   background: rgba(126, 184, 58, 0.07);
 }
 
-.wo-dz-label { color: var(--dr-text);  }
-.wo-dz-hint  { color: var(--dr-muted); }
-.wo-parse-hint { color: var(--dr-muted); }
+.wo-dz-label { color: var(--brand-token-text);  }
+.wo-dz-hint  { color: var(--brand-token-muted); }
+.wo-parse-hint { color: var(--brand-token-muted); }
 
 .wo-textarea {
-  background: var(--dr-surface2);
-  border-color: var(--dr-border);
-  color: var(--dr-text);
+  background: var(--brand-token-surface2);
+  border-color: var(--brand-token-border);
+  color: var(--brand-token-text);
 }
 
-.wo-textarea:focus { border-color: var(--dr-accent); }
+.wo-textarea:focus { border-color: var(--brand-token-accent); }
 
 .wo-parse-error {
-  color: var(--dr-danger);
+  color: var(--brand-token-danger);
   background: rgba(204, 68, 68, 0.1);
   border-color: rgba(204, 68, 68, 0.25);
 }
 
 .wo-parsed-preview {
-  background: var(--dr-surface2);
-  border-color: var(--dr-border);
+  background: var(--brand-token-surface2);
+  border-color: var(--brand-token-border);
 }
 
-.wo-preview-field label  { color: var(--dr-muted); }
+.wo-preview-field label  { color: var(--brand-token-muted); }
 
 .wo-preview-field input,
 .wo-preview-field select {
-  background: var(--dr-surface);
-  border-color: var(--dr-border);
-  color: var(--dr-text);
+  background: var(--brand-token-surface);
+  border-color: var(--brand-token-border);
+  color: var(--brand-token-text);
 }
 
 .wo-preview-field input:focus,
-.wo-preview-field select:focus { border-color: var(--dr-accent); }
+.wo-preview-field select:focus { border-color: var(--brand-token-accent); }
 
 .wo-li-table th {
-  color: var(--dr-muted);
-  border-bottom-color: var(--dr-border);
+  color: var(--brand-token-muted);
+  border-bottom-color: var(--brand-token-border);
 }
 
-.wo-li-table tr:not(:last-child) td { border-bottom-color: var(--dr-border); }
+.wo-li-table tr:not(:last-child) td { border-bottom-color: var(--brand-token-border); }
 .wo-li-table tr:hover td { background: rgba(126, 184, 58, 0.04); }
 
-.wo-li-num-cell { color: var(--dr-muted); }
+.wo-li-num-cell { color: var(--brand-token-muted); }
 
 .wo-li-input {
-  background: var(--dr-surface);
-  color: var(--dr-text);
+  background: var(--brand-token-surface);
+  color: var(--brand-token-text);
 }
 
-.wo-li-input:focus { border-color: var(--dr-accent); }
+.wo-li-input:focus { border-color: var(--brand-token-accent); }
 
-.wo-btn-del-li       { color: var(--dr-muted);  }
-.wo-btn-del-li:hover { color: var(--dr-danger); }
-.wo-btn-add-li       { color: var(--dr-accent); }
+.wo-btn-del-li       { color: var(--brand-token-muted);  }
+.wo-btn-del-li:hover { color: var(--brand-token-danger); }
+.wo-btn-add-li       { color: var(--brand-token-accent); }
 
 /* ============================================================
    WEATHER ALERT BANNER

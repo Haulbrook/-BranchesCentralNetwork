@@ -13,38 +13,38 @@ class SetupWizard {
         this.steps = [
             {
                 id: 'welcome',
-                title: 'Welcome to BRAIN Operations Setup',
-                description: 'This wizard will help you configure external connections and advanced AI capabilities.',
+                title: `Welcome to ${Branding.get('app_acronym')} Operations Setup`,
+                description: 'This wizard will help you customize your dashboard and configure AI capabilities.',
                 fields: []
             },
             {
-                id: 'google_services',
-                title: 'Google Services Configuration',
-                description: 'Configure your Google Apps Script and Sheets integration.',
+                id: 'company_branding',
+                title: 'Company Branding',
+                description: 'Customize the dashboard with your company identity.',
                 fields: [
                     {
-                        name: 'googleAppsScriptUrl',
-                        label: 'Google Apps Script Web App URL',
+                        name: 'company_name',
+                        label: 'Company Name',
                         type: 'text',
-                        placeholder: 'https://script.google.com/macros/s/.../exec',
+                        placeholder: 'Your Company',
                         required: true,
-                        helpText: 'Deploy code.js as a web app and paste the URL here'
+                        helpText: 'Shown on the login screen and sidebar'
                     },
                     {
-                        name: 'inventorySheetId',
-                        label: 'Inventory Sheet ID',
+                        name: 'app_acronym',
+                        label: 'Dashboard Acronym',
                         type: 'text',
-                        placeholder: 'Sheet ID from Google Sheets URL',
+                        placeholder: 'BRAIN',
                         required: false,
-                        helpText: 'Optional: For direct sheet access'
+                        helpText: 'Short name shown in headers and greetings'
                     },
                     {
-                        name: 'knowledgeBaseSheetId',
-                        label: 'Knowledge Base Sheet ID',
-                        type: 'text',
-                        placeholder: 'Sheet ID for training data',
+                        name: 'primary_color',
+                        label: 'Brand Color',
+                        type: 'color',
+                        default: '#7eb83a',
                         required: false,
-                        helpText: 'Optional: For AI training data'
+                        helpText: 'Primary accent color for the dashboard'
                     }
                 ]
             },
@@ -66,37 +66,6 @@ class SetupWizard {
                         type: 'checkbox',
                         default: true,
                         helpText: 'Anticipate next steps and provide proactive suggestions'
-                    }
-                ]
-            },
-            {
-                id: 'external_apis',
-                title: 'External API Configuration',
-                description: 'Configure additional external services (optional).',
-                fields: [
-                    {
-                        name: 'weatherApiKey',
-                        label: 'Weather API Key',
-                        type: 'text',
-                        placeholder: 'For weather-based scheduling',
-                        required: false,
-                        helpText: 'Optional: Integrate weather data for scheduling decisions'
-                    },
-                    {
-                        name: 'mapsApiKey',
-                        label: 'Google Maps API Key',
-                        type: 'text',
-                        placeholder: 'For route optimization',
-                        required: false,
-                        helpText: 'Optional: For mapping and routing features'
-                    },
-                    {
-                        name: 'webhookUrl',
-                        label: 'Webhook URL',
-                        type: 'text',
-                        placeholder: 'https://your-webhook.com/endpoint',
-                        required: false,
-                        helpText: 'Optional: For sending notifications to external systems'
                     }
                 ]
             },
@@ -245,8 +214,8 @@ class SetupWizard {
                 input.placeholder = field.placeholder || '';
                 input.required = field.required || false;
 
-                // Load saved value if exists
-                const savedValue = this.config[field.name] || localStorage.getItem(`wizard_${field.name}`);
+                // Load saved value, or use field default
+                const savedValue = this.config[field.name] || localStorage.getItem(`wizard_${field.name}`) || field.default;
                 if (savedValue) {
                     input.value = savedValue;
                 }
@@ -335,6 +304,9 @@ class SetupWizard {
     skipWizard() {
         if (confirm('Are you sure you want to skip setup? You can configure these settings later.')) {
             this.config = {
+                company_name: Branding.get('company_name'),
+                app_acronym: Branding.get('app_acronym'),
+                primary_color: Branding.get('primary_color'),
                 enableDeconstructionSkill: true,
                 enableForwardThinkerSkill: true
             };
@@ -349,6 +321,12 @@ class SetupWizard {
         // Save configuration
         localStorage.setItem(this.configKey, JSON.stringify(this.config));
         localStorage.setItem(this.wizardCompleteKey, 'true');
+
+        // Apply branding from wizard config
+        if (window.Branding) {
+            Branding.applyToDOM();
+            Branding.applyTheme();
+        }
 
         // Remove wizard UI
         const overlay = document.getElementById('setup-wizard-overlay');

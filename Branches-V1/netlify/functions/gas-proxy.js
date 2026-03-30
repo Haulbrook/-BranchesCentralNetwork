@@ -31,6 +31,16 @@ const SERVICE_ENV_MAP = {
   jobsAgent:       'GAS_JOBS_AGENT_URL',
 };
 
+// Resolve the backend URL for a given service.
+// Phase 1: flat env-var lookup (current behavior).
+// Phase 2 (SaaS): tenant-aware routing — check tenantInfo.tenant.gas_urls
+// first, fall back to env vars for the default BRAIN instance.
+function resolveServiceUrl(service, _tenantInfo) {
+  const envKey = SERVICE_ENV_MAP[service];
+  if (!envKey) return null;
+  return process.env[envKey] || null;
+}
+
 exports.handler = async (event) => {
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
@@ -85,14 +95,12 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers: corsHeaders(), body: JSON.stringify({ error: 'Missing service name' }) };
   }
 
-  const envKey = SERVICE_ENV_MAP[service];
-  if (!envKey) {
-    return { statusCode: 400, headers: corsHeaders(), body: JSON.stringify({ error: 'Unknown service' }) };
-  }
-
-  const gasUrl = process.env[envKey];
+  const gasUrl = resolveServiceUrl(service, tenantInfo);
   if (!gasUrl) {
-    return { statusCode: 500, headers: corsHeaders(), body: JSON.stringify({ error: 'Service not configured' }) };
+    const known = service in SERVICE_ENV_MAP;
+    const code = known ? 500 : 400;
+    const msg  = known ? 'Service not configured' : 'Unknown service';
+    return { statusCode: code, headers: corsHeaders(), body: JSON.stringify({ error: msg }) };
   }
 
   // Write-gating: check tier limits before allowing creates

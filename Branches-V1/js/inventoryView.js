@@ -34,7 +34,7 @@ class InventoryView {
             <div class="inv-app">
                 <div class="inv-header">
                     <div class="inv-brand">
-                        <span class="inv-brand-title">BRAIN</span>
+                        <span class="inv-brand-title">${Branding.get('app_acronym')}</span>
                         <span class="inv-brand-sub">Clippings Inventory</span>
                     </div>
                     <nav class="inv-tabs" role="tablist">

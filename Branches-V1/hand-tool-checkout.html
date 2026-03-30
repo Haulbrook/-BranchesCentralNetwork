@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hand Tool Checkout - Branches Artificial Intelligence Network</title>
+    <title>Hand Tool Checkout</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -446,24 +446,24 @@
     <div class="container">
         <div class="header">
             <h1>🔧 Hand Tool Checkout</h1>
-            <p>Branches Artificial Intelligence Network - Daily Tool Management with Drag & Drop</p>
+            <p id="toolBrandSub">Daily Tool Management with Drag & Drop</p>
 
             <div class="controls">
                 <div class="date-controls">
-                    <button class="btn btn-secondary" onclick="changeDate(-1)">← Previous Day</button>
+                    <button class="btn btn-secondary" data-action="changeDate" data-arg="-1">← Previous Day</button>
                     <div class="date-display" id="currentDate"></div>
-                    <button class="btn btn-secondary" onclick="changeDate(1)">Next Day →</button>
-                    <button class="btn btn-secondary" onclick="loadToday()">Today</button>
+                    <button class="btn btn-secondary" data-action="changeDate" data-arg="1">Next Day →</button>
+                    <button class="btn btn-secondary" data-action="loadToday">Today</button>
                 </div>
 
                 <div class="preset-controls">
-                    <button class="btn btn-secondary btn-small" onclick="savePreset(1)">Save Preset 1</button>
-                    <button class="btn btn-secondary btn-small" onclick="savePreset(2)">Save Preset 2</button>
-                    <button class="btn btn-secondary btn-small" onclick="savePreset(3)">Save Preset 3</button>
+                    <button class="btn btn-secondary btn-small" data-action="savePreset" data-arg="1">Save Preset 1</button>
+                    <button class="btn btn-secondary btn-small" data-action="savePreset" data-arg="2">Save Preset 2</button>
+                    <button class="btn btn-secondary btn-small" data-action="savePreset" data-arg="3">Save Preset 3</button>
                     <span style="color: rgba(255,255,255,0.6); margin: 0 10px;">|</span>
-                    <button class="btn btn-secondary btn-small" onclick="loadPreset(1)">Load 1</button>
-                    <button class="btn btn-secondary btn-small" onclick="loadPreset(2)">Load 2</button>
-                    <button class="btn btn-secondary btn-small" onclick="loadPreset(3)">Load 3</button>
+                    <button class="btn btn-secondary btn-small" data-action="loadPreset" data-arg="1">Load 1</button>
+                    <button class="btn btn-secondary btn-small" data-action="loadPreset" data-arg="2">Load 2</button>
+                    <button class="btn btn-secondary btn-small" data-action="loadPreset" data-arg="3">Load 3</button>
                 </div>
             </div>
         </div>
@@ -480,7 +480,7 @@
                         <input type="text" id="newToolType" class="input-field" maxlength="50" placeholder="Tool Type (e.g., Hammer)">
                         <input type="text" id="newToolName" class="input-field" maxlength="100" placeholder="Tool Name (e.g., Hammer #1)">
                         <input type="text" id="newToolTag" class="input-field" maxlength="20" placeholder="Tag (e.g., T-011)">
-                        <button class="btn" onclick="addNewTool()">➕ Add Tool</button>
+                        <button class="btn" data-action="addNewTool">➕ Add Tool</button>
                     </div>
                 </div>
             </div>
@@ -494,7 +494,7 @@
                 <div class="add-section">
                     <div class="add-form">
                         <input type="text" id="newCrewName" class="input-field" maxlength="100" placeholder="Crew Name (e.g., Crew A, John's Team)">
-                        <button class="btn" onclick="addCrew()">➕ Add Crew</button>
+                        <button class="btn" data-action="addCrew">➕ Add Crew</button>
                     </div>
                 </div>
             </div>
@@ -808,7 +808,7 @@
 
                 if (isExpanded) {
                     return `
-                        <div class="tool-stack expanded" data-stack-type="${safeType}" onclick="toggleStack(this.dataset.stackType, event)">
+                        <div class="tool-stack expanded" data-stack-type="${safeType}" data-action="toggleStack">
                             <div class="stack-header">
                                 <div class="stack-name">🔽 ${safeType}</div>
                                 <div class="stack-count">${availableCount} / ${totalCount} available</div>
@@ -818,9 +818,8 @@
                                     <div class="tool-card ${tool.crewId ? 'checked-out' : ''}"
                                          draggable="${!tool.crewId}"
                                          data-tool-id="${tool.id}"
-                                         ondragstart="handleToolDragStart(event)"
-                                         ondragend="handleToolDragEnd(event)"
-                                         onclick="event.stopPropagation()">
+                                         data-draggable="tool"
+                                         data-stop-propagation>
                                         <div class="tool-name">${escapeHtml(tool.name)}</div>
                                         <div class="tool-tag ${tool.crewId ? 'checked-out' : ''}">${escapeHtml(tool.tag)}</div>
                                         ${tool.crewId ? '<div style="font-size: 0.85em; color: var(--error); margin-top: 5px;">Checked Out</div>' : ''}
@@ -831,7 +830,7 @@
                     `;
                 } else {
                     return `
-                        <div class="tool-stack" data-stack-type="${safeType}" onclick="toggleStack(this.dataset.stackType, event)">
+                        <div class="tool-stack" data-stack-type="${safeType}" data-action="toggleStack">
                             <div class="stack-header">
                                 <div class="stack-name">▶️ ${safeType}</div>
                                 <div class="stack-count">x ${totalCount}</div>
@@ -923,13 +922,11 @@
                     <div class="crew-zone">
                         <div class="crew-header">
                             <div class="crew-name">${escapeHtml(crew.name)}</div>
-                            <button class="remove-crew-btn" onclick="removeCrew(${crew.id})">Remove</button>
+                            <button class="remove-crew-btn" data-action="removeCrew" data-arg="${crew.id}">Remove</button>
                         </div>
                         <div class="crew-dropzone"
                              data-crew-id="${crew.id}"
-                             ondragover="handleCrewDragOver(event)"
-                             ondragleave="handleCrewDragLeave(event)"
-                             ondrop="handleCrewDrop(event)">
+                             data-dropzone="crew">
                             <div class="crew-tools">
                                 ${crewTools.length === 0 ?
                                     '<div class="empty-message">Drop tools here</div>' :
@@ -937,8 +934,7 @@
                                         <div class="tool-card"
                                              draggable="true"
                                              data-tool-id="${tool.id}"
-                                             ondragstart="handleToolDragStart(event)"
-                                             ondragend="handleToolDragEnd(event)">
+                                             data-draggable="tool">
                                             <div class="tool-name">${escapeHtml(tool.name)}</div>
                                             <div class="tool-tag">${escapeHtml(tool.tag)}</div>
                                         </div>
@@ -1004,6 +1000,65 @@
                 toast.remove();
             }, 3000);
         }
+
+        // Apply branding from config
+        fetch('app.config.json').then(r => r.json()).then(cfg => {
+            if (cfg.branding) {
+                const b = cfg.branding;
+                document.title = `Hand Tool Checkout - ${b.company_full_name || 'Operations'}`;
+                const sub = document.getElementById('toolBrandSub');
+                if (sub) sub.textContent = `${b.company_full_name || ''} - Daily Tool Management with Drag & Drop`;
+            }
+        }).catch(() => {});
+
+        // Event delegation — replaces all inline onclick/ondrag* handlers
+        const actionHandlers = {
+            changeDate: (arg) => changeDate(Number(arg)),
+            loadToday:  () => loadToday(),
+            savePreset: (arg) => savePreset(Number(arg)),
+            loadPreset: (arg) => loadPreset(Number(arg)),
+            addNewTool: () => addNewTool(),
+            addCrew:    () => addCrew(),
+            toggleStack: (_arg, el) => {
+                const stack = el.closest('[data-stack-type]');
+                if (stack) toggleStack(stack.dataset.stackType, event);
+            },
+            removeCrew: (arg) => removeCrew(Number(arg)),
+        };
+
+        document.addEventListener('click', (e) => {
+            // Stop propagation for tool cards inside stacks
+            if (e.target.closest('[data-stop-propagation]')) {
+                e.stopPropagation();
+                return;
+            }
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            const handler = actionHandlers[btn.dataset.action];
+            if (handler) handler(btn.dataset.arg, btn);
+        });
+
+        // Drag-and-drop delegation
+        document.addEventListener('dragstart', (e) => {
+            const card = e.target.closest('[data-draggable="tool"]');
+            if (card) handleToolDragStart(e);
+        });
+        document.addEventListener('dragend', (e) => {
+            const card = e.target.closest('[data-draggable="tool"]');
+            if (card) handleToolDragEnd(e);
+        });
+        document.addEventListener('dragover', (e) => {
+            const zone = e.target.closest('[data-dropzone="crew"]');
+            if (zone) handleCrewDragOver(e);
+        });
+        document.addEventListener('dragleave', (e) => {
+            const zone = e.target.closest('[data-dropzone="crew"]');
+            if (zone) handleCrewDragLeave(e);
+        });
+        document.addEventListener('drop', (e) => {
+            const zone = e.target.closest('[data-dropzone="crew"]');
+            if (zone) handleCrewDrop(e);
+        });
 
         // Initialize app
         init();

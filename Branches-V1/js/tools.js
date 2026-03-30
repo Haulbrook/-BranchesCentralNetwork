@@ -128,11 +128,12 @@ class ToolManager {
                     <div style="font-size: 3rem; margin-bottom: 1rem;">❌</div>
                     <p>Tool failed to load</p>
                     <p style="font-size: 0.875rem; margin-top: 0.5rem;">${safeMessage}</p>
-                    <button onclick="window.app.refreshCurrentTool()" class="btn btn-primary" style="margin-top: 1rem;">
+                    <button id="retryToolBtn" class="btn btn-primary" style="margin-top: 1rem;">
                         Try Again
                     </button>
                 </div>
             `;
+            document.getElementById('retryToolBtn')?.addEventListener('click', () => window.app.refreshCurrentTool());
         }
 
         window.app?.ui?.showNotification(`Failed to load ${safeToolId} tool: ${safeMessage}`, 'error');

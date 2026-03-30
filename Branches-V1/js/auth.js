@@ -241,7 +241,7 @@ class AuthManager {
         screen.innerHTML = `
             <div class="login-container">
                 <div class="login-logo">
-                    <img src="images/root-apex-logo.jpeg" alt="Branches" class="login-logo-img" onerror="this.style.display='none'">
+                    <img src="${Branding.get('logo_img')}" alt="${Branding.get('company_name')}" class="login-logo-img">
                     <h1>Set New Password</h1>
                     <p>Enter your new password below</p>
                 </div>
@@ -267,6 +267,9 @@ class AuthManager {
         } else {
             document.body.appendChild(screen);
         }
+
+        // Hide logo on load error
+        screen.querySelectorAll('.login-logo-img').forEach(img => { img.onerror = () => { img.style.display = 'none'; }; });
 
         document.getElementById('resetPasswordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -325,8 +328,8 @@ class AuthManager {
         screen.innerHTML = `
             <div class="login-container">
                 <div class="login-logo">
-                    <img src="images/root-apex-logo.jpeg" alt="Branches" class="login-logo-img" onerror="this.style.display='none'">
-                    <h1>Branches</h1>
+                    <img src="${Branding.get('logo_img')}" alt="${Branding.get('company_name')}" class="login-logo-img">
+                    <h1>${Branding.get('login_heading')}</h1>
                     <p id="loginSubtitle">Sign in to access the dashboard</p>
                 </div>
                 <form id="loginForm" class="login-form">
@@ -360,6 +363,9 @@ class AuthManager {
         } else {
             document.body.appendChild(screen);
         }
+
+        // Hide logo on load error
+        screen.querySelectorAll('.login-logo-img').forEach(img => { img.onerror = () => { img.style.display = 'none'; }; });
 
         let isSignupMode = false;
 

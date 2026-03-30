@@ -275,9 +275,9 @@ class ConfigManager {
     getDefaultConfig() {
         return {
             app: {
-                name: "BRAIN Operations Dashboard",
+                name: "Operations Dashboard",
                 version: "1.0.0",
-                description: "Unified dashboard for all Branches Artificial Intelligence Network operational tools"
+                description: "Unified dashboard for all operational tools"
             },
             services: {
                 inventory: {

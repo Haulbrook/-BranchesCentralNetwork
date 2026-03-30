@@ -27,7 +27,7 @@
     <meta name="twitter:image" content="https://branchesv1.netlify.app/images/og-image.svg">
     <meta name="twitter:image:alt" content="BRAIN Operations Dashboard - Landscaping management platform">
 
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.open-meteo.com https://*.supabase.co https://cdn.jsdelivr.net https://script.google.com https://script.googleusercontent.com; img-src 'self' data: https:; worker-src 'self' blob: https://cdn.jsdelivr.net; frame-src 'self' https://script.google.com https://script.googleusercontent.com https://dailychessmap.netlify.app https://drshoptickets.netlify.app;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://api.open-meteo.com https://*.supabase.co https://cdn.jsdelivr.net https://script.google.com https://script.googleusercontent.com; img-src 'self' data: https:; worker-src 'self' blob: https://cdn.jsdelivr.net; frame-src 'self' https://script.google.com https://script.googleusercontent.com https://dailychessmap.netlify.app https://drshoptickets.netlify.app;">
     <title>BRAIN Operations Dashboard</title>
     <!-- Force light mode as default -->
     <script src="js/theme-init.js?v=20260317a"></script>
@@ -287,7 +287,7 @@
                         <div class="message assistant-message welcome-message" role="article">
                             <div class="message-avatar" aria-hidden="true">🌱</div>
                             <div class="message-content">
-                                <h3>Welcome to BRAIN Operations Dashboard</h3>
+                                <h3 id="welcomeHeading">Welcome to the Operations Dashboard</h3>
                                 <p>I can help you with:</p>
                                 <div class="quick-actions" role="group" aria-label="Quick action buttons">
                                     <button class="quick-action" data-query="Check inventory for boxwood" aria-label="Quick action: Check Inventory">
@@ -551,7 +551,7 @@
                     <div class="wo-pdf-dropzone" id="woPdfDropzone">
                         <div class="wo-dz-icon" id="woDzIcon">📄</div>
                         <div class="wo-dz-label" id="woDzLabel">Drop PDF here or click to browse</div>
-                        <div class="wo-dz-hint" id="woDzHint">BRAIN work order PDFs — all fields extracted automatically</div>
+                        <div class="wo-dz-hint" id="woDzHint">Work order PDFs — all fields extracted automatically</div>
                     </div>
                 </div>
 
@@ -645,6 +645,7 @@
     <script src="js/auth.js?v=20260317a"></script>
     <!-- Scripts -->
     <script src="js/config.js?v=20260317a"></script>
+    <script src="js/branding.js?v=20260329a"></script>
     <script src="js/utils.js?v=20260317a"></script>
     <script src="js/api.js?v=20260317a"></script>
     <script src="js/ui.js?v=20260317a"></script>

@@ -53,9 +53,10 @@ class DashboardApp {
                                 <div style="font-size:3rem;margin-bottom:1rem;">🔒</div>
                                 <h2>Authentication Unavailable</h2>
                                 <p style="color:var(--text-secondary);margin-top:0.5rem;">The authentication service failed to load. Please check your network connection and refresh the page.</p>
-                                <button onclick="window.location.reload()" style="margin-top:1rem;padding:8px 24px;border-radius:8px;border:none;background:var(--secondary-color);color:white;cursor:pointer;">Refresh Page</button>
+                                <button id="authReloadBtn" style="margin-top:1rem;padding:8px 24px;border-radius:8px;border:none;background:var(--secondary-color);color:white;cursor:pointer;">Refresh Page</button>
                             </div>
                         </div>`;
+                    document.getElementById('authReloadBtn')?.addEventListener('click', () => window.location.reload());
                 }
                 return;
             }
@@ -98,6 +99,11 @@ class DashboardApp {
 
             // Load configuration
             await this.loadConfiguration();
+
+            // Initialize branding from config and apply to DOM
+            await Branding.init();
+            Branding.applyToDOM();
+            Branding.applyTheme();
 
             // Initialize API manager with loaded config
             this.api.init();
@@ -513,13 +519,13 @@ Recommendations: ${report.recommendations.length}
         let html = `
             <div class="suggestions-header">
                 <div class="suggestions-title">💡 Suggestions</div>
-                <button class="suggestions-close" onclick="this.closest('.proactive-suggestions').remove()">×</button>
+                <button class="suggestions-close" data-action="closeSuggestions">×</button>
             </div>
         `;
 
         suggestions.slice(0, 3).forEach(suggestion => {
             html += `
-                <div class="suggestion-item ${suggestion.priority}-priority" onclick="window.app.handleSuggestionClick('${suggestion.type}')">
+                <div class="suggestion-item ${suggestion.priority}-priority" data-suggestion-type="${suggestion.type}">
                     <div class="suggestion-title">${suggestion.title}</div>
                     <div class="suggestion-description">${suggestion.description}</div>
                 </div>
@@ -527,6 +533,12 @@ Recommendations: ${report.recommendations.length}
         });
 
         panel.innerHTML = html;
+
+        // Attach event listeners
+        panel.querySelector('[data-action="closeSuggestions"]')?.addEventListener('click', () => panel.remove());
+        panel.querySelectorAll('[data-suggestion-type]').forEach(el => {
+            el.addEventListener('click', () => window.app.handleSuggestionClick(el.dataset.suggestionType));
+        });
 
         // Auto-hide after 15 seconds
         setTimeout(() => {
@@ -628,8 +640,8 @@ Recommendations: ${report.recommendations.length}
         return new Promise((resolve) => {
             setTimeout(() => {
                 resolve({
-                    name: 'BRAIN User',
-                    email: 'user@brain.app',
+                    name: Branding.get('guest_name'),
+                    email: Branding.get('guest_email'),
                     avatar: '🌱'
                 });
             }, 500);
@@ -1035,11 +1047,12 @@ Recommendations: ${report.recommendations.length}
                     <button data-open-url="${url.replace(/['"<>&]/g, '')}" class="btn btn-primary btn-open-tab" style="margin-right: 0.5rem;">
                         Open in New Tab
                     </button>
-                    <button onclick="window.app.showDashboardView()" class="btn btn-secondary">
+                    <button data-action="backToDashboard" class="btn btn-secondary">
                         Back to Dashboard
                     </button>
                 </div>
             `;
+            loading.querySelector('[data-action="backToDashboard"]')?.addEventListener('click', () => window.app.showDashboardView());
         };
 
         // Delegated click handler for safe URL opening
@@ -1362,7 +1375,7 @@ Recommendations: ${report.recommendations.length}
                 <div style="font-size: 3rem; margin-bottom: 1rem;">❌</div>
                 <h2>Failed to Load Dashboard</h2>
                 <p style="margin: 1rem 0;">${(error.message || 'Unknown error occurred').replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c]))}</p>
-                <button onclick="location.reload()" style="
+                <button id="initErrorReload" style="
                     background: white;
                     color: var(--primary-color);
                     border: none;
@@ -1375,12 +1388,13 @@ Recommendations: ${report.recommendations.length}
                 </button>
             </div>
         `;
+        document.getElementById('initErrorReload')?.addEventListener('click', () => location.reload());
     }
 
     getDefaultConfig() {
         return {
             app: {
-                name: "BRAIN Operations Dashboard",
+                name: Branding.get('app_title'),
                 version: "1.0.0"
             },
             services: {

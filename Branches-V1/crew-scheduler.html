@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crew Scheduler - Branches Artificial Intelligence Network</title>
+    <title>Crew Scheduler</title>
     <!-- v2.0 - Drag and drop crew scheduling -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -455,24 +455,24 @@
     <div class="container">
         <div class="header">
             <h1>📅 Crew Scheduler</h1>
-            <p>Branches Artificial Intelligence Network - Daily Crew Management</p>
+            <p id="schedulerBrandSub">Daily Crew Management</p>
 
             <div class="controls">
                 <div class="date-controls">
-                    <button class="btn btn-secondary" onclick="changeDate(-1)">← Previous Day</button>
+                    <button class="btn btn-secondary" data-action="changeDate" data-arg="-1">← Previous Day</button>
                     <div class="date-display" id="currentDate"></div>
-                    <button class="btn btn-secondary" onclick="changeDate(1)">Next Day →</button>
-                    <button class="btn btn-secondary" onclick="loadToday()">Today</button>
+                    <button class="btn btn-secondary" data-action="changeDate" data-arg="1">Next Day →</button>
+                    <button class="btn btn-secondary" data-action="loadToday">Today</button>
                 </div>
 
                 <div class="preset-controls">
-                    <button class="btn btn-secondary btn-small" onclick="savePreset(1)">Save Preset 1</button>
-                    <button class="btn btn-secondary btn-small" onclick="savePreset(2)">Save Preset 2</button>
-                    <button class="btn btn-secondary btn-small" onclick="savePreset(3)">Save Preset 3</button>
+                    <button class="btn btn-secondary btn-small" data-action="savePreset" data-arg="1">Save Preset 1</button>
+                    <button class="btn btn-secondary btn-small" data-action="savePreset" data-arg="2">Save Preset 2</button>
+                    <button class="btn btn-secondary btn-small" data-action="savePreset" data-arg="3">Save Preset 3</button>
                     <span style="color: rgba(255,255,255,0.6); margin: 0 10px;">|</span>
-                    <button class="btn btn-secondary btn-small" onclick="loadPreset(1)">Load 1</button>
-                    <button class="btn btn-secondary btn-small" onclick="loadPreset(2)">Load 2</button>
-                    <button class="btn btn-secondary btn-small" onclick="loadPreset(3)">Load 3</button>
+                    <button class="btn btn-secondary btn-small" data-action="loadPreset" data-arg="1">Load 1</button>
+                    <button class="btn btn-secondary btn-small" data-action="loadPreset" data-arg="2">Load 2</button>
+                    <button class="btn btn-secondary btn-small" data-action="loadPreset" data-arg="3">Load 3</button>
                 </div>
             </div>
         </div>
@@ -523,7 +523,7 @@
                 <div class="add-crew-section">
                     <div class="add-crew-form">
                         <input type="text" id="newCrewName" class="input-field" maxlength="100" placeholder="Enter new crew name (e.g., Crew A, Maintenance Team)">
-                        <button class="btn" onclick="addCrew()">➕ Add Crew</button>
+                        <button class="btn" data-action="addCrew">➕ Add Crew</button>
                     </div>
                 </div>
             </div>
@@ -732,8 +732,8 @@
                              draggable="${!isUsed || multiUse}"
                              data-item="${escapeHtml(item)}"
                              data-type="${cardClass}"
-                             ondragstart="handleDragStart(event)"
-                             ondragend="handleDragEnd(event)">
+                             data-draggable="resource"
+>
                     ${escapeHtml(item)}
                 </div>`;
             }).join('');
@@ -752,7 +752,7 @@
                 <div class="crew-card">
                     <div class="crew-header">
                         <div class="crew-name">${escapeHtml(crew.name)}</div>
-                        <button class="remove-crew-btn" onclick="removeCrew(${crew.id})">Remove</button>
+                        <button class="remove-crew-btn" data-action="removeCrew" data-arg="${crew.id}">Remove</button>
                     </div>
 
                     <!-- Crew Members -->
@@ -760,9 +760,7 @@
                     <div class="crew-dropzone ${crew.members.length > 0 ? 'has-cards' : ''}"
                          data-crew-id="${crew.id}"
                          data-drop-type="crew-member"
-                         ondragover="handleDragOver(event)"
-                         ondragleave="handleDragLeave(event)"
-                         ondrop="handleDrop(event)">
+                         data-dropzone="crew">
                         <div class="crew-cards">
                             ${crew.members.map(m => `
                                 <div class="card crew-member"
@@ -770,8 +768,8 @@
                                      data-item="${escapeHtml(m)}"
                                      data-type="crew-member"
                                      data-crew-id="${crew.id}"
-                                     ondragstart="handleDragStart(event)"
-                                     ondragend="handleDragEnd(event)">
+                                     data-draggable="resource"
+        >
                                     ${escapeHtml(m)}
                                 </div>
                             `).join('')}
@@ -783,9 +781,7 @@
                     <div class="crew-dropzone ${crew.trucks.length > 0 ? 'has-cards' : ''}"
                          data-crew-id="${crew.id}"
                          data-drop-type="truck"
-                         ondragover="handleDragOver(event)"
-                         ondragleave="handleDragLeave(event)"
-                         ondrop="handleDrop(event)">
+                         data-dropzone="crew">
                         <div class="crew-cards">
                             ${crew.trucks.map(t => `
                                 <div class="card truck"
@@ -793,8 +789,8 @@
                                      data-item="${escapeHtml(t)}"
                                      data-type="truck"
                                      data-crew-id="${crew.id}"
-                                     ondragstart="handleDragStart(event)"
-                                     ondragend="handleDragEnd(event)">
+                                     data-draggable="resource"
+        >
                                     ${escapeHtml(t)}
                                 </div>
                             `).join('')}
@@ -806,9 +802,7 @@
                     <div class="crew-dropzone ${crew.equipment.length > 0 ? 'has-cards' : ''}"
                          data-crew-id="${crew.id}"
                          data-drop-type="equipment"
-                         ondragover="handleDragOver(event)"
-                         ondragleave="handleDragLeave(event)"
-                         ondrop="handleDrop(event)">
+                         data-dropzone="crew">
                         <div class="crew-cards">
                             ${crew.equipment.map(e => `
                                 <div class="card equipment"
@@ -816,8 +810,8 @@
                                      data-item="${escapeHtml(e)}"
                                      data-type="equipment"
                                      data-crew-id="${crew.id}"
-                                     ondragstart="handleDragStart(event)"
-                                     ondragend="handleDragEnd(event)">
+                                     data-draggable="resource"
+        >
                                     ${escapeHtml(e)}
                                 </div>
                             `).join('')}
@@ -829,9 +823,7 @@
                     <div class="crew-dropzone ${crew.jobs.length > 0 ? 'has-cards' : ''}"
                          data-crew-id="${crew.id}"
                          data-drop-type="job"
-                         ondragover="handleDragOver(event)"
-                         ondragleave="handleDragLeave(event)"
-                         ondrop="handleDrop(event)">
+                         data-dropzone="crew">
                         <div class="crew-cards">
                             ${crew.jobs.map(j => `
                                 <div class="card job"
@@ -839,8 +831,8 @@
                                      data-item="${escapeHtml(j)}"
                                      data-type="job"
                                      data-crew-id="${crew.id}"
-                                     ondragstart="handleDragStart(event)"
-                                     ondragend="handleDragEnd(event)">
+                                     data-draggable="resource"
+        >
                                     ${escapeHtml(j)}
                                 </div>
                             `).join('')}
@@ -852,9 +844,7 @@
                     <div class="crew-dropzone ${crew.salesmen.length > 0 ? 'has-cards' : ''}"
                          data-crew-id="${crew.id}"
                          data-drop-type="salesman"
-                         ondragover="handleDragOver(event)"
-                         ondragleave="handleDragLeave(event)"
-                         ondrop="handleDrop(event)">
+                         data-dropzone="crew">
                         <div class="crew-cards">
                             ${crew.salesmen.map(s => `
                                 <div class="card salesman"
@@ -862,8 +852,8 @@
                                      data-item="${escapeHtml(s)}"
                                      data-type="salesman"
                                      data-crew-id="${crew.id}"
-                                     ondragstart="handleDragStart(event)"
-                                     ondragend="handleDragEnd(event)">
+                                     data-draggable="resource"
+        >
                                     ${escapeHtml(s)}
                                 </div>
                             `).join('')}
@@ -981,6 +971,50 @@
                 toast.remove();
             }, 3000);
         }
+
+        // Apply branding from config
+        fetch('app.config.json').then(r => r.json()).then(cfg => {
+            if (cfg.branding) {
+                const b = cfg.branding;
+                document.title = `Crew Scheduler - ${b.company_full_name || 'Operations'}`;
+                const sub = document.getElementById('schedulerBrandSub');
+                if (sub) sub.textContent = `${b.company_full_name || ''} - Daily Crew Management`;
+            }
+        }).catch(() => {});
+
+        // Event delegation — replaces all inline onclick/ondrag* handlers
+        const actionHandlers = {
+            changeDate: (arg) => changeDate(Number(arg)),
+            loadToday:  () => loadToday(),
+            savePreset: (arg) => savePreset(Number(arg)),
+            loadPreset: (arg) => loadPreset(Number(arg)),
+            addCrew:    () => addCrew(),
+            removeCrew: (arg) => removeCrew(Number(arg)),
+        };
+
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            const handler = actionHandlers[btn.dataset.action];
+            if (handler) handler(btn.dataset.arg);
+        });
+
+        // Drag-and-drop delegation
+        document.addEventListener('dragstart', (e) => {
+            if (e.target.closest('[data-draggable]')) handleDragStart(e);
+        });
+        document.addEventListener('dragend', (e) => {
+            if (e.target.closest('[data-draggable]')) handleDragEnd(e);
+        });
+        document.addEventListener('dragover', (e) => {
+            if (e.target.closest('[data-dropzone]')) handleDragOver(e);
+        });
+        document.addEventListener('dragleave', (e) => {
+            if (e.target.closest('[data-dropzone]')) handleDragLeave(e);
+        });
+        document.addEventListener('drop', (e) => {
+            if (e.target.closest('[data-dropzone]')) handleDrop(e);
+        });
 
         // Initialize app
         init();
