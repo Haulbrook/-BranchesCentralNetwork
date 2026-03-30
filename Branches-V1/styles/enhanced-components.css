@@ -1764,15 +1764,6 @@
 }
 
 /* ============================================================
-   SCROLL FIX
-   .main-content has overflow:hidden which clips the dashboard.
-   Override so the full job card list is reachable.
-   ============================================================ */
-.main-content {
-  overflow-y: auto !important;
-}
-
-/* ============================================================
    FULL-BLEED LAYOUT
    Remove padding/max-width so the dark section fills the view.
    Hide the empty metrics grid (no data, wastes vertical space).

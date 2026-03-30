@@ -206,9 +206,9 @@ class DashboardManager {
                     client:         saved.client || '',
                     address:        saved.address || '',
                     category:       saved.category || '',
-                    totalItems:     saved.totalItems || 0,
-                    completedItems: 0,
-                    percentage:     0,
+                    totalItems:     saved.totalItems || saved.tasksTotal || 0,
+                    completedItems: saved.completedItems || saved.tasksComplete || 0,
+                    percentage:     saved.percentage || saved.progress || 0,
                     lastUpdated:    saved.addedAt || '',
                     details:        saved.details || {}
                 });

@@ -489,7 +489,7 @@ function doPost(e) {
   try {
     // Parse incoming request
     const data = JSON.parse(e.postData.contents);
-    const functionName = data.function;
+    const functionName = data.function || data.action;
     const params = data.parameters || [];
 
     Logger.log("API Call: " + functionName + " with params: " + JSON.stringify(params));
@@ -576,6 +576,16 @@ function doPost(e) {
 
       case 'getActiveJobs':
         result = getActiveJobs();
+        break;
+
+      case 'toggleCheckbox':
+        result = toggleCheckbox(data.woNumber || (params[0] && params[0].woNumber),
+                                data.rowIndex || (params[0] && params[0].rowIndex),
+                                data.value    || (params[0] && params[0].value));
+        break;
+
+      case 'getLineItems':
+        result = getLineItems(data.woNumber || params[0]);
         break;
 
       case 'getTVDashboardData':
@@ -1339,7 +1349,12 @@ function subtractInventory(sheet, data) {
   
   // Update quantity
   sheet.getRange(itemRow + 1, 2).setValue(newQty);
-  
+
+  // Update notes if provided (column 5 = Notes)
+  if (data.notes) {
+    sheet.getRange(itemRow + 1, 5).setValue(data.notes);
+  }
+
   // Log the transaction
   logTransaction(sheet, {
     timestamp: new Date(),
@@ -1662,8 +1677,8 @@ function getRecentActivity(limit = 5) {
             activities.push({
               timestamp: row[0],
               action: row[1] || 'edited',
-              itemName: row[2] || 'Unknown Item',
-              details: row[3] || 'No details',
+              itemName: row[2] || ('WO-' + (row[0] ? new Date(row[0]).getTime().toString(36).slice(-4).toUpperCase() : 'N/A')),
+              details: row[3] || '',
               user: row[4] || Session.getActiveUser().getEmail() || 'System'
             });
           }
@@ -2948,6 +2963,40 @@ function getLineItems(woNumber) {
   } catch (error) {
     Logger.log('Error in getLineItems: ' + error.toString());
     return { success: false, error: error.toString(), data: [] };
+  }
+}
+
+/**
+ * Toggle a line item checkbox in the LineItems sheet.
+ */
+function toggleCheckbox(woNumber, rowIndex, value) {
+  try {
+    var ss = SpreadsheetApp.openById(CONFIG.ACTIVE_JOBS_SHEET_ID);
+    var sheet = ss.getSheetByName(CONFIG.LINE_ITEMS_SHEET_NAME);
+    if (!sheet) {
+      return { success: false, error: 'LineItems sheet not found' };
+    }
+
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var doneCol = -1;
+    for (var i = 0; i < headers.length; i++) {
+      var h = String(headers[i]).toLowerCase().trim();
+      if (h === 'done' || h === 'completed' || h === '_done' || h === 'complete') {
+        doneCol = i + 1;
+        break;
+      }
+    }
+    if (doneCol < 0) {
+      return { success: false, error: 'No done/completed column found in LineItems' };
+    }
+
+    var boolValue = (value === true || value === 'true');
+    sheet.getRange(rowIndex, doneCol).setValue(boolValue);
+
+    return { success: true };
+  } catch (error) {
+    Logger.log('Error in toggleCheckbox: ' + error.toString());
+    return { success: false, error: error.toString() };
   }
 }
 

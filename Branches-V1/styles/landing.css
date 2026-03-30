@@ -103,7 +103,7 @@ body.landing-page {
 }
 
 .land-section {
-    padding: 96px 0;
+    padding: 64px 0;
 }
 
 /* ---------- Navigation ---------- */
@@ -732,12 +732,12 @@ body.landing-page {
 }
 
 .demo-metric-change.positive {
-    background: rgba(102,187,106,0.1);
+    background: rgba(102,187,106,0.2);
     color: #66BB6A;
 }
 
 .demo-metric-change.negative {
-    background: rgba(239,83,80,0.1);
+    background: rgba(239,83,80,0.2);
     color: #EF5350;
 }
 
@@ -1667,7 +1667,7 @@ body.landing-page {
 }
 
 .land-faq-item.open .land-faq-answer {
-    max-height: 300px;
+    max-height: 600px;
 }
 
 .land-faq-answer-inner {
