@@ -1,0 +1,474 @@
+/* ========================================
+   📱 Mobile Optimizations
+   Portrait-first for iOS/Android phones
+   ======================================== */
+
+/* ─── GLOBAL MOBILE (≤ 768px) ─── */
+@media (max-width: 768px) {
+
+  /* Header: compact, single row */
+  .main-header {
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .mobile-menu-btn {
+    padding: 10px;
+    margin: -4px;
+  }
+
+  .mobile-menu-btn span {
+    width: 22px;
+    height: 2.5px;
+    margin: 4px 0;
+  }
+
+  .header-title h1 {
+    font-size: 1.15rem;
+  }
+
+  .header-title p {
+    display: none; /* hide subtitle on mobile */
+  }
+
+  .header-actions {
+    gap: 6px;
+  }
+
+  .header-btn {
+    padding: 10px;
+    font-size: 1.25rem;
+  }
+
+  /* Status indicator: bigger touch target */
+  .status-indicator {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* ─── Dashboard cards ─── */
+  .metrics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .metric-card {
+    padding: 14px 14px 14px 18px;
+  }
+
+  .metric-label {
+    font-size: 0.75rem;
+  }
+
+  .metric-value {
+    font-size: 1.5rem;
+  }
+
+  /* ─── WO Stats Bar ─── */
+  .wo-stats-bar {
+    gap: 10px;
+    padding: 12px 14px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .wo-stat-value {
+    font-size: 18px;
+  }
+
+  .wo-stat-label {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+  }
+
+  /* ─── Job Cards Grid ─── */
+  .job-cards-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .wo-card {
+    padding: 14px;
+  }
+
+  .wo-number {
+    font-size: 12px;
+  }
+
+  .wo-job-name {
+    font-size: 17px;
+  }
+
+  /* ─── WO Detail Modal (bottom sheet) ─── */
+  .wo-modal-body {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .wo-detail-meta {
+    font-size: 11px;
+  }
+
+  .wo-section-label {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+  }
+
+  /* Line items — bigger touch targets */
+  .wo-line-item-row {
+    padding: 14px 4px;
+    gap: 14px;
+    min-height: 48px;
+  }
+
+  .wo-li-checkbox {
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    font-size: 15px;
+  }
+
+  .wo-li-text {
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  .wo-li-num-badge {
+    font-size: 11px;
+    min-width: 22px;
+    height: 22px;
+  }
+
+  .wo-li-saving {
+    font-size: 11px;
+  }
+
+  /* ─── Chat Interface ─── */
+  .chat-container {
+    padding: 10px;
+  }
+
+  .chat-message {
+    max-width: 92%;
+    padding: 10px 14px;
+    font-size: 0.95rem;
+  }
+
+  .chat-message.user {
+    max-width: 88%;
+  }
+
+  .chat-input-wrapper {
+    padding: 8px;
+  }
+
+  .chat-input {
+    font-size: 16px; /* prevents iOS zoom on focus */
+    padding: 10px 14px;
+  }
+
+  /* Quick actions: 2 columns on phones */
+  .quick-actions {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .quick-action {
+    padding: 12px;
+  }
+
+  .action-icon {
+    font-size: 1.25rem;
+  }
+
+  .action-text {
+    font-size: 0.8rem;
+  }
+
+  /* ─── Sidebar drawer ─── */
+  .sidebar {
+    width: 280px;
+    z-index: 1000;
+  }
+
+  .nav-item {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    min-height: 44px;
+  }
+
+  .sidebar-footer {
+    padding: 14px 16px;
+  }
+
+  #logoutBtn {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+  }
+
+  /* ─── Usage View ─── */
+  .usage-view-container {
+    padding: 14px;
+  }
+
+  .usage-view-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .usage-cards {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* ─── Team View ─── */
+  .team-invite-form {
+    padding: 12px !important;
+  }
+
+  .team-invite-form div[style*="display:flex"] {
+    flex-direction: column;
+  }
+
+  /* ─── Tool Container (iframes) ─── */
+  .tool-header {
+    padding: 10px 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .tool-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .tool-btn {
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    min-height: 40px;
+  }
+
+  /* ─── Inventory Panel ─── */
+  .inv-header {
+    padding: 14px 14px 0;
+  }
+
+  .inv-body {
+    padding: 14px;
+  }
+
+  .inv-search-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .inv-input-sm {
+    max-width: 100%;
+  }
+
+  .inv-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* ─── Command Palette ─── */
+  .cmd-palette {
+    min-width: auto;
+    width: 94%;
+    top: 8%;
+    max-height: 80vh;
+  }
+
+  /* ─── Buttons ─── */
+  .btn {
+    min-height: 44px;
+    padding: 10px 20px;
+  }
+
+  .btn-primary, .btn-secondary {
+    font-size: 0.9rem;
+  }
+
+  /* ─── Modals ─── */
+  .modal-content {
+    width: 95%;
+    max-height: 85vh;
+  }
+}
+
+/* ─── SMALL PHONES (≤ 480px) ─── */
+@media (max-width: 480px) {
+
+  .metrics-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .metric-card {
+    padding: 10px 10px 10px 14px;
+  }
+
+  .metric-value {
+    font-size: 1.3rem;
+  }
+
+  .metric-label {
+    font-size: 0.7rem;
+  }
+
+  .wo-stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .wo-stat-value {
+    font-size: 16px;
+  }
+
+  .wo-card {
+    padding: 12px;
+  }
+
+  .wo-job-name {
+    font-size: 15px;
+  }
+
+  .wo-card-stats .wo-stat-value {
+    font-size: 16px;
+  }
+
+  /* Quick actions: single column */
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
+
+  /* Chat full width */
+  .chat-message,
+  .chat-message.user {
+    max-width: 95%;
+  }
+
+  /* Header even more compact */
+  .main-header {
+    padding: 8px 10px;
+  }
+
+  .header-title h1 {
+    font-size: 1rem;
+  }
+}
+
+/* ─── LANDSCAPE PHONES ─── */
+@media (max-height: 500px) and (orientation: landscape) {
+
+  .main-header {
+    padding: 6px 14px;
+  }
+
+  .header-title h1 {
+    font-size: 1rem;
+  }
+
+  .header-title p {
+    display: none;
+  }
+
+  /* More compact dashboard in landscape */
+  .metrics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .metric-card {
+    padding: 10px 10px 10px 14px;
+  }
+
+  .wo-stats-bar {
+    padding: 10px 14px;
+    gap: 14px;
+    display: flex;
+  }
+
+  /* Modal: use more height in landscape */
+  .wo-modal-box {
+    max-height: 95vh;
+  }
+
+  .wo-modal-body {
+    padding: 10px 14px;
+  }
+
+  .wo-line-item-row {
+    padding: 10px 4px;
+  }
+}
+
+/* ─── SAFE AREA (notch/dynamic island) ─── */
+@supports (padding: env(safe-area-inset-top)) {
+  .main-header {
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-left: max(14px, env(safe-area-inset-left));
+    padding-right: max(14px, env(safe-area-inset-right));
+  }
+
+  .sidebar {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .wo-modal-footer {
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .chat-input-wrapper {
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+}
+
+/* ─── iOS-specific: prevent zoom on input focus ─── */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea {
+    font-size: 16px;
+  }
+}
+
+/* ─── Disable hover effects on touch devices ─── */
+@media (hover: none) {
+  .wo-card:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: var(--border-color);
+  }
+
+  .wo-card:active {
+    transform: scale(0.98);
+    border-color: var(--brand-primary);
+  }
+
+  .metric-card:hover {
+    transform: none;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .wo-line-item-row:hover {
+    background: none;
+    padding-left: 0;
+    padding-right: 0;
+    margin: 0;
+    width: 100%;
+  }
+
+  .wo-line-item-row:active {
+    background: var(--surface-secondary);
+  }
+
+  .nav-item:hover {
+    background: none;
+  }
+
+  .nav-item:active {
+    background: var(--border-color);
+  }
+}

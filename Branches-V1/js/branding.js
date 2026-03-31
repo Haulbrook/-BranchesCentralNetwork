@@ -86,6 +86,10 @@ const Branding = (() => {
     const logoText = document.querySelector('.logo-text');
     if (logoText) logoText.textContent = companyName;
 
+    // Mobile header title
+    const headerTitle = document.getElementById('headerBrandTitle');
+    if (headerTitle) headerTitle.textContent = acronym || companyName;
+
     // Logo image
     const logoIcon = document.querySelector('.logo-icon');
     if (logoIcon) {

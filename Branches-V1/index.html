@@ -37,6 +37,7 @@
     <!-- Enhanced v2.0 Professional Components -->
     <link rel="stylesheet" href="styles/enhanced-theme.css?v=20260317a">
     <link rel="stylesheet" href="styles/enhanced-components.css?v=20260317a">
+    <link rel="stylesheet" href="styles/mobile.css?v=20260330a">
     <!-- AI Skills Styles -->
     <link rel="stylesheet" href="styles/wizard.css?v=20260317a">
     <link rel="stylesheet" href="styles/skills.css?v=20260317a">
@@ -169,12 +170,18 @@
 
         <!-- Main Content -->
         <main id="main-content" class="main-content" role="main" aria-label="Main content area">
-            <!-- Mobile menu button (visible on small screens when sidebar is hidden) -->
-            <button id="mobileMenuBtn" class="mobile-menu-btn" aria-label="Open navigation menu">
-                <span></span><span></span><span></span>
-            </button>
-            <!-- Connection status indicator -->
-            <div id="statusIndicator" class="status-indicator online" title="Connected" aria-live="polite"></div>
+            <!-- Mobile Header Bar -->
+            <header class="main-header">
+                <button id="mobileMenuBtn" class="mobile-menu-btn" aria-label="Open navigation menu">
+                    <span></span><span></span><span></span>
+                </button>
+                <div class="header-title">
+                    <h1 id="headerBrandTitle">BRAIN</h1>
+                </div>
+                <div class="header-actions">
+                    <div id="statusIndicator" class="status-indicator online" title="Connected" aria-live="polite"></div>
+                </div>
+            </header>
 
             <!-- Dashboard View -->
             <section id="dashboardView" class="dashboard-view" aria-labelledby="dashboard-heading">
