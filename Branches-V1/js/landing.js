@@ -8,11 +8,12 @@
     // ========== Supabase Auth ==========
     let supabaseClient = null;
 
-    // Capture the URL hash BEFORE Supabase consumes it — it contains type=invite, type=recovery, etc.
-    var _hashType = (function () {
+    // Detect auth redirects — modern Supabase uses PKCE with ?code= in query string,
+    // older versions use #type=invite in the hash fragment.
+    var _isAuthRedirect = (function () {
+        var query = window.location.search || '';
         var hash = window.location.hash || '';
-        var match = hash.match(/type=([a-z_]+)/);
-        return match ? match[1] : null;
+        return query.includes('code=') || /type=(invite|magiclink|recovery|signup)/.test(hash);
     })();
 
     function showSetPasswordScreen() {
@@ -88,9 +89,9 @@
                 if (event === 'PASSWORD_RECOVERY') {
                     showSetPasswordScreen();
                 }
-                // Invite links fire SIGNED_IN, not PASSWORD_RECOVERY — detect via URL hash type
-                if (event === 'SIGNED_IN' && (_hashType === 'invite' || _hashType === 'magiclink' || _hashType === 'signup')) {
-                    _hashType = null; // Prevent re-triggering
+                // Invite/magic links via PKCE fire SIGNED_IN — detect via ?code= in URL
+                if (event === 'SIGNED_IN' && _isAuthRedirect) {
+                    _isAuthRedirect = false; // Prevent re-triggering
                     showSetPasswordScreen();
                 }
             });
