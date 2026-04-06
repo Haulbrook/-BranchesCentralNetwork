@@ -8,6 +8,13 @@
     // ========== Supabase Auth ==========
     let supabaseClient = null;
 
+    // Capture the URL hash BEFORE Supabase consumes it — it contains type=invite, type=recovery, etc.
+    var _hashType = (function () {
+        var hash = window.location.hash || '';
+        var match = hash.match(/type=([a-z_]+)/);
+        return match ? match[1] : null;
+    })();
+
     function showSetPasswordScreen() {
         // Create a full-screen overlay for setting password after invite
         var overlay = document.createElement('div');
@@ -79,6 +86,11 @@
             // Listen for invite/reset magic links — show password setup screen
             supabaseClient.auth.onAuthStateChange(function (event) {
                 if (event === 'PASSWORD_RECOVERY') {
+                    showSetPasswordScreen();
+                }
+                // Invite links fire SIGNED_IN, not PASSWORD_RECOVERY — detect via URL hash type
+                if (event === 'SIGNED_IN' && (_hashType === 'invite' || _hashType === 'magiclink' || _hashType === 'signup')) {
+                    _hashType = null; // Prevent re-triggering
                     showSetPasswordScreen();
                 }
             });
