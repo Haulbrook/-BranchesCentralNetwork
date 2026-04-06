@@ -8,11 +8,81 @@
     // ========== Supabase Auth ==========
     let supabaseClient = null;
 
+    function showSetPasswordScreen() {
+        // Create a full-screen overlay for setting password after invite
+        var overlay = document.createElement('div');
+        overlay.id = 'setPasswordOverlay';
+        overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);';
+        overlay.innerHTML = '<div style="background:#1a1a2e;border-radius:16px;padding:40px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.5);">'
+            + '<h2 style="color:#fff;margin:0 0 8px;font-size:1.5rem;text-align:center;">Welcome! Create Your Password</h2>'
+            + '<p style="color:#aaa;margin:0 0 24px;text-align:center;font-size:0.9rem;">Set a password so you can sign in anytime</p>'
+            + '<form id="setPasswordForm">'
+            + '<label style="display:block;color:#ccc;font-size:0.85rem;margin-bottom:4px;">New Password</label>'
+            + '<input type="password" id="setPwInput" placeholder="At least 6 characters" required minlength="6" autocomplete="new-password" style="width:100%;padding:12px;border-radius:8px;border:1px solid #333;background:#111;color:#fff;margin-bottom:16px;box-sizing:border-box;">'
+            + '<label style="display:block;color:#ccc;font-size:0.85rem;margin-bottom:4px;">Confirm Password</label>'
+            + '<input type="password" id="setPwConfirm" placeholder="Confirm password" required minlength="6" autocomplete="new-password" style="width:100%;padding:12px;border-radius:8px;border:1px solid #333;background:#111;color:#fff;margin-bottom:16px;box-sizing:border-box;">'
+            + '<div id="setPwError" style="color:#ff6b6b;font-size:0.85rem;margin-bottom:12px;display:none;"></div>'
+            + '<div id="setPwSuccess" style="color:#51cf66;font-size:0.85rem;margin-bottom:12px;display:none;"></div>'
+            + '<button type="submit" id="setPwBtn" style="width:100%;padding:14px;border:none;border-radius:8px;background:#4a7c59;color:#fff;font-weight:600;font-size:1rem;cursor:pointer;">Create Password</button>'
+            + '</form>'
+            + '</div>';
+
+        document.body.appendChild(overlay);
+
+        document.getElementById('setPasswordForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            var pw = document.getElementById('setPwInput').value;
+            var confirm = document.getElementById('setPwConfirm').value;
+            var errorEl = document.getElementById('setPwError');
+            var successEl = document.getElementById('setPwSuccess');
+            var btn = document.getElementById('setPwBtn');
+
+            errorEl.style.display = 'none';
+            successEl.style.display = 'none';
+
+            if (pw.length < 6) {
+                errorEl.textContent = 'Password must be at least 6 characters';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            if (pw !== confirm) {
+                errorEl.textContent = 'Passwords do not match';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Creating password...';
+
+            try {
+                var result = await supabaseClient.auth.updateUser({ password: pw });
+                if (result.error) throw result.error;
+                successEl.textContent = 'Password created! Redirecting to dashboard...';
+                successEl.style.display = 'block';
+                setTimeout(function () { window.location.href = '/dashboard'; }, 1500);
+            } catch (err) {
+                errorEl.textContent = err.message || 'Failed to set password';
+                errorEl.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Create Password';
+            }
+        });
+    }
+
     function initSupabase() {
         const url = document.body.dataset.supabaseUrl;
         const key = document.body.dataset.supabaseAnonKey;
         if (url && key && window.supabase?.createClient) {
             supabaseClient = window.supabase.createClient(url, key);
+
+            // Listen for invite/reset magic links — show password setup screen
+            supabaseClient.auth.onAuthStateChange(function (event) {
+                if (event === 'PASSWORD_RECOVERY') {
+                    showSetPasswordScreen();
+                }
+            });
+
             checkAuthState();
         }
     }
