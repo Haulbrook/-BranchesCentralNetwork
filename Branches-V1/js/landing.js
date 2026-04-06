@@ -106,9 +106,9 @@
 
         // Pricing CTA buttons — trigger Stripe checkout
         var PRICE_MAP = {
-            starter: { monthly: 'price_1TDyZECi7C2vq1Yaahdl1nib', annual: 'price_1TDyZKCi7C2vq1YaRcdWmmxG' },
-            pro:     { monthly: 'price_1TDyZMCi7C2vq1YauRJz22XF', annual: 'price_1TDyZNCi7C2vq1YaNOG22nAq' },
-            max:     { monthly: 'price_1TDyZOCi7C2vq1YasMC8MoOE', annual: 'price_1TDyZPCi7C2vq1YafySyE2IP' },
+            starter: { monthly: 'price_1TJENFCpnxc4vmdiKErskBpY', annual: 'price_1TJENHCpnxc4vmdiey22zxjr' },
+            pro:     { monthly: 'price_1TJENICpnxc4vmdiTlSoHG1i', annual: 'price_1TJENLCpnxc4vmdimAT7Wrb8' },
+            max:     { monthly: 'price_1TJENOCpnxc4vmdiqVXGI2Tb', annual: 'price_1TJENOCpnxc4vmdisiGRASo7' },
         };
 
         document.querySelectorAll('.land-pricing-cta').forEach(function (btn) {
